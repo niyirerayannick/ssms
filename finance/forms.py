@@ -9,7 +9,7 @@ class FeeForm(forms.ModelForm):
     class Meta:
         model = SchoolFee
         fields = [
-            'student', 'academic_year', 'school_name', 'class_level',
+            'student', 'academic_year', 'term', 'school_name', 'class_level',
             'total_fees', 'amount_paid', 'payment_status', 'payment_dates', 'comments'
         ]
         widgets = {
@@ -19,6 +19,9 @@ class FeeForm(forms.ModelForm):
             'academic_year': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
                 'placeholder': 'e.g., 2024'
+            }),
+            'term': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             }),
             'school_name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'

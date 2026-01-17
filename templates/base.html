@@ -7,6 +7,10 @@
     <title>{% block title %}SIMS - Sponsorship Information Management System{% endblock %}</title>
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Heroicons -->
     <script src="https://cdn.jsdelivr.net/npm/heroicons@2.0.18/24/outline/index.js" type="module"></script>
     <!-- Chart.js -->
@@ -14,6 +18,74 @@
     <!-- HTMX for AJAX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
+        :root {
+            --brand-50: #eef2ff;
+            --brand-100: #e0e7ff;
+            --brand-500: #6366f1;
+            --brand-600: #4f46e5;
+            --brand-700: #4338ca;
+            --surface: rgba(255, 255, 255, 0.8);
+            --surface-border: rgba(226, 232, 240, 0.8);
+            --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.08);
+        }
+
+        body {
+            font-family: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+            color: #0f172a;
+            background:
+                radial-gradient(1200px 600px at 10% -10%, rgba(59, 130, 246, 0.14), transparent 60%),
+                radial-gradient(1200px 600px at 100% -20%, rgba(16, 185, 129, 0.12), transparent 60%),
+                #f8fafc;
+        }
+
+        main {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: 24px;
+            box-shadow: var(--shadow-soft);
+            margin: 16px 16px 16px 6px;
+            backdrop-filter: blur(12px);
+        }
+
+        @media (max-width: 767px) {
+            main {
+                margin: 12px;
+            }
+        }
+
+        h1, h2, h3 {
+            letter-spacing: -0.02em;
+        }
+
+        table thead {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.08), rgba(59, 130, 246, 0.08));
+        }
+
+        table tbody tr {
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+
+        table tbody tr:hover {
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+
+        input, select, textarea {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-color: rgba(148, 163, 184, 0.5);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: rgba(99, 102, 241, 0.8);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.7);
+        }
+
         /* Custom animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -24,11 +96,11 @@
         }
         /* Smooth transitions */
         * {
-            transition: background-color 0.2s, color 0.2s, transform 0.2s;
+            transition: background-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s, border-color 0.2s;
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="min-h-screen">
     {% include 'partials/navbar.html' %}
     
     <div class="flex min-h-screen">

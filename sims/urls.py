@@ -13,7 +13,7 @@ urlpatterns = [
     path('', include('accounts.urls')),
     path('core/', include('core.urls')),
     path('dashboard/', include('dashboard.urls')),
-    path('students/', include('students.urls')),
+    path('students/', include(('students.urls', 'students'), namespace='students')),
     path('families/', include('families.urls')),
     path('finance/', include('finance.urls')),
     path('insurance/', include('insurance.urls')),

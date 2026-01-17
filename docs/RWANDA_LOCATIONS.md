@@ -190,6 +190,24 @@ This loads:
 
 To extend with more data, edit the fixture file and add more entries.
 
+### Sync full government dataset
+
+To load the full official Rwanda location dataset and regenerate the fixture file:
+
+```bash
+python manage.py sync_rwanda_locations
+```
+
+This command downloads the public dataset from `jnkindi/rwanda-locations-json`,
+replaces existing location records, and rewrites
+`core/fixtures/rwanda_locations.json`.
+
+If you want to keep existing records and only add missing ones:
+
+```bash
+python manage.py sync_rwanda_locations --keep-existing
+```
+
 ## Frontend Implementation
 
 ### Using JavaScript Manager (Cascading Dropdowns)

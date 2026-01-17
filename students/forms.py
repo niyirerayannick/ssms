@@ -7,12 +7,32 @@ from django.contrib.auth.models import User
 
 class StudentForm(forms.ModelForm):
     """Form for creating and editing students."""
+
+    has_disability = forms.TypedChoiceField(
+        choices=[('false', 'No'), ('true', 'Yes')],
+        coerce=lambda value: value == 'true',
+        empty_value=False,
+        required=True,
+        label='Does student have any disability?',
+    )
+    disability_types = forms.MultipleChoiceField(
+        choices=Student.DISABILITY_CHOICES,
+        required=False,
+        label='Types of Disabilities',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.disability_types:
+            self.fields['disability_types'].initial = [
+                value.strip() for value in self.instance.disability_types.split(',') if value.strip()
+            ]
     
     class Meta:
         model = Student
         fields = [
             'family', 'first_name', 'last_name', 'gender', 'date_of_birth',
-            'school', 'school_name', 'class_level', 'enrollment_status',
+            'school', 'school_name', 'class_level', 'enrollment_status', 'sponsorship_status',
             'has_disability', 'disability_types', 'disability_description',
             'is_active', 'profile_picture', 'program_officer'
         ]
@@ -26,6 +46,7 @@ class StudentForm(forms.ModelForm):
             'school_name': 'Or Enter School Name',
             'class_level': 'Class Level',
             'enrollment_status': 'Enrollment Status',
+            'sponsorship_status': 'Sponsorship Status',
             'has_disability': 'Does student have any disability?',
             'disability_types': 'Types of Disabilities',
             'disability_description': 'Disability Description & Special Needs',
@@ -39,8 +60,9 @@ class StudentForm(forms.ModelForm):
             'school_name': 'Alternative: if school is not in database, enter name here',
             'class_level': 'e.g., P1, P6, S1, S3',
             'enrollment_status': 'Current enrollment status of the student',
+            'sponsorship_status': 'Current sponsorship status',
             'has_disability': 'Check if student has any disability',
-            'disability_types': 'List available: visual, hearing, mobility, intellectual, autism, speech, learning, emotional, other',
+            'disability_types': 'Select one or more disability types',
             'disability_description': 'Describe the disability and any special accommodations needed',
             'is_active': 'Check if student is currently active',
         }
@@ -77,12 +99,15 @@ class StudentForm(forms.ModelForm):
             'enrollment_status': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             }),
-            'has_disability': forms.CheckboxInput(attrs={
-                'class': 'w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500'
+            'sponsorship_status': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             }),
-            'disability_types': forms.TextInput(attrs={
+            'has_disability': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent'
+            }),
+            'disability_types': forms.SelectMultiple(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent',
-                'placeholder': 'e.g., visual, hearing, mobility'
+                'size': '6'
             }),
             'disability_description': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent',
@@ -100,6 +125,25 @@ class StudentForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             }),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        has_disability = cleaned_data.get('has_disability')
+        disability_types = cleaned_data.get('disability_types') or ''
+        disability_description = cleaned_data.get('disability_description', '')
+
+        if has_disability:
+            if not disability_types:
+                self.add_error('disability_types', 'Select at least one disability type.')
+        else:
+            cleaned_data['disability_types'] = ''
+            cleaned_data['disability_description'] = ''
+
+        return cleaned_data
+
+    def clean_disability_types(self):
+        values = self.cleaned_data.get('disability_types') or []
+        return ','.join(values)
 
 
 class StudentPhotoForm(forms.ModelForm):

@@ -11,29 +11,30 @@
             {% csrf_token %}
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="{{ form.student.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                        Student *
+                <div class="md:col-span-1">
+                    <label for="{{ form.family.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Family *
                     </label>
-                    {{ form.student }}
-                    {% if form.student.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.student.errors.0 }}</p>
+                    {{ form.family }}
+                    {% if form.family.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.family.errors.0 }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500 mt-1">Select the family to record Mutuelle payment for</p>
+                </div>
+                
+                <div>
+                    <label for="{{ form.insurance_year.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Insurance Year *
+                    </label>
+                    {{ form.insurance_year }}
+                    {% if form.insurance_year.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.insurance_year.errors.0 }}</p>
                     {% endif %}
                 </div>
                 
                 <div>
-                    <label for="{{ form.coverage_status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                        Coverage Status *
-                    </label>
-                    {{ form.coverage_status }}
-                    {% if form.coverage_status.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.coverage_status.errors.0 }}</p>
-                    {% endif %}
-                </div>
-                
-                <div>
-                    <label for="{{ form.required_amount.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                        Required Amount *
+                    <label for="{{ form.required_amount.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Required Amount (FRW) *
                     </label>
                     {{ form.required_amount }}
                     {% if form.required_amount.errors %}
@@ -42,26 +43,153 @@
                 </div>
                 
                 <div>
-                    <label for="{{ form.amount_paid.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                        Amount Paid *
+                    <label for="{{ form.amount_paid.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Amount Paid (FRW) *
                     </label>
                     {{ form.amount_paid }}
                     {% if form.amount_paid.errors %}
                         <p class="text-red-600 text-sm mt-1">{{ form.amount_paid.errors.0 }}</p>
                     {% endif %}
                 </div>
+                
+                <div>
+                    <label for="{{ form.coverage_status.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Coverage Status *
+                    </label>
+                    {{ form.coverage_status }}
+                    {% if form.coverage_status.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.coverage_status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="family-insurance-summary" class="hidden bg-teal-50 border border-teal-200 rounded-lg p-4">
+                <h3 class="font-semibold text-teal-900 mb-3">Current Insurance Record for This Family</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
+                    <div class="bg-white rounded p-3 border-l-4 border-purple-500">
+                        <p class="text-xs text-gray-600 uppercase tracking-wide">Total Contribution</p>
+                        <p id="db-total-contribution" class="text-lg font-bold text-purple-600">0 FRW</p>
+                        <p class="text-xs text-gray-500 mt-1">All years</p>
+                    </div>
+                    <div class="bg-white rounded p-3 border-l-4 border-teal-500">
+                        <p class="text-xs text-gray-600 uppercase tracking-wide">Required Amount</p>
+                        <p id="db-required-amount" class="text-lg font-bold text-teal-600">0 FRW</p>
+                        <p class="text-xs text-gray-500 mt-1">Current year</p>
+                    </div>
+                    <div class="bg-white rounded p-3 border-l-4 border-green-500">
+                        <p class="text-xs text-gray-600 uppercase tracking-wide">Amount Paid</p>
+                        <p id="db-amount-paid" class="text-lg font-bold text-green-600">0 FRW</p>
+                        <p class="text-xs text-gray-500 mt-1">Current year</p>
+                    </div>
+                    <div class="bg-white rounded p-3 border-l-4 border-red-500">
+                        <p class="text-xs text-gray-600 uppercase tracking-wide">Outstanding</p>
+                        <p id="db-balance" class="text-lg font-bold text-red-600">0 FRW</p>
+                        <p class="text-xs text-gray-500 mt-1">Current year</p>
+                    </div>
+                </div>
+                <p class="text-xs text-teal-700">
+                    <strong>Coverage Status:</strong> <span id="db-coverage-status">Not Covered</span>
+                </p>
+            </div>
+            
+            <div>
+                <label for="{{ form.payment_dates.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Payment Dates
+                </label>
+                {{ form.payment_dates }}
+                {% if form.payment_dates.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.payment_dates.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xs text-gray-500 mt-1">Comma-separated dates, e.g., 2024-01-15, 2024-02-20</p>
+            </div>
+            
+            <div>
+                <label for="{{ form.remarks.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Remarks
+                </label>
+                {{ form.remarks }}
+                {% if form.remarks.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.remarks.errors.0 }}</p>
+                {% endif %}
             </div>
             
             <div class="flex justify-end space-x-4">
                 <a href="{% url 'insurance:insurance_list' %}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
                     Cancel
                 </a>
-                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200">
-                    Save
+                <button type="submit" class="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition duration-200">
+                    Save Payment
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const familySelect = document.getElementById('id_family');
+        const summaryDiv = document.getElementById('family-insurance-summary');
+        const requiredAmountInput = document.getElementById('id_required_amount');
+        const amountPaidInput = document.getElementById('id_amount_paid');
+        const insuranceYearInput = document.getElementById('id_insurance_year');
+        
+        if (!familySelect) return;
+        
+        function fetchFamilyInsuranceDetails(familyId) {
+            if (!familyId) {
+                if (summaryDiv) summaryDiv.classList.add('hidden');
+                return;
+            }
+            
+            fetch(`/finance/api/family/${familyId}/insurance/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch family insurance details');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        if (summaryDiv) summaryDiv.classList.remove('hidden');
+                        
+                        const formatCurrency = (value) => {
+                            return Number(value).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }) + ' FRW';
+                        };
+                        
+                        document.getElementById('db-total-contribution').textContent = formatCurrency(data.total_contribution);
+                        document.getElementById('db-required-amount').textContent = formatCurrency(data.required_amount);
+                        document.getElementById('db-amount-paid').textContent = formatCurrency(data.amount_paid);
+                        document.getElementById('db-balance').textContent = formatCurrency(data.balance);
+                        document.getElementById('db-coverage-status').textContent = data.coverage_status;
+                        
+                        if (requiredAmountInput) {
+                            requiredAmountInput.value = data.required_amount;
+                        }
+                        if (amountPaidInput) {
+                            amountPaidInput.value = data.amount_paid;
+                        }
+                        if (insuranceYearInput) {
+                            insuranceYearInput.value = data.insurance_year;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching family insurance details:', error);
+                    if (summaryDiv) summaryDiv.classList.add('hidden');
+                });
+        }
+        
+        familySelect.addEventListener('change', function() {
+            fetchFamilyInsuranceDetails(this.value);
+        });
+        
+        if (familySelect.value) {
+            fetchFamilyInsuranceDetails(familySelect.value);
+        }
+    });
+</script>
 {% endblock %}
 

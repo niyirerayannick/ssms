@@ -98,6 +98,17 @@ def student_detail(request, pk):
 
 
 @login_required
+@permission_required('students.view_student', raise_exception=True)
+def photo_gallery(request):
+    """View all student photos in a gallery."""
+    photos = (
+        StudentPhoto.objects.select_related('student')
+        .order_by('-created_at')
+    )
+    return render(request, 'students/photo_gallery.html', {'photos': photos})
+
+
+@login_required
 def add_photo(request, pk):
     """Add photo to student."""
     student = get_object_or_404(Student, pk=pk)

@@ -22,6 +22,22 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- Sponsored Students Report -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-center">
+                <div class="text-5xl mb-4">⭐</div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Sponsored Students</h2>
+                <p class="text-gray-600 text-sm mb-4">Detailed list of actively sponsored students</p>
+                {% if perms.students.view_student %}
+                <a href="{% url 'reports:sponsored_students_report' %}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition duration-200">
+                    View Report
+                </a>
+                {% else %}
+                <p class="text-gray-400 text-sm">Permission required</p>
+                {% endif %}
+            </div>
+        </div>
         
         <!-- Fees Excel Report -->
         <div class="bg-white p-6 rounded-lg shadow-md">

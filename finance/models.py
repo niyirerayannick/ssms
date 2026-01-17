@@ -5,6 +5,12 @@ from students.models import Student
 class SchoolFee(models.Model):
     """School fees model for tracking fee payments."""
     
+    TERM_CHOICES = [
+        ('1', 'Term 1'),
+        ('2', 'Term 2'),
+        ('3', 'Term 3'),
+    ]
+
     PAYMENT_STATUS_CHOICES = [
         ('paid', 'Paid'),
         ('partial', 'Partial'),
@@ -18,6 +24,7 @@ class SchoolFee(models.Model):
         related_name='fees'
     )
     academic_year = models.CharField(max_length=20, default='2024')
+    term = models.CharField(max_length=1, choices=TERM_CHOICES, default='1')
     school_name = models.CharField(max_length=200, blank=True, help_text="School name for this fee record")
     class_level = models.CharField(max_length=50, blank=True)
     total_fees = models.DecimalField(max_digits=10, decimal_places=2)

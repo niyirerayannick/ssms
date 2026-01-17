@@ -30,9 +30,9 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ fee.student.full_name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.term }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ fee.required_fees }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ fee.amount_paid }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">${{ fee.balance }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.required_fees }} RWF</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.amount_paid }} RWF</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">{{ fee.balance }} RWF</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             {% if perms.finance.manage_fees %}
                             <a href="{% url 'finance:fee_edit' fee.pk %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>

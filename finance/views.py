@@ -294,7 +294,7 @@ def get_family_insurance_details(request, family_id):
             'success': True,
             'family_id': family.id,
             'family_code': family.family_code,
-            'family_name': f"{family.head_of_family_first_name or ''} {family.head_of_family_last_name or ''}".strip(),
+            'family_name': (family.head_of_family or '').strip(),
             'total_members': family.total_family_members or 0,
             'total_contribution': str(total_contribution),
             'total_required_all_years': str(total_required_all_years),

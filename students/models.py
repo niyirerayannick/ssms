@@ -19,6 +19,12 @@ class Student(models.Model):
         ('graduated', 'Graduated'),
         ('dropped_out', 'Dropped Out'),
     ]
+
+    SPONSORSHIP_STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('pending', 'Pending'),
+        ('graduated', 'Graduated'),
+    ]
     
     DISABILITY_CHOICES = [
         ('visual', 'Visual Impairment (Blind/Low Vision)'),
@@ -57,6 +63,11 @@ class Student(models.Model):
         max_length=20, 
         choices=ENROLLMENT_STATUS_CHOICES, 
         default='enrolled'
+    )
+    sponsorship_status = models.CharField(
+        max_length=20,
+        choices=SPONSORSHIP_STATUS_CHOICES,
+        default='pending'
     )
     is_active = models.BooleanField(default=True)
     

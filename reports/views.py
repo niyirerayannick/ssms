@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.db.models import Sum
 from students.models import Student
 from finance.models import SchoolFee
-from insurance.models import HealthInsurance
+from insurance.models import FamilyInsurance
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
@@ -32,14 +32,14 @@ def students_pdf(request):
     elements.append(Spacer(1, 12))
     
     # Table data
-    data = [['Name', 'Gender', 'Age', 'School', 'District', 'Status']]
+    data = [['Name', 'Gender', 'Age', 'School', 'Location', 'Status']]
     for student in students:
         data.append([
             student.full_name,
             student.get_gender_display(),
             str(student.age),
             student.school.name if student.school else 'N/A',
-            student.district,
+            student.location_display,
             student.get_sponsorship_status_display(),
         ])
     
@@ -63,6 +63,22 @@ def students_pdf(request):
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="students_list.pdf"'
     return response
+
+
+@login_required
+@permission_required('students.view_student', raise_exception=True)
+def sponsored_students_report(request):
+    """Detailed report for sponsored (active) students."""
+    students = (
+        Student.objects.select_related('family', 'school', 'program_officer')
+        .filter(sponsorship_status='active')
+        .order_by('last_name', 'first_name')
+    )
+
+    context = {
+        'students': students,
+    }
+    return render(request, 'reports/sponsored_students.html', context)
 
 
 @login_required
@@ -98,12 +114,12 @@ def fees_excel(request):
         ws.append([
             fee.student.full_name,
             fee.term,
-            float(fee.required_fees),
+            float(fee.total_fees),
             float(fee.amount_paid),
             float(fee.balance),
-            fee.get_status_display(),
+            fee.get_payment_status_display(),
         ])
-        total_required += float(fee.required_fees)
+        total_required += float(fee.total_fees)
         total_paid += float(fee.amount_paid)
         total_balance += float(fee.balance)
     
@@ -137,7 +153,7 @@ def fees_excel(request):
 @permission_required('insurance.manage_insurance', raise_exception=True)
 def insurance_pdf(request):
     """Export insurance coverage as PDF."""
-    insurance_records = HealthInsurance.objects.select_related('student').all()
+    insurance_records = FamilyInsurance.objects.select_related('family').all()
     
     # Create PDF
     buffer = io.BytesIO()
@@ -152,21 +168,23 @@ def insurance_pdf(request):
     
     # Summary
     covered = insurance_records.filter(coverage_status='covered').count()
-    not_covered = insurance_records.filter(coverage_status='not covered').count()
+    partially_covered = insurance_records.filter(coverage_status='partially_covered').count()
+    not_covered = insurance_records.filter(coverage_status='not_covered').count()
     summary = Paragraph(
-        f"Covered: {covered} | Not Covered: {not_covered} | Total: {insurance_records.count()}",
+        f"Covered: {covered} | Partially Covered: {partially_covered} | Not Covered: {not_covered} | Total: {insurance_records.count()}",
         styles['Normal']
     )
     elements.append(summary)
     elements.append(Spacer(1, 12))
     
     # Table data
-    data = [['Student Name', 'Required Amount', 'Amount Paid', 'Coverage Status']]
+    data = [['Family', 'Year', 'Required Amount (RWF)', 'Amount Paid (RWF)', 'Coverage Status']]
     for insurance in insurance_records:
         data.append([
-            insurance.student.full_name,
-            f"${insurance.required_amount:.2f}",
-            f"${insurance.amount_paid:.2f}",
+            insurance.family.head_of_family,
+            insurance.insurance_year,
+            f"{insurance.required_amount:.2f} RWF",
+            f"{insurance.amount_paid:.2f} RWF",
             insurance.get_coverage_status_display(),
         ])
     
