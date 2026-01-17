@@ -13,17 +13,48 @@ class StudentForm(forms.ModelForm):
         fields = [
             'family', 'first_name', 'last_name', 'gender', 'date_of_birth',
             'school', 'school_name', 'class_level', 'enrollment_status',
+            'has_disability', 'disability_types', 'disability_description',
             'is_active', 'profile_picture', 'program_officer'
         ]
+        labels = {
+            'family': 'Family *',
+            'first_name': 'First Name',
+            'last_name': 'Last Name',
+            'gender': 'Gender',
+            'date_of_birth': 'Date of Birth',
+            'school': 'School',
+            'school_name': 'Or Enter School Name',
+            'class_level': 'Class Level',
+            'enrollment_status': 'Enrollment Status',
+            'has_disability': 'Does student have any disability?',
+            'disability_types': 'Types of Disabilities',
+            'disability_description': 'Disability Description & Special Needs',
+            'is_active': 'Active Student',
+            'profile_picture': 'Profile Picture',
+            'program_officer': 'Assigned Program Officer',
+        }
+        help_texts = {
+            'family': 'Select existing family or create a new one using the link below',
+            'school': 'Select from existing schools or create a new one using the link below',
+            'school_name': 'Alternative: if school is not in database, enter name here',
+            'class_level': 'e.g., P1, P6, S1, S3',
+            'enrollment_status': 'Current enrollment status of the student',
+            'has_disability': 'Check if student has any disability',
+            'disability_types': 'List available: visual, hearing, mobility, intellectual, autism, speech, learning, emotional, other',
+            'disability_description': 'Describe the disability and any special accommodations needed',
+            'is_active': 'Check if student is currently active',
+        }
         widgets = {
             'family': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             }),
             'first_name': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'placeholder': 'Enter first name'
             }),
             'last_name': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'placeholder': 'Enter last name'
             }),
             'gender': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
@@ -40,10 +71,23 @@ class StudentForm(forms.ModelForm):
                 'placeholder': 'Or enter school name manually'
             }),
             'class_level': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                'placeholder': 'e.g., P1, P6, S1, S3'
             }),
             'enrollment_status': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            }),
+            'has_disability': forms.CheckboxInput(attrs={
+                'class': 'w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500'
+            }),
+            'disability_types': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent',
+                'placeholder': 'e.g., visual, hearing, mobility'
+            }),
+            'disability_description': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent',
+                'rows': 4,
+                'placeholder': 'Describe the disability and any special accommodations needed'
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500'

@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
 from django.db.models import Sum
 from students.models import Student
-from finance.models import SchoolFees
+from finance.models import SchoolFee
 from insurance.models import HealthInsurance
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
@@ -69,7 +69,7 @@ def students_pdf(request):
 @permission_required('finance.manage_fees', raise_exception=True)
 def fees_excel(request):
     """Export fees summary as Excel."""
-    fees = SchoolFees.objects.select_related('student').all()
+    fees = SchoolFee.objects.select_related('student').all()
     
     # Create workbook
     wb = Workbook()

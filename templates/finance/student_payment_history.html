@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.full_name }} - Payment History - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'students:student_detail' student.id %}" class="text-blue-600 hover:text-blue-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ student.full_name }}</h1>
+                    <p class="text-gray-600 mt-1">School Fee Payment History</p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 md:mt-0">
+            <a href="{% url 'finance:add_student_payment' student.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200 inline-flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Record Payment
+            </a>
+        </div>
+    </div>
+
+    <!-- Student Info Card -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Student Status -->
+        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-500">
+            <p class="text-xs text-gray-500 font-semibold uppercase">Enrollment Status</p>
+            <p class="text-lg font-bold text-gray-900 mt-2">{{ student.get_enrollment_status_display }}</p>
+        </div>
+
+        <!-- Total Outstanding -->
+        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-red-500">
+            <p class="text-xs text-gray-500 font-semibold uppercase">Total Outstanding</p>
+            <p class="text-lg font-bold text-red-600 mt-2">FRW {{ total_outstanding|floatformat:2 }}</p>
+        </div>
+
+        <!-- Total Paid -->
+        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-green-500">
+            <p class="text-xs text-gray-500 font-semibold uppercase">Total Paid</p>
+            <p class="text-lg font-bold text-green-600 mt-2">FRW {{ total_paid|floatformat:2 }}</p>
+        </div>
+
+        <!-- Payment Rate -->
+        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-purple-500">
+            <p class="text-xs text-gray-500 font-semibold uppercase">Payment Rate</p>
+            <p class="text-lg font-bold text-purple-600 mt-2">{{ payment_percentage }}%</p>
+        </div>
+    </div>
+
+    <!-- Financial Summary -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Financial Summary</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+                <p class="text-sm text-gray-600 font-medium mb-1">Total Required</p>
+                <p class="text-2xl font-bold text-gray-900">FRW {{ total_required|floatformat:2 }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600 font-medium mb-1">Amount Paid</p>
+                <p class="text-2xl font-bold text-green-600">FRW {{ total_paid|floatformat:2 }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-600 font-medium mb-1">Outstanding Balance</p>
+                <p class="text-2xl font-bold text-red-600">FRW {{ total_outstanding|floatformat:2 }}</p>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="mt-6">
+            <div class="flex justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Payment Progress</span>
+                <span class="text-sm font-medium text-gray-700">{{ payment_percentage }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4">
+                <div class="bg-green-500 h-4 rounded-full transition-all duration-300" style="width: {{ payment_percentage }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Records Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="p-6 border-b">
+            <h2 class="text-xl font-bold text-gray-800">Payment Records</h2>
+        </div>
+        
+        {% if fees %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Academic Year</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Class</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Required</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paid</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dates Paid</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for fee in fees %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ fee.academic_year }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ fee.school_name }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ fee.class_level }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">FRW {{ fee.total_fees|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-green-600">FRW {{ fee.amount_paid|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-sm font-bold {% if fee.balance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                            FRW {{ fee.balance|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full
+                                {% if fee.payment_status == 'paid' %}bg-green-100 text-green-800
+                                {% elif fee.payment_status == 'overdue' %}bg-red-100 text-red-800
+                                {% elif fee.payment_status == 'partial' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-orange-100 text-orange-800{% endif %}">
+                                {{ fee.get_payment_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-700">
+                            {% if fee.payment_dates %}
+                                {{ fee.payment_dates|linebreaks }}
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm font-medium">
+                            <a href="{% url 'finance:fee_edit' fee.id %}" class="text-blue-600 hover:text-blue-800 mr-3">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-6 text-center text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <p class="text-gray-600">No payment records found for this student</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Comments Section -->
+    {% if fees %}
+    <div class="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+        <h3 class="font-semibold text-blue-900 mb-3">Payment Notes</h3>
+        {% for fee in fees %}
+            {% if fee.comments %}
+            <div class="mb-3 pb-3 border-b border-blue-200 last:border-b-0">
+                <p class="text-sm font-medium text-blue-900">{{ fee.academic_year }} - {{ fee.school_name }}</p>
+                <p class="text-sm text-blue-800 mt-1">{{ fee.comments }}</p>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

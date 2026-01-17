@@ -4,8 +4,8 @@ from .models import Family, FamilyStudent
 
 @admin.register(Family)
 class FamilyAdmin(admin.ModelAdmin):
-    list_display = ['guardian_name', 'guardian_phone', 'family_size', 'district', 'created_at']
-    search_fields = ['guardian_name', 'guardian_phone', 'district__name']
+    list_display = ['head_of_family', 'phone_number', 'district', 'created_at']
+    search_fields = ['head_of_family', 'phone_number', 'district__name']
     list_filter = ['district', 'created_at']
     readonly_fields = ['created_at', 'updated_at']
 

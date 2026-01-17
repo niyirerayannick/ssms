@@ -1,0 +1,492 @@
+[
+  {
+    "model": "core.province",
+    "pk": 1,
+    "fields": {
+      "name": "Kigali",
+      "code": "KGL",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": 2,
+    "fields": {
+      "name": "Northern Province",
+      "code": "NRP",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": 3,
+    "fields": {
+      "name": "Southern Province",
+      "code": "SRP",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": 4,
+    "fields": {
+      "name": "Eastern Province",
+      "code": "ERP",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.province",
+    "pk": 5,
+    "fields": {
+      "name": "Western Province",
+      "code": "WRP",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 1,
+    "fields": {
+      "name": "Gasabo",
+      "province": 1,
+      "code": "GSB",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 2,
+    "fields": {
+      "name": "Kicukiro",
+      "province": 1,
+      "code": "KCK",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 3,
+    "fields": {
+      "name": "Nyarugenge",
+      "province": 1,
+      "code": "NYG",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 4,
+    "fields": {
+      "name": "Burera",
+      "province": 2,
+      "code": "BRR",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 5,
+    "fields": {
+      "name": "Gicumbi",
+      "province": 2,
+      "code": "GCB",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 6,
+    "fields": {
+      "name": "Musanze",
+      "province": 2,
+      "code": "MSZ",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 7,
+    "fields": {
+      "name": "Ruhengeri",
+      "province": 2,
+      "code": "RHG",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 8,
+    "fields": {
+      "name": "Nyabihu",
+      "province": 2,
+      "code": "NYB",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 9,
+    "fields": {
+      "name": "Gisagara",
+      "province": 3,
+      "code": "GSG",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 10,
+    "fields": {
+      "name": "Huye",
+      "province": 3,
+      "code": "HUY",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 11,
+    "fields": {
+      "name": "Nyamagabe",
+      "province": 3,
+      "code": "NMA",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 12,
+    "fields": {
+      "name": "Nyaruguru",
+      "province": 3,
+      "code": "NYR",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 13,
+    "fields": {
+      "name": "Ruhango",
+      "province": 3,
+      "code": "RNG",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 14,
+    "fields": {
+      "name": "Muhanga",
+      "province": 3,
+      "code": "MHG",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 15,
+    "fields": {
+      "name": "Bugesera",
+      "province": 4,
+      "code": "BGS",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 16,
+    "fields": {
+      "name": "Gatsibo",
+      "province": 4,
+      "code": "GTS",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 17,
+    "fields": {
+      "name": "Kayonza",
+      "province": 4,
+      "code": "KYZ",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 18,
+    "fields": {
+      "name": "Kirehe",
+      "province": 4,
+      "code": "KRH",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 19,
+    "fields": {
+      "name": "Ngoma",
+      "province": 4,
+      "code": "NGM",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 20,
+    "fields": {
+      "name": "Rwamagana",
+      "province": 4,
+      "code": "RWM",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 21,
+    "fields": {
+      "name": "Karongi",
+      "province": 5,
+      "code": "KRG",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 22,
+    "fields": {
+      "name": "Kamwenge",
+      "province": 5,
+      "code": "KMW",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 23,
+    "fields": {
+      "name": "Nyabihu",
+      "province": 5,
+      "code": "NYB2",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 24,
+    "fields": {
+      "name": "Kibuye",
+      "province": 5,
+      "code": "KBY",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 25,
+    "fields": {
+      "name": "Rusizi",
+      "province": 5,
+      "code": "RSZ",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.district",
+    "pk": 26,
+    "fields": {
+      "name": "Rubavu",
+      "province": 5,
+      "code": "RBV",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.sector",
+    "pk": 1,
+    "fields": {
+      "name": "Remera",
+      "district": 1,
+      "code": "REM",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.sector",
+    "pk": 2,
+    "fields": {
+      "name": "Kacyiru",
+      "district": 1,
+      "code": "KCY",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.sector",
+    "pk": 3,
+    "fields": {
+      "name": "Kimironko",
+      "district": 1,
+      "code": "KMK",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.sector",
+    "pk": 4,
+    "fields": {
+      "name": "Kimihurura",
+      "district": 1,
+      "code": "KMH",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.cell",
+    "pk": 1,
+    "fields": {
+      "name": "Remera",
+      "sector": 1,
+      "code": "REM",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.cell",
+    "pk": 2,
+    "fields": {
+      "name": "Gisozi",
+      "sector": 1,
+      "code": "GSZ",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.cell",
+    "pk": 3,
+    "fields": {
+      "name": "Kacyiru",
+      "sector": 2,
+      "code": "KCY",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.cell",
+    "pk": 4,
+    "fields": {
+      "name": "Kibagabaga",
+      "sector": 2,
+      "code": "KBG",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.village",
+    "pk": 1,
+    "fields": {
+      "name": "Remera Village",
+      "cell": 1,
+      "code": "REM-V1",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.village",
+    "pk": 2,
+    "fields": {
+      "name": "Remera Central",
+      "cell": 1,
+      "code": "REM-V2",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.village",
+    "pk": 3,
+    "fields": {
+      "name": "Gisozi North",
+      "cell": 2,
+      "code": "GSZ-V1",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.village",
+    "pk": 4,
+    "fields": {
+      "name": "Gisozi South",
+      "cell": 2,
+      "code": "GSZ-V2",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.village",
+    "pk": 5,
+    "fields": {
+      "name": "Kacyiru Central",
+      "cell": 3,
+      "code": "KCY-V1",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "core.village",
+    "pk": 6,
+    "fields": {
+      "name": "Kibagabaga North",
+      "cell": 4,
+      "code": "KBG-V1",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  }
+]

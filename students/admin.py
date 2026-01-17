@@ -1,12 +1,12 @@
 from django.contrib import admin
-from .models import Student, StudentPhoto, AcademicRecord
+from .models import Student, StudentPhoto, StudentMark
 
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'gender', 'age', 'school', 'district', 'sponsorship_status', 'program_officer']
-    list_filter = ['gender', 'sponsorship_status', 'district', 'school']
-    search_fields = ['full_name', 'district__name', 'school__name']
+    list_display = ['full_name', 'gender', 'age', 'school', 'enrollment_status', 'program_officer']
+    list_filter = ['gender', 'enrollment_status', 'school']
+    search_fields = ['first_name', 'last_name', 'school__name']
     readonly_fields = ['created_at', 'updated_at']
 
 
@@ -17,7 +17,7 @@ class StudentPhotoAdmin(admin.ModelAdmin):
     list_filter = ['created_at']
 
 
-@admin.register(AcademicRecord)
+@admin.register(StudentMark)
 class AcademicRecordAdmin(admin.ModelAdmin):
     list_display = ['student', 'subject', 'marks', 'term', 'academic_year', 'created_at']
     search_fields = ['student__full_name', 'subject']

@@ -1,6 +1,11 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
-from .models import District, Sector, Cell, Village, Province
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib import messages
+from django.db.models import Q
+from .models import District, Sector, Cell, Village, Province, School
+from .forms import SchoolForm
 
 
 @require_http_methods(["GET"])
@@ -45,3 +50,78 @@ def get_villages(request):
     
     villages = Village.objects.filter(cell_id=cell_id).values('id', 'name')
     return JsonResponse({'villages': list(villages)})
+
+
+# School Management Views
+
+@login_required
+def school_list(request):
+    """List all schools with search and filter."""
+    schools = School.objects.select_related('province', 'district', 'sector').all()
+    
+    # Search
+    search_query = request.GET.get('search', '')
+    if search_query:
+        schools = schools.filter(
+            Q(name__icontains=search_query) |
+            Q(headteacher_name__icontains=search_query) |
+            Q(headteacher_email__icontains=search_query)
+        )
+    
+    # Filter by district
+    district_filter = request.GET.get('district', '')
+    if district_filter:
+        schools = schools.filter(district_id=district_filter)
+    
+    context = {
+        'schools': schools,
+        'search_query': search_query,
+        'district_filter': district_filter,
+    }
+    return render(request, 'core/school_list.html', context)
+
+
+@login_required
+def school_detail(request, pk):
+    """View school profile with students and banking info."""
+    school = get_object_or_404(School, pk=pk)
+    students = school.students.select_related('family').all()
+    
+    context = {
+        'school': school,
+        'students': students,
+        'student_count': students.count(),
+    }
+    return render(request, 'core/school_detail.html', context)
+
+
+@login_required
+def school_create(request):
+    """Create a new school."""
+    if request.method == 'POST':
+        form = SchoolForm(request.POST)
+        if form.is_valid():
+            school = form.save()
+            messages.success(request, f'School {school.name} created successfully!')
+            return redirect('core:school_detail', pk=school.pk)
+    else:
+        form = SchoolForm()
+    
+    return render(request, 'core/school_form.html', {'form': form, 'title': 'Add New School'})
+
+
+@login_required
+def school_edit(request, pk):
+    """Edit school information."""
+    school = get_object_or_404(School, pk=pk)
+    
+    if request.method == 'POST':
+        form = SchoolForm(request.POST, instance=school)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'School {school.name} updated successfully!')
+            return redirect('core:school_detail', pk=school.pk)
+    else:
+        form = SchoolForm(instance=school)
+    
+    return render(request, 'core/school_form.html', {'form': form, 'school': school, 'title': 'Edit School'})

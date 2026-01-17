@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ family.head_of_family }} - Family Profile - SIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto animate-fade-in">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-6 md:p-8 text-white mb-6">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h1 class="text-4xl font-bold mb-2">{{ family.head_of_family }}</h1>
+                <p class="text-blue-100 text-lg">Family Code: <span class="font-mono font-semibold">{{ family.family_code }}</span></p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'families:family_edit' family.pk %}" class="bg-white text-blue-600 hover:bg-gray-100 px-4 py-2 rounded-lg font-semibold transition">
+                    Edit Family
+                </a>
+                <a href="{% url 'families:family_list' %}" class="bg-blue-500 hover:bg-blue-400 px-4 py-2 rounded-lg font-semibold transition">
+                    Back to Families
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Family Information -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Head of Family Information Card -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center border-b pb-3">
+                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    Head of Family Information
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Full Name</p>
+                        <p class="text-lg font-semibold text-gray-800">{{ family.head_of_family }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">National ID</p>
+                        <p class="text-lg font-semibold text-gray-800">{{ family.national_id }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Primary Phone</p>
+                        <p class="text-lg font-semibold text-gray-800">
+                            <a href="tel:{{ family.phone_number }}" class="text-blue-600 hover:underline">{{ family.phone_number }}</a>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Alternative Phone</p>
+                        <p class="text-lg font-semibold text-gray-800">
+                            {% if family.alternative_phone %}
+                                <a href="tel:{{ family.alternative_phone }}" class="text-blue-600 hover:underline">{{ family.alternative_phone }}</a>
+                            {% else %}
+                                <span class="text-gray-400">Not provided</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Family Members & Contribution Card -->
+            <div class="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-xl p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Family Contribution Summary
+                </h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <p class="text-xs text-gray-600 font-medium mb-1">Family Members</p>
+                        <p class="text-3xl font-bold text-green-600">{{ family.total_family_members }}</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <p class="text-xs text-gray-600 font-medium mb-1">Per Person</p>
+                        <p class="text-3xl font-bold text-blue-600">3,000 RWF</p>
+                    </div>
+                    <div class="bg-white rounded-lg p-4 shadow">
+                        <p class="text-xs text-gray-600 font-medium mb-1">Total Contribution</p>
+                        <p class="text-3xl font-bold text-purple-600">{{ family.total_contribution|floatformat:0|add:"0" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Information Card -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center border-b pb-3">
+                    <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    Location (Rwanda Administrative Structure)
+                </h2>
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Province</p>
+                        <p class="text-lg font-semibold text-gray-800">{{ family.province.name|default:"Not specified" }}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600 font-medium mb-1">District</p>
+                            <p class="text-lg font-semibold text-gray-800">{{ family.district.name|default:"Not specified" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600 font-medium mb-1">Sector</p>
+                            <p class="text-lg font-semibold text-gray-800">{{ family.sector.name|default:"Not specified" }}</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600 font-medium mb-1">Cell</p>
+                            <p class="text-lg font-semibold text-gray-800">{{ family.cell.name|default:"Not specified" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600 font-medium mb-1">Village</p>
+                            <p class="text-lg font-semibold text-gray-800">{{ family.village.name|default:"Not specified" }}</p>
+                        </div>
+                    </div>
+                    {% if family.address_description %}
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                        <p class="text-sm text-gray-600 font-medium mb-1">Address Description</p>
+                        <p class="text-gray-800">{{ family.address_description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Notes Card -->
+            {% if family.notes %}
+            <div class="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-2 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H3a1 1 0 00-1 1v12a1 1 0 001 1h14a1 1 0 001-1V6a1 1 0 00-1-1h3a1 1 0 000-2h-2.09A2 2 0 0013 3H7a2 2 0 00-2 2H4zm2 3a1 1 0 000 2h8a1 1 0 000-2H6zm0 4a1 1 0 000 2h8a1 1 0 000-2H6zm0 4a1 1 0 000 2h4a1 1 0 000-2H6z" clip-rule="evenodd"/>
+                    </svg>
+                    Additional Notes
+                </h3>
+                <p class="text-gray-700 whitespace-pre-wrap">{{ family.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Students & Info -->
+        <div class="space-y-6">
+            <!-- Family Statistics -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Family Statistics</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <span class="text-gray-700 font-medium">Total Students</span>
+                        <span class="text-2xl font-bold text-blue-600">{{ family.total_students }}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                        <span class="text-gray-700 font-medium">Family Members</span>
+                        <span class="text-2xl font-bold text-purple-600">{{ family.total_family_members }}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <span class="text-gray-700 font-medium">Created</span>
+                        <span class="text-sm font-semibold text-green-600">{{ family.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Section -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0H9m6 0H9m6 0H9M9 8h6"/>
+                        </svg>
+                        Students ({{ family.total_students }})
+                    </h3>
+                    <a href="{% url 'students:student_create' %}" class="text-blue-600 hover:text-blue-800 text-sm font-semibold">
+                        + Add Student
+                    </a>
+                </div>
+                
+                {% if family_students %}
+                    <div class="space-y-3 max-h-96 overflow-y-auto">
+                        {% for family_student in family_students %}
+                        <div class="p-4 border border-gray-200 rounded-lg hover:border-blue-400 transition">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="font-semibold text-gray-800">
+                                        <a href="{% url 'students:student_detail' family_student.student.pk %}" class="text-blue-600 hover:underline">
+                                            {{ family_student.student.full_name }}
+                                        </a>
+                                    </p>
+                                    <p class="text-xs text-gray-600">{{ family_student.relationship }}</p>
+                                </div>
+                                <span class="text-xs font-semibold {% if family_student.student.is_active %}text-green-600 bg-green-100{% else %}text-gray-600 bg-gray-100{% endif %} px-2 py-1 rounded">
+                                    {% if family_student.student.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-600 space-y-1">
+                                <p><span class="font-medium">School:</span> {{ family_student.student.school.name|default:family_student.student.school_name }}</p>
+                                <p><span class="font-medium">Class:</span> {{ family_student.student.class_level }}</p>
+                                <p><span class="font-medium">Status:</span> {{ family_student.student.get_enrollment_status_display }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <svg class="w-16 h-16 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                    <p class="text-gray-600 font-medium">No students linked to this family yet</p>
+                    <a href="{% url 'students:student_create' %}" class="text-blue-600 hover:text-blue-800 text-sm font-semibold mt-2 inline-block">
+                        Add First Student →
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Insurance Section (if available) -->
+            {% if insurance_records %}
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m7 7a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Mutuelle Insurance
+                </h3>
+                <div class="space-y-2 max-h-48 overflow-y-auto">
+                    {% for record in insurance_records|slice:":3" %}
+                    <div class="p-3 bg-gray-50 rounded-lg text-sm">
+                        <div class="flex justify-between">
+                            <span class="font-medium text-gray-800">{{ record.insurance_year }}</span>
+                            <span class="text-xs font-semibold {% if record.is_active %}text-green-600{% else %}text-gray-600{% endif %}">
+                                {% if record.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                        <p class="text-gray-600">{{ record.get_coverage_status_display }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

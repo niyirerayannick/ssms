@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q
-from .models import Student, StudentPhoto, AcademicRecord
-from .forms import StudentForm, StudentPhotoForm, AcademicRecordForm
+from .models import Student, StudentPhoto, StudentMark
+from .forms import StudentForm, StudentPhotoForm, StudentMarkForm
 from families.models import FamilyStudent
 
 
@@ -122,7 +122,7 @@ def add_academic_record(request, pk):
     student = get_object_or_404(Student, pk=pk)
     
     if request.method == 'POST':
-        form = AcademicRecordForm(request.POST, request.FILES)
+        form = StudentMarkForm(request.POST, request.FILES)
         if form.is_valid():
             record = form.save(commit=False)
             record.student = student
@@ -130,6 +130,6 @@ def add_academic_record(request, pk):
             messages.success(request, 'Academic record added successfully!')
             return redirect('students:student_detail', pk=student.pk)
     else:
-        form = AcademicRecordForm()
+        form = StudentMarkForm()
     
     return render(request, 'students/add_academic_record.html', {'form': form, 'student': student})

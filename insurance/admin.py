@@ -4,9 +4,9 @@ from .models import FamilyInsurance, HealthInsurance
 
 @admin.register(FamilyInsurance)
 class FamilyInsuranceAdmin(admin.ModelAdmin):
-    list_display = ['family', 'insurance_year', 'required_amount', 'amount_paid', 'balance', 'coverage_status', 'payment_date']
-    list_filter = ['coverage_status', 'insurance_year', 'payment_date']
-    search_fields = ['family__guardian_name']
+    list_display = ['family', 'insurance_year', 'required_amount', 'amount_paid', 'balance', 'coverage_status', 'created_at']
+    list_filter = ['coverage_status', 'insurance_year']
+    search_fields = ['family__head_of_family']
     readonly_fields = ['balance', 'created_at', 'updated_at']
 
 

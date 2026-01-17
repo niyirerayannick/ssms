@@ -33,6 +33,16 @@
                     </div>
                     
                     <div>
+                        <label for="{{ form.national_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            National ID *
+                        </label>
+                        {{ form.national_id }}
+                        {% if form.national_id.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.national_id.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
                         <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
                             Phone Number *
                         </label>
@@ -50,6 +60,36 @@
                         {% if form.alternative_phone.errors %}
                             <p class="text-red-600 text-sm mt-1">{{ form.alternative_phone.errors.0 }}</p>
                         {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.total_family_members.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Total Family Members *
+                        </label>
+                        {{ form.total_family_members }}
+                        {% if form.total_family_members.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.total_family_members.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Family Contribution Information -->
+                <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <p class="text-xs text-gray-600 mb-1">Family Members</p>
+                            <p class="text-2xl font-bold text-blue-600" id="displayMembers">1</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-600 mb-1">Contribution per Person</p>
+                            <p class="text-2xl font-bold text-green-600">3,000 RWF</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <p class="text-xs text-gray-600 mb-1">Total Family Contribution</p>
+                            <p class="text-3xl font-bold text-purple-600">
+                                <span id="totalContribution">3,000</span> RWF
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -161,6 +201,25 @@
         const cellSelect = document.getElementById('id_cell');
         const villageSelect = document.getElementById('id_village');
         
+        // Load all provinces on initial page load
+        function loadProvinces() {
+            fetch('/core/api/locations/provinces/')
+                .then(response => response.json())
+                .then(data => {
+                    provinceSelect.innerHTML = '<option value="">Select Province...</option>';
+                    data.data.forEach(province => {
+                        const option = document.createElement('option');
+                        option.value = province.id;
+                        option.textContent = province.name;
+                        provinceSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading provinces:', error));
+        }
+        
+        // Load provinces on page load
+        loadProvinces();
+        
         // Load districts when province changes
         provinceSelect?.addEventListener('change', function() {
             const provinceId = this.value;
@@ -170,16 +229,17 @@
             villageSelect.innerHTML = '<option value="">Select Village...</option>';
             
             if (provinceId) {
-                fetch(`/core/api/districts/?province_id=${provinceId}`)
+                fetch(`/core/api/locations/districts/${provinceId}/`)
                     .then(response => response.json())
                     .then(data => {
-                        data.districts.forEach(district => {
+                        data.data.forEach(district => {
                             const option = document.createElement('option');
                             option.value = district.id;
                             option.textContent = district.name;
                             districtSelect.appendChild(option);
                         });
-                    });
+                    })
+                    .catch(error => console.error('Error loading districts:', error));
             }
         });
         
@@ -191,16 +251,17 @@
             villageSelect.innerHTML = '<option value="">Select Village...</option>';
             
             if (districtId) {
-                fetch(`/core/api/sectors/?district_id=${districtId}`)
+                fetch(`/core/api/locations/sectors/${districtId}/`)
                     .then(response => response.json())
                     .then(data => {
-                        data.sectors.forEach(sector => {
+                        data.data.forEach(sector => {
                             const option = document.createElement('option');
                             option.value = sector.id;
                             option.textContent = sector.name;
                             sectorSelect.appendChild(option);
                         });
-                    });
+                    })
+                    .catch(error => console.error('Error loading sectors:', error));
             }
         });
         
@@ -211,16 +272,17 @@
             villageSelect.innerHTML = '<option value="">Select Village...</option>';
             
             if (sectorId) {
-                fetch(`/core/api/cells/?sector_id=${sectorId}`)
+                fetch(`/core/api/locations/cells/${sectorId}/`)
                     .then(response => response.json())
                     .then(data => {
-                        data.cells.forEach(cell => {
+                        data.data.forEach(cell => {
                             const option = document.createElement('option');
                             option.value = cell.id;
                             option.textContent = cell.name;
                             cellSelect.appendChild(option);
                         });
-                    });
+                    })
+                    .catch(error => console.error('Error loading cells:', error));
             }
         });
         
@@ -230,18 +292,37 @@
             villageSelect.innerHTML = '<option value="">Select Village...</option>';
             
             if (cellId) {
-                fetch(`/core/api/villages/?cell_id=${cellId}`)
+                fetch(`/core/api/locations/villages/${cellId}/`)
                     .then(response => response.json())
                     .then(data => {
-                        data.villages.forEach(village => {
+                        data.data.forEach(village => {
                             const option = document.createElement('option');
                             option.value = village.id;
                             option.textContent = village.name;
                             villageSelect.appendChild(option);
                         });
-                    });
+                    })
+                    .catch(error => console.error('Error loading villages:', error));
             }
         });
+        
+        // Update total contribution when family members change
+        const totalMembersInput = document.getElementById('id_total_family_members');
+        if (totalMembersInput) {
+            function updateContribution() {
+                const members = parseInt(totalMembersInput.value) || 1;
+                const contribution = members * 3000;
+                document.getElementById('displayMembers').textContent = members.toString();
+                document.getElementById('totalContribution').textContent = contribution.toLocaleString('en-US');
+            }
+            
+            // Update on initial load and on change
+            updateContribution();
+            totalMembersInput.addEventListener('change', updateContribution);
+            totalMembersInput.addEventListener('input', updateContribution);
+        }
+    });
+</script>
     });
 </script>
 {% endblock %}

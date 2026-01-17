@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils.text import gettext_lazy as _
+from django.core.validators import MinValueValidator
 from core.models import Province, District, Sector, Cell, Village
 import uuid
 
@@ -12,6 +13,7 @@ class Family(models.Model):
     
     # Head of Family Information
     head_of_family = models.CharField(max_length=200, help_text="Full Name")
+    national_id = models.CharField(max_length=50, unique=True, help_text="National ID (e.g., ID Card Number)")
     phone_number = models.CharField(max_length=20)
     alternative_phone = models.CharField(max_length=20, blank=True, null=True)
     
@@ -21,6 +23,13 @@ class Family(models.Model):
     sector = models.ForeignKey(Sector, on_delete=models.SET_NULL, null=True, blank=True, related_name='families')
     cell = models.ForeignKey(Cell, on_delete=models.SET_NULL, null=True, blank=True, related_name='families')
     village = models.ForeignKey(Village, on_delete=models.SET_NULL, null=True, blank=True, related_name='families')
+    
+    # Family Members
+    total_family_members = models.IntegerField(
+        default=1, 
+        help_text="Total number of family members",
+        validators=[MinValueValidator(1)]
+    )
     
     # Additional Information
     address_description = models.TextField(blank=True, null=True, help_text="Detailed address or landmarks")
@@ -60,6 +69,16 @@ class Family(models.Model):
         if self.village:
             parts.append(self.village.name)
         return " → ".join(parts) if parts else "Not specified"
+    
+    @property
+    def total_contribution(self):
+        """Calculate total family contribution: total_members * 3000."""
+        return self.total_family_members * 3000
+    
+    @property
+    def total_students(self):
+        """Get count of students in this family."""
+        return self.family_students.count()
     
     @property
     def students(self):

@@ -28,7 +28,31 @@
         </div>
     </div>
     
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {% if perms.finance.manage_fees %}
+        <a href="{% url 'finance:student_payments' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-4 rounded-lg shadow-md flex items-center space-x-3 border-l-4 border-blue-500">
+            <svg class="w-8 h-8 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div>
+                <p class="font-semibold text-gray-900">Payment History</p>
+                <p class="text-xs text-gray-500">View all school fees</p>
+            </div>
+        </a>
+        
+        <a href="{% url 'finance:add_student_payment' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-4 rounded-lg shadow-md flex items-center space-x-3 border-l-4 border-green-500">
+            <svg class="w-8 h-8 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            <div>
+                <p class="font-semibold text-gray-900">Record Payment</p>
+                <p class="text-xs text-gray-500">Add school fee payment</p>
+            </div>
+        </a>
+        {% endif %}
+    </div>
+    
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
             <!-- Personal Information -->
@@ -49,8 +73,12 @@
                         <p class="font-medium text-gray-900">{{ student.get_gender_display }}</p>
                     </div>
                     <div>
+                        <p class="text-sm text-gray-600">Date of Birth</p>
+                        <p class="font-medium text-gray-900">{{ student.date_of_birth|date:"M d, Y" }}</p>
+                    </div>
+                    <div>
                         <p class="text-sm text-gray-600">Age</p>
-                        <p class="font-medium text-gray-900">{{ student.age }}</p>
+                        <p class="font-medium text-gray-900">{{ student.age }} years old</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">Class Level</p>
@@ -58,15 +86,29 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-600">School</p>
-                        <p class="font-medium text-gray-900">{{ student.school.name|default:"N/A" }}</p>
+                        <p class="font-medium text-gray-900">
+                            {% if student.school %}
+                                <a href="{% url 'core:school_detail' student.school.pk %}" class="text-blue-600 hover:underline">{{ student.school.name }}</a>
+                            {% else %}
+                                <span class="text-gray-400">N/A</span>
+                            {% endif %}
+                        </p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Sponsorship Status</p>
+                        <p class="text-sm text-gray-600">Enrollment Status</p>
                         <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full 
-                            {% if student.sponsorship_status == 'active' %}bg-green-100 text-green-800
-                            {% elif student.sponsorship_status == 'pending' %}bg-yellow-100 text-yellow-800
-                            {% else %}bg-gray-100 text-gray-800{% endif %}">
-                            {{ student.get_sponsorship_status_display }}
+                            {% if student.enrollment_status == 'enrolled' %}bg-green-100 text-green-800
+                            {% elif student.enrollment_status == 'transferred' %}bg-blue-100 text-blue-800
+                            {% elif student.enrollment_status == 'graduated' %}bg-purple-100 text-purple-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ student.get_enrollment_status_display }}
+                        </span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Account Status</p>
+                        <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full 
+                            {% if student.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {% if student.is_active %}Active{% else %}Inactive{% endif %}
                         </span>
                     </div>
                     <div class="col-span-2">
@@ -75,6 +117,39 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Disability & Special Needs Card -->
+            {% if student.has_disability %}
+            <div class="bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-xl p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Disability & Special Needs Information
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Disability Status</p>
+                        <p class="text-lg font-semibold text-red-700">✓ Student has reported disability</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Types of Disabilities</p>
+                        <p class="text-base font-medium text-gray-800">{{ student.disability_display }}</p>
+                    </div>
+                    {% if student.disability_description %}
+                    <div class="p-4 bg-white rounded-lg border-l-4 border-red-500">
+                        <p class="text-sm text-gray-600 font-medium mb-2">Special Needs & Accommodations</p>
+                        <p class="text-gray-800 whitespace-pre-wrap">{{ student.disability_description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Disability Status</h3>
+                <p class="text-gray-700"><svg class="w-5 h-5 inline mr-2 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>No disability reported</p>
+            </div>
+            {% endif %}
             
             <!-- Photo Gallery -->
             <div class="bg-white p-6 rounded-xl shadow-md">
@@ -153,30 +228,64 @@
         <div class="space-y-6">
             <!-- Family Information -->
             <div class="bg-white p-6 rounded-xl shadow-md">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">Family Information</h3>
-                    {% if family %}
-                        <a href="{% url 'families:family_detail' family.pk %}" class="text-blue-600 hover:text-blue-800 text-sm">View Family</a>
-                    {% endif %}
-                </div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.856-1.487M9 20H4v-2a3 3 0 015.856-1.487M15 6a3 3 0 11-6 0 3 3 0 016 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zM5 20a2 2 0 01-2-2v-2a2 2 0 012-2h10a2 2 0 012 2v2a2 2 0 01-2 2H5z"/>
+                    </svg>
+                    Family Information
+                </h3>
                 {% if family %}
                 <div class="space-y-3">
-                    <div>
-                        <p class="text-sm text-gray-600">Guardian</p>
-                        <p class="font-medium text-gray-900">{{ family.guardian_name }}</p>
+                    <div class="p-3 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-gray-600 font-medium">Family</p>
+                        <p class="text-lg font-semibold text-gray-900">
+                            <a href="{% url 'families:family_detail' family.pk %}" class="text-blue-600 hover:underline">
+                                {{ family.family_code }}
+                            </a>
+                        </p>
+                        <p class="text-sm text-gray-700 mt-1">Head: {{ family.head_of_family }}</p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Phone</p>
-                        <p class="font-medium text-gray-900">{{ family.guardian_phone }}</p>
+                        <p class="text-sm text-gray-600 font-medium">Phone</p>
+                        <p class="font-medium text-gray-900">
+                            <a href="tel:{{ family.phone_number }}" class="text-blue-600 hover:underline">{{ family.phone_number }}</a>
+                        </p>
                     </div>
                     <div>
-                        <p class="text-sm text-gray-600">Family Size</p>
-                        <p class="font-medium text-gray-900">{{ family.family_size }}</p>
+                        <p class="text-sm text-gray-600 font-medium">Family Members</p>
+                        <p class="font-medium text-gray-900">{{ family.total_family_members }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Family Contribution</p>
+                        <p class="text-lg font-bold text-green-600">{{ family.total_contribution }} RWF</p>
                     </div>
                 </div>
                 {% else %}
-                <p class="text-gray-500 text-sm">No family information available.</p>
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p class="text-sm text-yellow-800">No family linked to this student</p>
+                    <a href="{% url 'families:family_create' %}" class="text-blue-600 hover:underline text-sm font-medium mt-2 inline-block">Create Family →</a>
+                </div>
                 {% endif %}
+            </div>
+            
+            <!-- System Timestamps -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    System Information
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <p class="text-gray-600 font-medium">Added on</p>
+                        <p class="text-gray-900">{{ student.created_at|date:"M d, Y \a\t H:i" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600 font-medium">Last Updated</p>
+                        <p class="text-gray-900">{{ student.updated_at|date:"M d, Y \a\t H:i" }}</p>
+                    </div>
+                </div>
             </div>
             
             <!-- Mutuelle Status -->
@@ -196,7 +305,7 @@
                         </div>
                         <div class="text-sm">
                             <p class="text-gray-600">Year: <span class="font-medium">{{ latest_insurance.insurance_year }}</span></p>
-                            <p class="text-gray-600">Paid: <span class="font-medium">${{ latest_insurance.amount_paid }}</span> / <span class="font-medium">${{ latest_insurance.required_amount }}</span></p>
+                            <p class="text-gray-600">Paid: <span class="font-medium">{{ latest_insurance.amount_paid }}</span> / <span class="font-medium">{{ latest_insurance.required_amount }}</span></p>
                         </div>
                     </div>
                     {% endwith %}
@@ -208,23 +317,24 @@
             
             <!-- Fees Summary -->
             <div class="bg-white p-6 rounded-xl shadow-md">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Fees Summary</h3>
-                {% if fees %}
-                <div class="space-y-2">
-                    {% for fee in fees %}
-                    <div class="border-b pb-2 last:border-0">
-                        <p class="text-sm font-medium">{{ fee.term }}</p>
-                        <p class="text-xs text-gray-600">Status: 
-                            <span class="{% if fee.status == 'paid' %}text-green-600{% elif fee.status == 'overdue' %}text-red-600{% else %}text-yellow-600{% endif %}">
-                                {{ fee.get_status_display }}
-                            </span>
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">School Fee Information</h3>
+                {% if student.school %}
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">School</p>
+                        <p class="text-lg font-semibold text-gray-900">
+                            <a href="{% url 'core:school_detail' student.school.pk %}" class="text-blue-600 hover:underline">
+                                {{ student.school.name }}
+                            </a>
                         </p>
-                        <p class="text-xs text-gray-600">Balance: ${{ fee.balance }}</p>
                     </div>
-                    {% endfor %}
+                    <div class="border-t pt-3">
+                        <p class="text-sm text-gray-600 font-medium">Standard Fee</p>
+                        <p class="text-2xl font-bold text-green-600">{{ student.school.fee_amount|floatformat:0 }} RWF</p>
+                    </div>
                 </div>
                 {% else %}
-                <p class="text-gray-500 text-sm">No fee records.</p>
+                <p class="text-gray-500 text-sm">No school assigned yet.</p>
                 {% endif %}
             </div>
         </div>

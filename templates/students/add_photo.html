@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Student Photo - SIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto animate-fade-in py-8">
+    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Add Student Photo</h1>
+            <p class="text-gray-600">
+                Upload a photo for <strong>{{ student.full_name }}</strong>
+            </p>
+        </div>
+
+        <!-- Student Info Card -->
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-6">
+            <div class="flex items-center space-x-4">
+                {% if student.profile_picture %}
+                    <img src="{{ student.profile_picture.url }}" alt="{{ student.full_name }}" class="w-16 h-16 rounded-full object-cover border-2 border-blue-300">
+                {% else %}
+                    <div class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </div>
+                {% endif %}
+                <div>
+                    <p class="text-sm text-gray-600">Student Name</p>
+                    <p class="font-semibold text-gray-800 text-lg">{{ student.full_name }}</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ student.school.name|default:student.school_name }} • {{ student.class_level }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Photo Upload Section -->
+            <div class="border-l-4 border-purple-500 bg-purple-50 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Photo Details
+                </h2>
+                <div class="space-y-6">
+                    <!-- Image Upload -->
+                    <div>
+                        <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.image.label }} <span class="text-red-500">*</span>
+                        </label>
+                        <div class="mt-2">
+                            <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-purple-500 transition">
+                                <div class="space-y-1 text-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 20M8 20l3.172-3.172a4 4 0 015.656 0L20 28" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <div class="flex text-sm text-gray-600">
+                                        <label for="{{ form.image.id_for_label }}" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-purple-500">
+                                            <span>Click to upload</span>
+                                            {{ form.image }}
+                                        </label>
+                                        <p class="pl-1">or drag and drop</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% if form.image.help_text %}
+                            <p class="text-xs text-gray-500 mt-2">{{ form.image.help_text }}</p>
+                        {% endif %}
+                        {% if form.image.errors %}
+                            <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.image.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Captured Via Camera -->
+                    <div class="border-t border-purple-200 pt-6">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center h-5">
+                                {{ form.captured_via_camera }}
+                            </div>
+                            <div class="text-sm">
+                                <label for="{{ form.captured_via_camera.id_for_label }}" class="font-medium text-gray-700">
+                                    {{ form.captured_via_camera.label }}
+                                </label>
+                                {% if form.captured_via_camera.help_text %}
+                                    <p class="text-xs text-gray-500 mt-1">{{ form.captured_via_camera.help_text }}</p>
+                                {% endif %}
+                                {% if form.captured_via_camera.errors %}
+                                    <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.captured_via_camera.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Caption -->
+                    <div class="border-t border-purple-200 pt-6">
+                        <label for="{{ form.caption.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.caption.label }}
+                        </label>
+                        {{ form.caption }}
+                        {% if form.caption.help_text %}
+                            <p class="text-xs text-gray-500 mt-1">{{ form.caption.help_text }}</p>
+                        {% endif %}
+                        {% if form.caption.errors %}
+                            <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.caption.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-4 pt-6 border-t border-gray-200">
+                <button type="submit" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Upload Photo
+                </button>
+                <a href="{% url 'students:student_detail' student.pk %}" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Cancel
+                </a>
+            </div>
+        </form>
+
+        <!-- Info Box -->
+        <div class="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+            <p class="text-sm text-blue-800">
+                <strong>Tip:</strong> Upload clear, well-lit photos of the student. You can optionally add a caption to describe the photo (e.g., "Class photo", "ID photo", "Event photo").
+            </p>
+        </div>
+
+        <!-- Existing Photos -->
+        {% if student.photos.all %}
+        <div class="mt-8 pt-8 border-t border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">Existing Photos</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {% for photo in student.photos.all %}
+                <div class="relative group">
+                    <img src="{{ photo.image.url }}" alt="{{ photo.caption }}" class="w-full h-40 object-cover rounded-lg shadow">
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg transition flex items-end p-2">
+                        <p class="text-white text-xs opacity-0 group-hover:opacity-100 transition">{{ photo.caption }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    #id_image {
+        display: none;
+    }
+</style>
+{% endblock %}

@@ -18,7 +18,7 @@ class Province(models.Model):
 class District(models.Model):
     """Rwanda District model."""
     name = models.CharField(max_length=200)
-    province = models.ForeignKey(Province, on_delete=models.CASCADE, related_name='districts')
+    province = models.ForeignKey(Province, on_delete=models.CASCADE, related_name='districts', null=True, blank=True)
     code = models.CharField(max_length=10, unique=True, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -85,6 +85,20 @@ class School(models.Model):
     province = models.ForeignKey(Province, on_delete=models.SET_NULL, null=True, blank=True, related_name='schools')
     district = models.ForeignKey(District, on_delete=models.SET_NULL, null=True, related_name='schools')
     sector = models.ForeignKey(Sector, on_delete=models.SET_NULL, null=True, blank=True, related_name='schools')
+    
+    # Headteacher Information
+    headteacher_name = models.CharField(max_length=200, blank=True, null=True, help_text="Full name of school headteacher")
+    headteacher_mobile = models.CharField(max_length=20, blank=True, null=True, help_text="Mobile phone number")
+    headteacher_email = models.EmailField(blank=True, null=True, help_text="Email address")
+    
+    # Bank Account Information
+    bank_name = models.CharField(max_length=200, blank=True, null=True, help_text="Name of the bank")
+    bank_account_name = models.CharField(max_length=200, blank=True, null=True, help_text="Account holder name")
+    bank_account_number = models.CharField(max_length=50, blank=True, null=True, help_text="Bank account number")
+    
+    # Fee Information
+    fee_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Standard fee amount per student")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

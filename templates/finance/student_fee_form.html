@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - SIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-6">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'finance:student_payments' student.id %}" class="text-blue-600 hover:text-blue-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">{{ title }}</h1>
+                <p class="text-gray-600 mt-1">Student: <span class="font-semibold">{{ student.full_name }}</span></p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white p-8 rounded-lg shadow-md">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Student Info (Display Only) -->
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                <h3 class="font-semibold text-blue-900 mb-2">Student Information</h3>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p class="text-blue-700 font-medium">Full Name</p>
+                        <p class="text-blue-900">{{ student.full_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-blue-700 font-medium">Status</p>
+                        <p class="text-blue-900">{{ student.get_enrollment_status_display }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Academic Year -->
+                <div>
+                    <label for="{{ form.academic_year.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Academic Year *
+                    </label>
+                    {{ form.academic_year }}
+                    {% if form.academic_year.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.academic_year.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- School Name -->
+                <div>
+                    <label for="{{ form.school_name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        School Name
+                    </label>
+                    {{ form.school_name }}
+                    {% if form.school_name.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.school_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Class Level -->
+                <div>
+                    <label for="{{ form.class_level.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Class Level
+                    </label>
+                    {{ form.class_level }}
+                    {% if form.class_level.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.class_level.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Total Fees -->
+                <div>
+                    <label for="{{ form.total_fees.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Total Fees (FRW) *
+                    </label>
+                    {{ form.total_fees }}
+                    {% if form.total_fees.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.total_fees.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Amount Paid -->
+                <div>
+                    <label for="{{ form.amount_paid.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Amount Paid (FRW) *
+                    </label>
+                    {{ form.amount_paid }}
+                    {% if form.amount_paid.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.amount_paid.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Payment Status -->
+                <div>
+                    <label for="{{ form.payment_status.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Payment Status *
+                    </label>
+                    {{ form.payment_status }}
+                    {% if form.payment_status.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.payment_status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payment Dates -->
+            <div>
+                <label for="{{ form.payment_dates.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Payment Dates
+                </label>
+                {{ form.payment_dates }}
+                {% if form.payment_dates.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.payment_dates.errors.0 }}</p>
+                {% endif %}
+                <p class="text-xs text-gray-500 mt-1">Comma-separated dates, e.g., 2024-01-15, 2024-02-20</p>
+            </div>
+
+            <!-- Comments -->
+            <div>
+                <label for="{{ form.comments.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                    Comments
+                </label>
+                {{ form.comments }}
+                {% if form.comments.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.comments.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-4 pt-6 border-t">
+                <a href="{% url 'finance:student_payments' student.id %}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200 font-medium">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200 font-medium">
+                    Save Payment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

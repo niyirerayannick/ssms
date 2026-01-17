@@ -20,6 +20,18 @@ class Student(models.Model):
         ('dropped_out', 'Dropped Out'),
     ]
     
+    DISABILITY_CHOICES = [
+        ('visual', 'Visual Impairment (Blind/Low Vision)'),
+        ('hearing', 'Hearing Impairment (Deaf/Hard of Hearing)'),
+        ('mobility', 'Mobility Impairment (Physical Disability)'),
+        ('intellectual', 'Intellectual Disability'),
+        ('autism', 'Autism Spectrum Disorder'),
+        ('speech', 'Speech or Language Impairment'),
+        ('learning', 'Specific Learning Disability'),
+        ('emotional', 'Emotional or Behavioral Disability'),
+        ('other', 'Other Disability'),
+    ]
+    
     # Family Connection
     family = models.ForeignKey(
         Family, 
@@ -47,6 +59,23 @@ class Student(models.Model):
         default='enrolled'
     )
     is_active = models.BooleanField(default=True)
+    
+    # Disability Information
+    has_disability = models.BooleanField(
+        default=False,
+        help_text="Does the student have any disability?"
+    )
+    disability_types = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text="Comma-separated list of disabilities (e.g., visual, hearing, mobility)"
+    )
+    disability_description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Detailed description of the disability and any special needs"
+    )
     
     # Profile Picture
     profile_picture = models.ImageField(upload_to='students/profile/', blank=True, null=True)
@@ -95,6 +124,21 @@ class Student(models.Model):
             if latest_insurance:
                 return latest_insurance.coverage_status
         return None
+    
+    @property
+    def disability_display(self):
+        """Display formatted disability information."""
+        if not self.has_disability:
+            return "No disability reported"
+        
+        if not self.disability_types:
+            return "Disability reported but no types specified"
+        
+        # Convert comma-separated codes to display names
+        disability_dict = dict(self.DISABILITY_CHOICES)
+        types = [t.strip() for t in self.disability_types.split(',')]
+        display_names = [disability_dict.get(t, t) for t in types]
+        return ", ".join(display_names)
 
     def __str__(self):
         return self.full_name
