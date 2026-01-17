@@ -1,0 +1,14 @@
+{
+  "name": "sims-theme",
+  "version": "1.0.0",
+  "description": "SIMS Tailwind CSS theme",
+  "scripts": {
+    "build": "tailwindcss -i ./src/styles.css -o ../static/css/dist/styles.css --minify",
+    "dev": "tailwindcss -i ./src/styles.css -o ../static/css/dist/styles.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "@tailwindcss/forms": "^0.5.7"
+  }
+}
+

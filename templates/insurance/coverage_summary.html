@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Insurance Coverage Summary - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-800">Insurance Coverage Summary</h1>
+        <a href="{% url 'insurance:insurance_list' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+            Back to Insurance List
+        </a>
+    </div>
+    
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm">Total Records</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ total }}</p>
+                </div>
+                <div class="text-4xl">📊</div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm">Covered</p>
+                    <p class="text-3xl font-bold text-green-600 mt-2">{{ covered }}</p>
+                </div>
+                <div class="text-4xl">✅</div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm">Not Covered</p>
+                    <p class="text-3xl font-bold text-red-600 mt-2">{{ not_covered }}</p>
+                </div>
+                <div class="text-4xl">❌</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Coverage Percentage -->
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">Coverage Rate</h2>
+        {% if total > 0 %}
+        <div class="w-full bg-gray-200 rounded-full h-8">
+            <div class="bg-green-600 h-8 rounded-full flex items-center justify-center text-white font-semibold" 
+                 style="width: {% widthratio covered total 100 %}%">
+                {% widthratio covered total 100 %}% Covered
+            </div>
+        </div>
+        {% else %}
+        <p class="text-gray-500">No insurance records available.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

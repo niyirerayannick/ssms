@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-3xl font-bold text-gray-800">Reports</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Students PDF Report -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-center">
+                <div class="text-5xl mb-4">📄</div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Students List</h2>
+                <p class="text-gray-600 text-sm mb-4">Export all students information as PDF</p>
+                {% if perms.students.view_student %}
+                <a href="{% url 'reports:students_pdf' %}" class="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition duration-200">
+                    Download PDF
+                </a>
+                {% else %}
+                <p class="text-gray-400 text-sm">Permission required</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Fees Excel Report -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-center">
+                <div class="text-5xl mb-4">📊</div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Fees Summary</h2>
+                <p class="text-gray-600 text-sm mb-4">Export fees summary as Excel spreadsheet</p>
+                {% if perms.finance.manage_fees %}
+                <a href="{% url 'reports:fees_excel' %}" class="inline-block bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition duration-200">
+                    Download Excel
+                </a>
+                {% else %}
+                <p class="text-gray-400 text-sm">Permission required</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Insurance PDF Report -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="text-center">
+                <div class="text-5xl mb-4">🏥</div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Insurance Coverage</h2>
+                <p class="text-gray-600 text-sm mb-4">Export insurance coverage report as PDF</p>
+                {% if perms.insurance.manage_insurance %}
+                <a href="{% url 'reports:insurance_pdf' %}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200">
+                    Download PDF
+                </a>
+                {% else %}
+                <p class="text-gray-400 text-sm">Permission required</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

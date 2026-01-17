@@ -1,0 +1,17 @@
+services:
+  web:
+    # Override command for development (Django runserver)
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      # Hot reload for development
+    environment:
+      - DEBUG=True
+    # Expose port directly (no nginx needed in dev)
+    ports:
+      - "8000:8000"
+
+  # Disable nginx in development
+  nginx:
+    profiles:
+      - production

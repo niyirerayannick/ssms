@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Students - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-800">Students</h1>
+        {% if perms.students.add_student %}
+        <a href="{% url 'students:student_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+            + Add Student
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Search and Filters -->
+    <div class="bg-white p-4 rounded-lg shadow-md">
+        <form method="get" class="flex flex-wrap gap-4">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name, district, or school..."
+                   class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">All Status</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="graduated" {% if status_filter == 'graduated' %}selected{% endif %}>Graduated</option>
+            </select>
+            <select name="gender" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">All Genders</option>
+                <option value="M" {% if gender_filter == 'M' %}selected{% endif %}>Male</option>
+                <option value="F" {% if gender_filter == 'F' %}selected{% endif %}>Female</option>
+            </select>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200">
+                Filter
+            </button>
+        </form>
+    </div>
+    
+    <!-- Students Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">School</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for student in students %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                {% if student.profile_picture %}
+                                <img src="{{ student.profile_picture.url }}" alt="{{ student.full_name }}" class="h-10 w-10 rounded-full mr-3">
+                                {% else %}
+                                <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center mr-3">
+                                    <span class="text-gray-600">{{ student.full_name|first|upper }}</span>
+                                </div>
+                                {% endif %}
+                                <span class="font-medium text-gray-900">{{ student.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.get_gender_display }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.age }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.school.name|default:"N/A" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.district }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                {% if student.sponsorship_status == 'active' %}bg-green-100 text-green-800
+                                {% elif student.sponsorship_status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ student.get_sponsorship_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'students:student_detail' student.pk %}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
+                            {% if perms.students.change_student %}
+                            <a href="{% url 'students:student_edit' student.pk %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">No students found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

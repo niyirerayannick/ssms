@@ -1,0 +1,83 @@
+{% if user.is_authenticated %}
+<aside id="sidebar" class="hidden md:block w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white min-h-screen shadow-xl">
+    <nav class="p-4">
+        <ul class="space-y-2">
+            <li>
+                <a href="{% url 'dashboard:index' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 {% if request.resolver_match.app_name == 'dashboard' %}bg-blue-600 shadow-lg{% else %}hover:bg-gray-700{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'students:student_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 {% if request.resolver_match.app_name == 'students' %}bg-blue-600 shadow-lg{% else %}hover:bg-gray-700{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <span class="font-medium">Students</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'finance:fees_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 {% if request.resolver_match.app_name == 'finance' %}bg-blue-600 shadow-lg{% else %}hover:bg-gray-700{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="font-medium">Finance</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'insurance:insurance_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 {% if request.resolver_match.app_name == 'insurance' %}bg-blue-600 shadow-lg{% else %}hover:bg-gray-700{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                    <span class="font-medium">Mutuelle</span>
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'reports:index' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 {% if request.resolver_match.app_name == 'reports' %}bg-blue-600 shadow-lg{% else %}hover:bg-gray-700{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="font-medium">Reports</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</aside>
+
+<!-- Mobile menu button -->
+<button id="mobile-menu-btn" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-gray-900 text-white rounded-lg shadow-lg">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+    </svg>
+</button>
+
+<!-- Mobile sidebar overlay -->
+<div id="mobile-sidebar" class="md:hidden fixed inset-0 z-40 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50" onclick="document.getElementById('mobile-sidebar').classList.add('hidden')"></div>
+    <aside class="fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-xl">
+        <div class="p-4">
+            <button onclick="document.getElementById('mobile-sidebar').classList.add('hidden')" class="mb-4 p-2 hover:bg-gray-700 rounded-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            <ul class="space-y-2">
+                <li><a href="{% url 'dashboard:index' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-700">📊 Dashboard</a></li>
+                <li><a href="{% url 'students:student_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-700">👥 Students</a></li>
+                <li><a href="{% url 'finance:fees_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-700">💰 Finance</a></li>
+                <li><a href="{% url 'insurance:insurance_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-700">🏥 Mutuelle</a></li>
+                <li><a href="{% url 'reports:index' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-700">📄 Reports</a></li>
+            </ul>
+        </div>
+    </aside>
+</div>
+
+<script>
+    // Mobile menu toggle
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
+        document.getElementById('mobile-sidebar').classList.toggle('hidden');
+    });
+</script>
+{% endif %}

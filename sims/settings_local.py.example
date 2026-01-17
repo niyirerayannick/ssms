@@ -1,0 +1,32 @@
+"""
+Local development settings - Copy this to settings_local.py and customize
+"""
+from .settings import *
+
+# Override database for local SQLite (optional)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+# Or keep PostgreSQL for local:
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'sims_db',
+#         'USER': 'postgres',
+#         'PASSWORD': 'postgres',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
+
+# Local development settings
+DEBUG = True
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+# Optional: Use SQLite for quick local development
+# Uncomment to use SQLite instead of PostgreSQL
+

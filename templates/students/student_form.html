@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - SIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto animate-fade-in">
+    <div class="bg-white rounded-xl shadow-md p-6 md:p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ title }}</h1>
+        
+        <form method="post" enctype="multipart/form-data" class="space-y-6" id="studentForm">
+            {% csrf_token %}
+            
+            <!-- Personal Information -->
+            <div class="border-b border-gray-200 pb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    Personal Information
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.full_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Full Name *
+                        </label>
+                        {{ form.full_name }}
+                        {% if form.full_name.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.full_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.gender.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Gender *
+                        </label>
+                        {{ form.gender }}
+                        {% if form.gender.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.gender.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.age.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Age *
+                        </label>
+                        {{ form.age }}
+                        {% if form.age.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.age.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.profile_picture.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Profile Picture
+                        </label>
+                        {{ form.profile_picture }}
+                        {% if form.profile_picture.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.profile_picture.errors.0 }}</p>
+                        {% endif %}
+                        {% if student and student.profile_picture %}
+                            <p class="text-sm text-gray-500 mt-2">Current: <a href="{{ student.profile_picture.url }}" target="_blank" class="text-blue-600 hover:underline">View</a></p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- School Information -->
+            <div class="border-b border-gray-200 pb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    School Information
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.school.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            School
+                        </label>
+                        {{ form.school }}
+                        {% if form.school.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.school.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.class_level.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Class Level *
+                        </label>
+                        {{ form.class_level }}
+                        {% if form.class_level.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.class_level.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Rwanda Location -->
+            <div class="border-b border-gray-200 pb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    Location (Rwanda Administrative Structure)
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.district.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            District *
+                        </label>
+                        {{ form.district }}
+                        {% if form.district.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.district.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.sector.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Sector
+                        </label>
+                        {{ form.sector }}
+                        {% if form.sector.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.sector.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.cell.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Cell
+                        </label>
+                        {{ form.cell }}
+                        {% if form.cell.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.cell.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.village.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Village
+                        </label>
+                        {{ form.village }}
+                        {% if form.village.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.village.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sponsorship Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.sponsorship_status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Sponsorship Status *
+                    </label>
+                    {{ form.sponsorship_status }}
+                    {% if form.sponsorship_status.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.sponsorship_status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.program_officer.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Program Officer
+                    </label>
+                    {{ form.program_officer }}
+                    {% if form.program_officer.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.program_officer.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <a href="{% url 'students:student_list' %}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition duration-200 shadow-md hover:shadow-lg">
+                    Save Student
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Dependent dropdowns for Rwanda location
+    document.addEventListener('DOMContentLoaded', function() {
+        const districtSelect = document.getElementById('id_district');
+        const sectorSelect = document.getElementById('id_sector');
+        const cellSelect = document.getElementById('id_cell');
+        const villageSelect = document.getElementById('id_village');
+        
+        // Load sectors when district changes
+        districtSelect?.addEventListener('change', function() {
+            const districtId = this.value;
+            sectorSelect.innerHTML = '<option value="">Select Sector...</option>';
+            cellSelect.innerHTML = '<option value="">Select Cell...</option>';
+            villageSelect.innerHTML = '<option value="">Select Village...</option>';
+            
+            if (districtId) {
+                fetch(`/core/api/sectors/?district_id=${districtId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.sectors.forEach(sector => {
+                            const option = document.createElement('option');
+                            option.value = sector.id;
+                            option.textContent = sector.name;
+                            sectorSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+        
+        // Load cells when sector changes
+        sectorSelect?.addEventListener('change', function() {
+            const sectorId = this.value;
+            cellSelect.innerHTML = '<option value="">Select Cell...</option>';
+            villageSelect.innerHTML = '<option value="">Select Village...</option>';
+            
+            if (sectorId) {
+                fetch(`/core/api/cells/?sector_id=${sectorId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.cells.forEach(cell => {
+                            const option = document.createElement('option');
+                            option.value = cell.id;
+                            option.textContent = cell.name;
+                            cellSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+        
+        // Load villages when cell changes
+        cellSelect?.addEventListener('change', function() {
+            const cellId = this.value;
+            villageSelect.innerHTML = '<option value="">Select Village...</option>';
+            
+            if (cellId) {
+                fetch(`/core/api/villages/?cell_id=${cellId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.villages.forEach(village => {
+                            const option = document.createElement('option');
+                            option.value = village.id;
+                            option.textContent = village.name;
+                            villageSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+    });
+</script>
+{% endblock %}

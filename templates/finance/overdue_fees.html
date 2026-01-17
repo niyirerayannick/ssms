@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Overdue Fees - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-800">Overdue Fees</h1>
+        <a href="{% url 'finance:fees_list' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+            Back to Fees List
+        </a>
+    </div>
+    
+    <!-- Overdue Fees Table -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-red-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Required</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for fee in overdue_fees %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ fee.student.full_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.term }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ fee.required_fees }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${{ fee.amount_paid }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">${{ fee.balance }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {% if perms.finance.manage_fees %}
+                            <a href="{% url 'finance:fee_edit' fee.pk %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">No overdue fees found. Great job! 🎉</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

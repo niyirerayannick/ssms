@@ -1,0 +1,12 @@
+{
+  "name": "sims",
+  "version": "1.0.0",
+  "description": "Sponsorship Information Management System",
+  "scripts": {
+    "build": "tailwindcss -i ./static/src/input.css -o ./static/css/output.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
+

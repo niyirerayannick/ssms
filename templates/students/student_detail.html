@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.full_name }} - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-fade-in">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                {% if student.profile_picture %}
+                    <img src="{{ student.profile_picture.url }}" alt="{{ student.full_name }}" class="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover">
+                {% else %}
+                    <div class="w-20 h-20 rounded-full border-4 border-white shadow-lg bg-white bg-opacity-20 flex items-center justify-center">
+                        <span class="text-3xl font-bold">{{ student.full_name|first|upper }}</span>
+                    </div>
+                {% endif %}
+                <div>
+                    <h1 class="text-3xl font-bold">{{ student.full_name }}</h1>
+                    <p class="text-blue-100">{{ student.get_gender_display }} • Age {{ student.age }}</p>
+                </div>
+            </div>
+            {% if perms.students.change_student %}
+            <a href="{% url 'students:student_edit' student.pk %}" class="bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition duration-200 shadow-md">
+                Edit Student
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Personal Information -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    Personal Information
+                </h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Full Name</p>
+                        <p class="font-medium text-gray-900">{{ student.full_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Gender</p>
+                        <p class="font-medium text-gray-900">{{ student.get_gender_display }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Age</p>
+                        <p class="font-medium text-gray-900">{{ student.age }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Class Level</p>
+                        <p class="font-medium text-gray-900">{{ student.class_level }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">School</p>
+                        <p class="font-medium text-gray-900">{{ student.school.name|default:"N/A" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Sponsorship Status</p>
+                        <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full 
+                            {% if student.sponsorship_status == 'active' %}bg-green-100 text-green-800
+                            {% elif student.sponsorship_status == 'pending' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ student.get_sponsorship_status_display }}
+                        </span>
+                    </div>
+                    <div class="col-span-2">
+                        <p class="text-sm text-gray-600">Location</p>
+                        <p class="font-medium text-gray-900">{{ student.location_display|default:"Not specified" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Photo Gallery -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Photo Gallery
+                    </h2>
+                    <a href="{% url 'students:add_photo' student.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">+ Add Photo</a>
+                </div>
+                {% if student.photos.all %}
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {% for photo in student.photos.all %}
+                    <div class="relative group">
+                        <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:student.full_name }}" class="w-full h-32 object-cover rounded-lg shadow-md hover:shadow-xl transition duration-200">
+                        {% if photo.caption %}
+                        <p class="text-xs text-gray-600 mt-1">{{ photo.caption }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">No photos uploaded yet.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Academic Records -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                        Academic Records
+                    </h2>
+                    <a href="{% url 'students:add_academic_record' student.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">+ Add Record</a>
+                </div>
+                {% if student.academic_records.all %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Marks</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Term</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for record in student.academic_records.all %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ record.subject }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">{{ record.marks }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">{{ record.term }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-500">{{ record.academic_year }}</td>
+                                <td class="px-4 py-3 text-sm">
+                                    {% if record.report_photo %}
+                                    <a href="{{ record.report_photo.url }}" target="_blank" class="text-blue-600 hover:text-blue-800">View Report</a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-8">No academic records yet.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Family Information -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Family Information</h3>
+                    {% if family %}
+                        <a href="{% url 'families:family_detail' family.pk %}" class="text-blue-600 hover:text-blue-800 text-sm">View Family</a>
+                    {% endif %}
+                </div>
+                {% if family %}
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-sm text-gray-600">Guardian</p>
+                        <p class="font-medium text-gray-900">{{ family.guardian_name }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Phone</p>
+                        <p class="font-medium text-gray-900">{{ family.guardian_phone }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Family Size</p>
+                        <p class="font-medium text-gray-900">{{ family.family_size }}</p>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">No family information available.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Mutuelle Status -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Mutuelle de Santé</h3>
+                {% if family and family.insurance_records.exists %}
+                    {% with latest_insurance=family.insurance_records.first %}
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Status</span>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full 
+                                {% if latest_insurance.coverage_status == 'covered' %}bg-green-100 text-green-800
+                                {% elif latest_insurance.coverage_status == 'partially_covered' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ latest_insurance.get_coverage_status_display }}
+                            </span>
+                        </div>
+                        <div class="text-sm">
+                            <p class="text-gray-600">Year: <span class="font-medium">{{ latest_insurance.insurance_year }}</span></p>
+                            <p class="text-gray-600">Paid: <span class="font-medium">${{ latest_insurance.amount_paid }}</span> / <span class="font-medium">${{ latest_insurance.required_amount }}</span></p>
+                        </div>
+                    </div>
+                    {% endwith %}
+                {% else %}
+                    <p class="text-gray-500 text-sm">No insurance information available.</p>
+                    <p class="text-xs text-gray-400 mt-2">Insurance is managed at family level.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Fees Summary -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Fees Summary</h3>
+                {% if fees %}
+                <div class="space-y-2">
+                    {% for fee in fees %}
+                    <div class="border-b pb-2 last:border-0">
+                        <p class="text-sm font-medium">{{ fee.term }}</p>
+                        <p class="text-xs text-gray-600">Status: 
+                            <span class="{% if fee.status == 'paid' %}text-green-600{% elif fee.status == 'overdue' %}text-red-600{% else %}text-yellow-600{% endif %}">
+                                {{ fee.get_status_display }}
+                            </span>
+                        </p>
+                        <p class="text-xs text-gray-600">Balance: ${{ fee.balance }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-sm">No fee records.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
