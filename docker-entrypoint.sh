@@ -7,27 +7,33 @@ echo "SIMS - Starting Application"
 echo "=========================================="
 
 # Use environment variables with defaults
+DB_ENGINE=${DB_ENGINE:-django.db.backends.sqlite3}
 DB_HOST=${DB_HOST:-db}
 DB_USER=${DB_USER:-sims_user}
 DB_NAME=${DB_NAME:-sims_db}
 
-echo "Waiting for PostgreSQL to be ready..."
-echo "Host: $DB_HOST, User: $DB_USER, Database: $DB_NAME"
+# Only wait for PostgreSQL if using PostgreSQL database
+if [[ "$DB_ENGINE" == *"postgresql"* ]]; then
+  echo "Waiting for PostgreSQL to be ready..."
+  echo "Host: $DB_HOST, User: $DB_USER, Database: $DB_NAME"
 
-# Wait for PostgreSQL (with timeout)
-timeout=60
-counter=0
-while ! pg_isready -h $DB_HOST -U $DB_USER -d $DB_NAME 2>/dev/null; do
-  if [ $counter -ge $timeout ]; then
-    echo "ERROR: PostgreSQL not available after $timeout seconds"
-    exit 1
-  fi
-  echo "Waiting for PostgreSQL... ($counter/$timeout)"
-  sleep 2
-  counter=$((counter + 2))
-done
+  # Wait for PostgreSQL (with timeout)
+  timeout=60
+  counter=0
+  while ! pg_isready -h $DB_HOST -U $DB_USER -d $DB_NAME 2>/dev/null; do
+    if [ $counter -ge $timeout ]; then
+      echo "ERROR: PostgreSQL not available after $timeout seconds"
+      exit 1
+    fi
+    echo "Waiting for PostgreSQL... ($counter/$timeout)"
+    sleep 2
+    counter=$((counter + 2))
+  done
 
-echo "✓ PostgreSQL is ready!"
+  echo "✓ PostgreSQL is ready!"
+else
+  echo "Using SQLite database (no external database required)"
+fi
 
 # Run migrations
 echo ""

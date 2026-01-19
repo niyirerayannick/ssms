@@ -54,7 +54,6 @@ Thumbs.db
 Dockerfile
 docker-compose.yml
 docker-compose.dev.yml
-docker-entrypoint.sh
 .dockerignore
 
 # Documentation
