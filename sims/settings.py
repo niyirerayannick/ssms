@@ -18,7 +18,25 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-produc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS','js0csgw0cwokwc4oo8oook8k.168.231.79.158.sslip.io','localhost,127.0.0.1').split(',')
+# ALLOWED_HOSTS configuration with Coolify support
+raw_hosts = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+ALLOWED_HOSTS = [host.strip() for host in raw_hosts.split(',') if host.strip()]
+# Add wildcard support for sslip.io (Coolify default domain)
+if not any('sslip.io' in host for host in ALLOWED_HOSTS):
+    ALLOWED_HOSTS.append('.sslip.io')
+
+# CSRF trusted origins for Django 5.x (required for cross-origin requests)
+CSRF_TRUSTED_ORIGINS = []
+for host in ALLOWED_HOSTS:
+    if host not in ['localhost', '127.0.0.1', '0.0.0.0']:
+        # Add both http and https variants
+        if not host.startswith('.'):
+            CSRF_TRUSTED_ORIGINS.append(f'https://{host}')
+            CSRF_TRUSTED_ORIGINS.append(f'http://{host}')
+        else:
+            # For wildcard domains like .sslip.io
+            CSRF_TRUSTED_ORIGINS.append(f'https://*{host}')
+            CSRF_TRUSTED_ORIGINS.append(f'http://*{host}')
 
 
 # Application definition
