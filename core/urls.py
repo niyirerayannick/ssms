@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, api_views
+from . import views, api_views, import_export
 
 app_name = 'core'
 
@@ -24,4 +24,12 @@ urlpatterns = [
     path('schools/<int:pk>/', views.school_detail, name='school_detail'),
     path('schools/add/', views.school_create, name='school_create'),
     path('schools/<int:pk>/edit/', views.school_edit, name='school_edit'),
+    
+    # Excel Import/Export
+    path('import/students/', import_export.import_students, name='import_students'),
+    path('import/families/', import_export.import_families, name='import_families'),
+    path('import/schools/', import_export.import_schools, name='import_schools'),
+    path('templates/students/', import_export.download_student_template, name='download_student_template'),
+    path('templates/families/', import_export.download_family_template, name='download_family_template'),
+    path('templates/schools/', import_export.download_school_template, name='download_school_template'),
 ]

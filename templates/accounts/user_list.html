@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}User Management - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">User Management</h1>
+            <p class="text-gray-600 mt-1">Manage system users and their roles</p>
+        </div>
+        <a href="{% url 'accounts:user_create' %}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-md">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add User
+        </a>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="bg-white/70 border border-slate-200 rounded-xl shadow-sm p-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label for="search" class="block text-sm font-semibold text-slate-700 mb-2">Search</label>
+                <input 
+                    type="text" 
+                    name="search" 
+                    id="search"
+                    placeholder="Username, name, or email..."
+                    value="{{ search_query }}"
+                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+            </div>
+            <div>
+                <label for="role" class="block text-sm font-semibold text-slate-700 mb-2">Role</label>
+                <select name="role" id="role" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    <option value="">All Roles</option>
+                    {% for role in roles %}
+                    <option value="{{ role.name }}" {% if role.name == role_filter %}selected{% endif %}>{{ role.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit" class="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors font-medium">
+                    Search
+                </button>
+                {% if search_query or role_filter %}
+                <a href="{% url 'accounts:user_list' %}" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-colors font-medium">
+                    Clear
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    {% if users %}
+    <div class="bg-white/70 border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Username</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200">
+                    {% for user in users %}
+                    <tr class="hover:bg-emerald-50/50 transition-colors">
+                        <td class="px-6 py-4 text-sm">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold">
+                                    {{ user.username|slice:":1"|upper }}
+                                </div>
+                                <div class="ml-3">
+                                    <div class="font-medium text-slate-900">{{ user.username }}</div>
+                                    {% if user.is_superuser %}
+                                    <div class="text-xs text-red-600 font-semibold">SUPERUSER</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-900">
+                            {{ user.get_full_name|default:"-" }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600">
+                            {{ user.email|default:"-" }}
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            {% with role=user.groups.first %}
+                            {% if role %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                                    {% if role.name == 'Admin' %}bg-purple-100 text-purple-800
+                                    {% elif role.name == 'Accountant' %}bg-blue-100 text-blue-800
+                                    {% elif role.name == 'Executive Secretary' %}bg-emerald-100 text-emerald-800
+                                    {% elif role.name == 'Program Officer' %}bg-teal-100 text-teal-800
+                                    {% else %}bg-slate-100 text-slate-800{% endif %}">
+                                    {{ role.name }}
+                                </span>
+                            {% else %}
+                                <span class="text-slate-400">No role</span>
+                            {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            {% if user.is_active %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                Active
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                Inactive
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm space-x-2">
+                            <a href="{% url 'accounts:user_edit' user.id %}" class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors text-xs font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Edit
+                            </a>
+                            {% if not user.is_superuser and user.id != request.user.id %}
+                            <a href="{% url 'accounts:user_delete' user.id %}" class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors text-xs font-medium">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                Delete
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Results Summary -->
+    <div class="text-sm text-slate-600">
+        Showing <strong>{{ users.count }}</strong> user{{ users.count|pluralize }}
+        {% if search_query %}matching "<strong>{{ search_query }}</strong>"{% endif %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white/70 border border-slate-200 rounded-xl shadow-sm p-12 text-center">
+        <svg class="w-16 h-16 text-slate-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+        <h3 class="text-lg font-medium text-slate-900 mb-2">No users found</h3>
+        <p class="text-slate-600 mb-6">
+            {% if search_query or role_filter %}
+                No users match your search criteria.
+            {% else %}
+                Get started by adding your first user.
+            {% endif %}
+        </p>
+        <a href="{% url 'accounts:user_create' %}" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add First User
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete User - SIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white/70 border border-red-200 rounded-xl shadow-sm p-8">
+        <!-- Warning Icon -->
+        <div class="flex justify-center mb-6">
+            <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-slate-900 mb-2">Delete User Account</h1>
+            <p class="text-slate-600">This action cannot be undone</p>
+        </div>
+
+        <!-- User Details -->
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+            <h2 class="text-sm font-semibold text-slate-700 mb-3">User to be deleted:</h2>
+            
+            <div class="space-y-2">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-12 w-12 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white font-bold text-lg">
+                        {{ user_to_delete.username|slice:":1"|upper }}
+                    </div>
+                    <div class="ml-4">
+                        <div class="font-semibold text-slate-900">{{ user_to_delete.username }}</div>
+                        <div class="text-sm text-slate-600">{{ user_to_delete.get_full_name|default:"No name set" }}</div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+                    <div>
+                        <span class="text-slate-600">Email:</span>
+                        <span class="font-medium text-slate-900">{{ user_to_delete.email|default:"Not set" }}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-600">Role:</span>
+                        {% with role=user_to_delete.groups.first %}
+                        <span class="font-medium text-slate-900">{{ role.name|default:"No role" }}</span>
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warning Message -->
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-amber-800">Warning</h3>
+                    <div class="mt-2 text-sm text-amber-700">
+                        <p>Deleting this user will:</p>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li>Permanently remove the user account</li>
+                            <li>Revoke all access to the system</li>
+                            <li>Remove role assignments</li>
+                            <li>This action cannot be undone</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Form -->
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="flex items-center justify-end gap-3">
+                <a href="{% url 'accounts:user_list' %}" class="px-6 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-lg transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors">
+                    Yes, Delete User
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
