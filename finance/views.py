@@ -241,9 +241,16 @@ def add_student_payment(request, student_id):
             messages.success(request, f'School fee payment recorded for {student.full_name}!')
             return redirect('finance:student_payments', student_id=student.id)
     else:
-        # Pre-fill the student field
-        initial_data = {'student': student}
+        # Pre-fill the student field and school name
+        initial_data = {
+            'student': student,
+            'school_name': student.school.name if student.school else '',
+            'class_level': student.class_level if hasattr(student, 'class_level') else ''
+        }
         form = FeeForm(initial=initial_data)
+        # Disable student field since it's pre-selected
+        form.fields['student'].widget.attrs['readonly'] = True
+        form.fields['student'].disabled = True
     
     context = {
         'form': form,

@@ -4,17 +4,113 @@
 
 {% block content %}
 <div class="space-y-6 animate-fade-in">
-    <!-- Page Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p class="text-gray-600 mt-1">Welcome back, {{ user.get_full_name|default:user.username }}!</p>
-        </div>
-        <div class="mt-4 md:mt-0 flex flex-col items-end gap-2">
-            <span class="text-sm text-gray-500">Last updated: {{ "now"|date:"F d, Y \a\t H:i" }}</span>
-            {% if has_recent_activity %}
-            <span class="text-xs inline-block bg-green-100 text-green-700 px-2 py-1 rounded">Recent Activity</span>
-            {% endif %}
+    <!-- Enhanced Page Header -->
+    <div class="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200 rounded-2xl p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <!-- Left Section: Welcome Message -->
+            <div class="flex items-center gap-4">
+                <!-- User Avatar -->
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-4 ring-emerald-100">
+                    {{ user.get_full_name|first|default:user.username|first|upper }}
+                </div>
+                <!-- Welcome Text -->
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-900">
+                        Welcome back, 
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-600">
+                            {{ user.get_full_name|default:user.username }}
+                        </span>!
+                    </h1>
+                    <p class="text-slate-600 mt-1 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="font-medium">
+                            {% if user.groups.all %}
+                                {{ user.groups.all.0.name }}
+                            {% else %}
+                                System User
+                            {% endif %}
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Section: Stats & Actions -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <!-- Date & Time Card -->
+                <div class="bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-xl px-4 py-3 shadow-sm">
+                    <div class="flex items-center gap-2 text-emerald-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <div>
+                            <p class="text-xs font-medium text-emerald-600">Today</p>
+                            <p class="text-sm font-bold text-slate-900">{{ "now"|date:"F d, Y" }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status Card -->
+                <div class="bg-white/80 backdrop-blur-sm border border-emerald-200 rounded-xl px-4 py-3 shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                            <div>
+                                <p class="text-xs font-medium text-emerald-600">System Status</p>
+                                <p class="text-sm font-bold text-slate-900">All Systems Online</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Dropdown -->
+                <div class="relative group">
+                    <button class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Quick Actions
+                    </button>
+                    <!-- Dropdown Menu -->
+                    <div class="hidden group-hover:block absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50">
+                        {% if perms.students.add_student %}
+                        <a href="{% url 'students:student_create' %}" class="flex items-center gap-3 px-4 py-2 text-slate-700 hover:bg-emerald-50 transition-colors">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+                            </svg>
+                            <span class="font-medium">Add Student</span>
+                        </a>
+                        {% endif %}
+                        {% if perms.families.add_family %}
+                        <a href="{% url 'families:family_create' %}" class="flex items-center gap-3 px-4 py-2 text-slate-700 hover:bg-emerald-50 transition-colors">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.856-1.487M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="font-medium">Add Family</span>
+                        </a>
+                        {% endif %}
+                        {% if perms.finance.add_schoolfee %}
+                        <a href="{% url 'finance:fee_create' %}" class="flex items-center gap-3 px-4 py-2 text-slate-700 hover:bg-emerald-50 transition-colors">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="font-medium">Record Payment</span>
+                        </a>
+                        {% endif %}
+                        <div class="border-t border-slate-200 my-2"></div>
+                        <a href="{% url 'reports:index' %}" class="flex items-center gap-3 px-4 py-2 text-slate-700 hover:bg-emerald-50 transition-colors">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span class="font-medium">View Reports</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

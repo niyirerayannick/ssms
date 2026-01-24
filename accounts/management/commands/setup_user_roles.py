@@ -18,6 +18,11 @@ class Command(BaseCommand):
                 'description': 'Full system access',
                 'permissions': 'all'
             },
+            'Data Entry': {
+                'description': 'Data entry for students, families, and schools',
+                'apps': ['students', 'families', 'core'],
+                'permissions': ['view', 'add', 'change'],
+            },
             'Accountant': {
                 'description': 'Financial management and reporting - Full view access to all finance-related data',
                 'apps': ['finance', 'insurance', 'students', 'families', 'core', 'reports'],

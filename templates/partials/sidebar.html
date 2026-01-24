@@ -17,6 +17,7 @@
         </div>
 
         <!-- Students Section -->
+        {% if perms.students.view_student %}
         <div class="mb-6">
             <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Students</h3>
             <ul class="space-y-2">
@@ -28,6 +29,7 @@
                         <span class="font-medium">View Students</span>
                     </a>
                 </li>
+                {% if perms.students.add_student %}
                 <li>
                     <a href="{% url 'students:student_create' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,10 +38,13 @@
                         <span>Add Student</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </div>
+        {% endif %}
 
         <!-- Families Section -->
+        {% if perms.families.view_family %}
         <div class="mb-6">
             <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Families</h3>
             <ul class="space-y-2">
@@ -51,6 +56,7 @@
                         <span class="font-medium">View Families</span>
                     </a>
                 </li>
+                {% if perms.families.add_family %}
                 <li>
                     <a href="{% url 'families:family_create' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,10 +65,13 @@
                         <span>Add Family</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </div>
+        {% endif %}
 
         <!-- Schools Section -->
+        {% if perms.core.view_school %}
         <div class="mb-6">
             <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Schools</h3>
             <ul class="space-y-2">
@@ -74,6 +83,7 @@
                         <span class="font-medium">View Schools</span>
                     </a>
                 </li>
+                {% if perms.core.add_school %}
                 <li>
                     <a href="{% url 'core:school_create' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,14 +92,18 @@
                         <span>Add School</span>
                     </a>
                 </li>
+                {% endif %}
             </ul>
         </div>
+        {% endif %}
 
         <!-- Finance Section -->
+        {% if perms.finance.view_schoolfee or perms.insurance.view_familyinsurance %}
         <div class="mb-6">
             <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Finance & Payments</h3>
             <ul class="space-y-2">
                 <!-- Finance Dashboard -->
+                {% if perms.finance.view_schoolfee %}
                 <li>
                     <a href="{% url 'finance:dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'finance' and request.resolver_match.url_name == 'dashboard' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,6 +134,7 @@
                                     <span>View All Fees</span>
                                 </a>
                             </li>
+                            {% if perms.finance.add_schoolfee %}
                             <li>
                                 <a href="{% url 'finance:fee_create' %}?type=school_fee" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,6 +143,7 @@
                                     <span>Record Fee Payment</span>
                                 </a>
                             </li>
+                            {% endif %}
                             <li>
                                 <a href="{% url 'finance:overdue_fees' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,8 +155,10 @@
                         </ul>
                     </details>
                 </li>
+                {% endif %}
 
                 <!-- Mutuelle de Santé Submenu -->
+                {% if perms.insurance.view_familyinsurance %}
                 <li class="pt-2">
                     <details class="group">
                         <summary class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer hover:bg-white/10">
@@ -161,6 +179,7 @@
                                     <span>View All Records</span>
                                 </a>
                             </li>
+                            {% if perms.insurance.add_familyinsurance %}
                             <li>
                                 <a href="{% url 'finance:fee_create' %}?type=insurance" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,15 +188,19 @@
                                     <span>Record Payment</span>
                                 </a>
                             </li>
+                            {% endif %}
                         </ul>
                     </details>
                 </li>
+                {% endif %}
             </ul>
         </div>
+        {% endif %}
 
 
 
         <!-- Reports Section -->
+        {% if perms.finance.view_schoolfee or perms.insurance.view_familyinsurance or perms.students.view_student %}
         <div class="mb-6">
             <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Reports & Analytics</h3>
             <ul class="space-y-2">
@@ -191,6 +214,7 @@
                 </li>
             </ul>
         </div>
+        {% endif %}
 
         <!-- Admin Section -->
         {% if user.is_staff %}

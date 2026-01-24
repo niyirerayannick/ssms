@@ -6,9 +6,9 @@ class SchoolFee(models.Model):
     """School fees model for tracking fee payments."""
     
     TERM_CHOICES = [
-        ('1', 'Term 1'),
-        ('2', 'Term 2'),
-        ('3', 'Term 3'),
+        ('1', 'TERM 1'),
+        ('2', 'TERM 2'),
+        ('3', 'TERM 3'),
     ]
 
     PAYMENT_STATUS_CHOICES = [

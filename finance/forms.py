@@ -1,10 +1,19 @@
 from django import forms
 from .models import SchoolFee
 from insurance.models import FamilyInsurance
+from core.models import School
 
 
 class FeeForm(forms.ModelForm):
     """Form for creating and editing school fees."""
+    
+    # Override school_name as a ChoiceField
+    school_name = forms.ChoiceField(
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+        })
+    )
     
     class Meta:
         model = SchoolFee
@@ -21,9 +30,6 @@ class FeeForm(forms.ModelForm):
                 'placeholder': 'e.g., 2024'
             }),
             'term': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-            }),
-            'school_name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
             }),
             'class_level': forms.TextInput(attrs={
@@ -50,6 +56,22 @@ class FeeForm(forms.ModelForm):
                 'rows': 3
             }),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Populate school choices from the School model
+        schools = School.objects.all().order_by('name')
+        school_choices = [('', '--- Select School ---')] + [(school.name, school.name) for school in schools]
+        self.fields['school_name'].choices = school_choices
+        
+        # If editing and instance has a student with a school, pre-select it
+        if self.instance and self.instance.pk:  # Check if it's an existing instance
+            try:
+                if self.instance.student and self.instance.student.school:
+                    self.fields['school_name'].initial = self.instance.student.school.name
+            except:
+                pass  # Instance doesn't have a student yet (new record)
 
 
 class FamilyInsuranceForm(forms.ModelForm):

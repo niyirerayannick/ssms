@@ -6,12 +6,121 @@ from students.models import Student
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+from reportlab.pdfgen import canvas
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
+from datetime import datetime
 import io
+import os
+from django.conf import settings
+
+
+class NumberedCanvas(canvas.Canvas):
+    """Custom canvas for adding page numbers and headers/footers"""
+    def __init__(self, *args, **kwargs):
+        canvas.Canvas.__init__(self, *args, **kwargs)
+        self._saved_page_states = []
+
+    def showPage(self):
+        self._saved_page_states.append(dict(self.__dict__))
+        self._startPage()
+
+    def save(self):
+        num_pages = len(self._saved_page_states)
+        for state in self._saved_page_states:
+            self.__dict__.update(state)
+            self.draw_page_number(num_pages)
+            canvas.Canvas.showPage(self)
+        canvas.Canvas.save(self)
+
+    def draw_page_number(self, page_count):
+        self.setFont("Helvetica", 9)
+        self.setFillColor(colors.grey)
+        self.drawRightString(
+            letter[0] - 0.5*inch,
+            0.5*inch,
+            f"Page {self._pageNumber} of {page_count}"
+        )
+        # Add footer line
+        self.setStrokeColor(colors.HexColor("#047857"))
+        self.setLineWidth(1)
+        self.line(0.75*inch, 0.65*inch, letter[0] - 0.75*inch, 0.65*inch)
+
+
+def create_letterhead(elements, report_title, report_subtitle=None):
+    """Create professional letterhead for reports"""
+    styles = getSampleStyleSheet()
+    
+    # Custom styles
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=24,
+        textColor=colors.HexColor('#047857'),
+        spaceAfter=6,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    org_style = ParagraphStyle(
+        'OrgName',
+        parent=styles['Normal'],
+        fontSize=20,
+        textColor=colors.HexColor('#0d9488'),
+        spaceAfter=4,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'Subtitle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.grey,
+        spaceAfter=12,
+        alignment=TA_CENTER,
+        fontName='Helvetica'
+    )
+    
+    meta_style = ParagraphStyle(
+        'MetaInfo',
+        parent=styles['Normal'],
+        fontSize=9,
+        textColor=colors.grey,
+        alignment=TA_RIGHT,
+        spaceAfter=6
+    )
+    
+    # Organization name and title
+    elements.append(Paragraph("Solidact FDN", org_style))
+    elements.append(Paragraph("Information Management System", subtitle_style))
+    
+    # Decorative line
+    elements.append(Spacer(1, 6))
+    line_data = [['', '']]
+    line_table = Table(line_data, colWidths=[letter[0] - 1.5*inch])
+    line_table.setStyle(TableStyle([
+        ('LINEABOVE', (0, 0), (-1, 0), 2, colors.HexColor('#047857')),
+        ('LINEBELOW', (0, 0), (-1, 0), 0.5, colors.HexColor('#0d9488')),
+    ]))
+    elements.append(line_table)
+    elements.append(Spacer(1, 20))
+    
+    # Report title
+    elements.append(Paragraph(report_title, title_style))
+    if report_subtitle:
+        elements.append(Paragraph(report_subtitle, subtitle_style))
+    elements.append(Spacer(1, 6))
+    
+    # Report metadata
+    current_date = datetime.now().strftime("%B %d, %Y at %I:%M %p")
+    elements.append(Paragraph(f"Generated on: {current_date}", meta_style))
+    elements.append(Spacer(1, 20))
 
 
 @login_required
@@ -20,19 +129,27 @@ def students_pdf(request):
     """Export students list as PDF."""
     students = Student.objects.select_related('school', 'program_officer').all()
     
-    # Create PDF
+    # Create PDF with custom canvas for page numbers
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=0.75*inch,
+        leftMargin=0.75*inch,
+        topMargin=0.75*inch,
+        bottomMargin=1*inch
+    )
     elements = []
-    styles = getSampleStyleSheet()
     
-    # Title
-    title = Paragraph("Students List - SIMS", styles['Title'])
-    elements.append(title)
-    elements.append(Spacer(1, 12))
+    # Add letterhead
+    create_letterhead(
+        elements,
+        "Students List Report",
+        f"Total Students: {students.count()}"
+    )
     
-    # Table data
-    data = [['Name', 'Gender', 'Age', 'School', 'Location', 'Status']]
+    # Table data with better styling
+    data = [['Full Name', 'Gender', 'Age', 'School', 'Location', 'Status']]
     for student in students:
         data.append([
             student.full_name,
@@ -43,25 +160,44 @@ def students_pdf(request):
             student.get_sponsorship_status_display(),
         ])
     
-    # Create table
-    table = Table(data)
+    # Create table with improved styling
+    table = Table(data, colWidths=[1.8*inch, 0.7*inch, 0.5*inch, 1.5*inch, 1.5*inch, 1*inch])
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        # Header styling
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#047857')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        
+        # Data rows styling
+        ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
+        ('ALIGN', (1, 1), (2, -1), 'CENTER'),  # Gender and Age centered
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        
+        # Alternating row colors
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
+        
+        # Grid
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
     ]))
     
     elements.append(table)
-    doc.build(elements)
+    
+    # Build PDF with custom canvas for page numbers
+    doc.build(elements, canvasmaker=NumberedCanvas)
     
     buffer.seek(0)
     response = HttpResponse(buffer.read(), content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="students_list.pdf"'
+    response['Content-Disposition'] = 'attachment; filename="students_list_report.pdf"'
     return response
 
 
@@ -79,6 +215,141 @@ def sponsored_students_report(request):
         'students': students,
     }
     return render(request, 'reports/sponsored_students.html', context)
+
+
+@login_required
+@permission_required('finance.view_schoolfee', raise_exception=True)
+def fees_pdf(request):
+    """Export school fees summary as PDF."""
+    fees = SchoolFee.objects.select_related('student', 'student__school').all()
+    
+    # Calculate summary statistics
+    total_required = sum(float(fee.total_fees) for fee in fees)
+    total_paid = sum(float(fee.amount_paid) for fee in fees)
+    total_balance = sum(float(fee.balance) for fee in fees)
+    
+    paid_count = fees.filter(payment_status='paid').count()
+    partial_count = fees.filter(payment_status='partial').count()
+    pending_count = fees.filter(payment_status='pending').count()
+    
+    # Create PDF with custom canvas
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=0.75*inch,
+        leftMargin=0.75*inch,
+        topMargin=0.75*inch,
+        bottomMargin=1*inch
+    )
+    elements = []
+    
+    # Add letterhead
+    create_letterhead(
+        elements,
+        "School Fees Summary Report",
+        f"Total Fee Records: {fees.count()}"
+    )
+    
+    # Summary statistics box
+    styles = getSampleStyleSheet()
+    summary_style = ParagraphStyle(
+        'SummaryBox',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor('#047857'),
+        alignment=TA_CENTER
+    )
+    
+    summary_data = [[
+        Paragraph(f"<b>Paid:</b> {paid_count}", summary_style),
+        Paragraph(f"<b>Partial:</b> {partial_count}", summary_style),
+        Paragraph(f"<b>Pending:</b> {pending_count}", summary_style),
+    ]]
+    
+    summary_table = Table(summary_data, colWidths=[2.4*inch, 2.4*inch, 2.4*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f0fdf4')),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 20))
+    
+    # Table data
+    data = [['Student Name', 'Term', 'School', 'Required (RWF)', 'Paid (RWF)', 'Balance (RWF)', 'Status']]
+    for fee in fees:
+        data.append([
+            fee.student.full_name,
+            f"Term {fee.term}",
+            fee.student.school.name if fee.student.school else 'N/A',
+            f"{fee.total_fees:,.0f}",
+            f"{fee.amount_paid:,.0f}",
+            f"{fee.balance:,.0f}",
+            fee.get_payment_status_display(),
+        ])
+    
+    # Add totals row
+    data.append([
+        'TOTAL',
+        '',
+        '',
+        f"{total_required:,.0f}",
+        f"{total_paid:,.0f}",
+        f"{total_balance:,.0f}",
+        ''
+    ])
+    
+    # Create table with improved styling
+    table = Table(data, colWidths=[1.5*inch, 0.6*inch, 1.2*inch, 1*inch, 1*inch, 1*inch, 0.9*inch])
+    table.setStyle(TableStyle([
+        # Header styling
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#047857')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        
+        # Data rows styling
+        ('ALIGN', (0, 1), (2, -2), 'LEFT'),  # Name, term, school left aligned
+        ('ALIGN', (3, 1), (-1, -2), 'CENTER'),  # Numbers and status centered
+        ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -2), 7),
+        ('TOPPADDING', (0, 1), (-1, -2), 5),
+        ('BOTTOMPADDING', (0, 1), (-1, -2), 5),
+        
+        # Totals row styling
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#d1fae5')),
+        ('TEXTCOLOR', (0, -1), (-1, -1), colors.HexColor('#047857')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, -1), (-1, -1), 8),
+        ('ALIGN', (0, -1), (-1, -1), 'CENTER'),
+        ('TOPPADDING', (0, -1), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, -1), (-1, -1), 8),
+        
+        # Alternating row colors
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f0fdf4')]),
+        
+        # Grid
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
+    ]))
+    
+    elements.append(table)
+    
+    # Build PDF with custom canvas
+    doc.build(elements, canvasmaker=NumberedCanvas)
+    
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="school_fees_report.pdf"'
+    return response
 
 
 @login_required
@@ -155,58 +426,130 @@ def insurance_pdf(request):
     """Export insurance coverage as PDF."""
     insurance_records = FamilyInsurance.objects.select_related('family').all()
     
-    # Create PDF
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    elements = []
-    styles = getSampleStyleSheet()
-    
-    # Title
-    title = Paragraph("Insurance Coverage Report - SIMS", styles['Title'])
-    elements.append(title)
-    elements.append(Spacer(1, 12))
-    
-    # Summary
+    # Calculate summary statistics
     covered = insurance_records.filter(coverage_status='covered').count()
     partially_covered = insurance_records.filter(coverage_status='partially_covered').count()
     not_covered = insurance_records.filter(coverage_status='not_covered').count()
-    summary = Paragraph(
-        f"Covered: {covered} | Partially Covered: {partially_covered} | Not Covered: {not_covered} | Total: {insurance_records.count()}",
-        styles['Normal']
+    total_required = sum(float(i.required_amount) for i in insurance_records)
+    total_paid = sum(float(i.amount_paid) for i in insurance_records)
+    
+    # Create PDF with custom canvas
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=0.75*inch,
+        leftMargin=0.75*inch,
+        topMargin=0.75*inch,
+        bottomMargin=1*inch
     )
-    elements.append(summary)
-    elements.append(Spacer(1, 12))
+    elements = []
+    
+    # Add letterhead
+    create_letterhead(
+        elements,
+        "Mutuelle de Santé Coverage Report",
+        f"Total Families: {insurance_records.count()}"
+    )
+    
+    # Summary statistics box
+    styles = getSampleStyleSheet()
+    summary_style = ParagraphStyle(
+        'SummaryBox',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#047857'),
+        alignment=TA_CENTER
+    )
+    
+    summary_data = [[
+        Paragraph(f"<b>Covered:</b> {covered}", summary_style),
+        Paragraph(f"<b>Partially:</b> {partially_covered}", summary_style),
+        Paragraph(f"<b>Not Covered:</b> {not_covered}", summary_style),
+    ]]
+    
+    summary_table = Table(summary_data, colWidths=[2.4*inch, 2.4*inch, 2.4*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f0fdf4')),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 20))
     
     # Table data
-    data = [['Family', 'Year', 'Required Amount (RWF)', 'Amount Paid (RWF)', 'Coverage Status']]
+    data = [['Family Head', 'Year', 'Required (RWF)', 'Paid (RWF)', 'Balance (RWF)', 'Status']]
     for insurance in insurance_records:
+        balance = float(insurance.required_amount) - float(insurance.amount_paid)
         data.append([
             insurance.family.head_of_family,
             insurance.insurance_year,
-            f"{insurance.required_amount:.2f} RWF",
-            f"{insurance.amount_paid:.2f} RWF",
+            f"{insurance.required_amount:,.0f}",
+            f"{insurance.amount_paid:,.0f}",
+            f"{balance:,.0f}",
             insurance.get_coverage_status_display(),
         ])
     
-    # Create table
-    table = Table(data)
+    # Add totals row
+    total_balance = total_required - total_paid
+    data.append([
+        'TOTAL',
+        '',
+        f"{total_required:,.0f}",
+        f"{total_paid:,.0f}",
+        f"{total_balance:,.0f}",
+        ''
+    ])
+    
+    # Create table with improved styling
+    table = Table(data, colWidths=[1.8*inch, 0.7*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.1*inch])
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        # Header styling
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#047857')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        
+        # Data rows styling
+        ('ALIGN', (0, 1), (0, -2), 'LEFT'),  # Family name left aligned
+        ('ALIGN', (1, 1), (-1, -2), 'CENTER'),  # Numbers and status centered
+        ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -2), 8),
+        ('TOPPADDING', (0, 1), (-1, -2), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -2), 6),
+        
+        # Totals row styling
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#d1fae5')),
+        ('TEXTCOLOR', (0, -1), (-1, -1), colors.HexColor('#047857')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, -1), (-1, -1), 9),
+        ('ALIGN', (0, -1), (-1, -1), 'CENTER'),
+        ('TOPPADDING', (0, -1), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, -1), (-1, -1), 8),
+        
+        # Alternating row colors
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f0fdf4')]),
+        
+        # Grid
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
     ]))
     
     elements.append(table)
-    doc.build(elements)
+    
+    # Build PDF with custom canvas
+    doc.build(elements, canvasmaker=NumberedCanvas)
     
     buffer.seek(0)
     response = HttpResponse(buffer.read(), content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="insurance_coverage.pdf"'
+    response['Content-Disposition'] = 'attachment; filename="mutuelle_coverage_report.pdf"'
     return response
 
 

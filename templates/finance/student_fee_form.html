@@ -49,6 +49,17 @@
                     {% endif %}
                 </div>
 
+                <!-- Term -->
+                <div>
+                    <label for="{{ form.term.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                        Term *
+                    </label>
+                    {{ form.term }}
+                    {% if form.term.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.term.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
                 <!-- School Name -->
                 <div>
                     <label for="{{ form.school_name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
