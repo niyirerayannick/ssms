@@ -58,8 +58,57 @@
                             {% endif %}
                         </p>
                     </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Father Name</p>
+                        <p class="text-lg font-semibold text-gray-800">
+                            {% if family.father_name %}
+                                {{ family.father_name }}
+                            {% else %}
+                                <span class="text-gray-400">Not provided</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Mother Name</p>
+                        <p class="text-lg font-semibold text-gray-800">
+                            {% if family.mother_name %}
+                                {{ family.mother_name }}
+                            {% else %}
+                                <span class="text-gray-400">Not provided</span>
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
             </div>
+
+            {% if family.is_orphan %}
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center border-b pb-3">
+                    <svg class="w-6 h-6 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7a4 4 0 108 0 4 4 0 00-8 0zm8 10H4a4 4 0 014-4h4a4 4 0 014 4z"/>
+                    </svg>
+                    Guardian Information
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Guardian Name</p>
+                        <p class="text-lg font-semibold text-gray-800">
+                            {{ family.guardian_name|default:"Not provided" }}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium mb-1">Guardian Phone</p>
+                        <p class="text-lg font-semibold text-gray-800">
+                            {% if family.guardian_phone %}
+                                <a href="tel:{{ family.guardian_phone }}" class="text-emerald-600 hover:underline">{{ family.guardian_phone }}</a>
+                            {% else %}
+                                <span class="text-gray-400">Not provided</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <!-- Family Members & Contribution Card -->
             <div class="bg-gradient-to-br from-green-50 to-blue-50 border-2 border-green-200 rounded-xl p-6">

@@ -3,7 +3,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count
 from .models import District, Sector, Cell, Village, Province, School, Notification
 from .forms import SchoolForm
 
@@ -72,11 +72,21 @@ def school_list(request):
     district_filter = request.GET.get('district', '')
     if district_filter:
         schools = schools.filter(district_id=district_filter)
+
+    summary = schools.aggregate(total_students=Count('students'))
+    total_schools = schools.count()
+    with_bank = schools.exclude(bank_account_number__isnull=True).exclude(bank_account_number__exact='').count()
+    total_districts = schools.values('district_id').distinct().count()
     
     context = {
         'schools': schools,
         'search_query': search_query,
         'district_filter': district_filter,
+        'total_schools': total_schools,
+        'total_students': summary.get('total_students', 0),
+        'with_bank': with_bank,
+        'without_bank': max(total_schools - with_bank, 0),
+        'total_districts': total_districts,
     }
     return render(request, 'core/school_list.html', context)
 

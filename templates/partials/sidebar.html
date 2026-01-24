@@ -29,6 +29,16 @@
                         <span class="font-medium">View Students</span>
                     </a>
                 </li>
+                {% if perms.students.view_studentmark %}
+                <li>
+                    <a href="{% url 'students:student_performance' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Student Performance</span>
+                    </a>
+                </li>
+                {% endif %}
                 {% if perms.students.add_student %}
                 <li>
                     <a href="{% url 'students:student_create' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
@@ -278,6 +288,9 @@
                 <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Students</h3>
                 <ul class="space-y-1">
                     <li><a href="{% url 'students:student_list' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">👥 View Students</a></li>
+                    {% if perms.students.view_studentmark %}
+                    <li><a href="{% url 'students:student_performance' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">📈 Student Performance</a></li>
+                    {% endif %}
                     <li><a href="{% url 'students:student_create' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">+ Add Student</a></li>
                 </ul>
             </div>

@@ -170,6 +170,12 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Reports
+REPORTS_LETTERHEAD_PATH = os.environ.get(
+    'REPORTS_LETTERHEAD_PATH',
+    str(BASE_DIR / 'static' / 'image' / 'letterhead.png')
+)
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 

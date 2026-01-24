@@ -256,6 +256,41 @@
                         <p class="font-medium text-gray-900">{{ family.total_family_members }}</p>
                     </div>
                     <div>
+                        <p class="text-sm text-gray-600 font-medium">Father Name</p>
+                        <p class="font-medium text-gray-900">
+                            {% if family.father_name %}
+                                {{ family.father_name }}
+                            {% else %}
+                                <span class="text-gray-400">Not provided</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600 font-medium">Mother Name</p>
+                        <p class="font-medium text-gray-900">
+                            {% if family.mother_name %}
+                                {{ family.mother_name }}
+                            {% else %}
+                                <span class="text-gray-400">Not provided</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% if family.is_orphan %}
+                    <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <p class="text-sm text-gray-600 font-medium">Guardian</p>
+                        <p class="font-medium text-gray-900">
+                            {{ family.guardian_name|default:"Not provided" }}
+                        </p>
+                        <p class="text-sm text-gray-600 mt-1">
+                            {% if family.guardian_phone %}
+                                <a href="tel:{{ family.guardian_phone }}" class="text-emerald-600 hover:underline">{{ family.guardian_phone }}</a>
+                            {% else %}
+                                <span class="text-gray-400">No phone</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                    <div>
                         <p class="text-sm text-gray-600 font-medium">Family Contribution</p>
                         <p class="text-lg font-bold text-green-600">{{ family.total_contribution }} RWF</p>
                     </div>
@@ -288,33 +323,7 @@
                 </div>
             </div>
             
-            <!-- Mutuelle Status -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4">Mutuelle de Santé</h3>
-                {% if family and family.insurance_records.exists %}
-                    {% with latest_insurance=family.insurance_records.first %}
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">Status</span>
-                            <span class="px-3 py-1 text-xs font-semibold rounded-full 
-                                {% if latest_insurance.coverage_status == 'covered' %}bg-green-100 text-green-800
-                                {% elif latest_insurance.coverage_status == 'partially_covered' %}bg-yellow-100 text-yellow-800
-                                {% else %}bg-red-100 text-red-800{% endif %}">
-                                {{ latest_insurance.get_coverage_status_display }}
-                            </span>
-                        </div>
-                        <div class="text-sm">
-                            <p class="text-gray-600">Year: <span class="font-medium">{{ latest_insurance.insurance_year }}</span></p>
-                            <p class="text-gray-600">Paid: <span class="font-medium">{{ latest_insurance.amount_paid }}</span> / <span class="font-medium">{{ latest_insurance.required_amount }}</span></p>
-                        </div>
-                    </div>
-                    {% endwith %}
-                {% else %}
-                    <p class="text-gray-500 text-sm">No insurance information available.</p>
-                    <p class="text-xs text-gray-400 mt-2">Insurance is managed at family level.</p>
-                {% endif %}
-            </div>
-            
+                       
             <!-- Fees Summary -->
             <div class="bg-white p-6 rounded-xl shadow-md">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">School Fee Information</h3>

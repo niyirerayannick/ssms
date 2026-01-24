@@ -16,6 +16,13 @@ class Family(models.Model):
     national_id = models.CharField(max_length=50, unique=True, help_text="National ID (e.g., ID Card Number)")
     phone_number = models.CharField(max_length=20)
     alternative_phone = models.CharField(max_length=20, blank=True, null=True)
+
+    # Parents / Guardian Information
+    father_name = models.CharField(max_length=200, blank=True, help_text="Father's full name")
+    mother_name = models.CharField(max_length=200, blank=True, help_text="Mother's full name")
+    is_orphan = models.BooleanField(default=False)
+    guardian_name = models.CharField(max_length=200, blank=True, help_text="Guardian full name (if orphan)")
+    guardian_phone = models.CharField(max_length=20, blank=True, help_text="Guardian phone number")
     
     # Rwanda Location Structure (Province → District → Sector → Cell → Village)
     province = models.ForeignKey(Province, on_delete=models.SET_NULL, null=True, related_name='families')

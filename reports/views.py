@@ -52,6 +52,17 @@ class NumberedCanvas(canvas.Canvas):
         self.line(0.75*inch, 0.65*inch, letter[0] - 0.75*inch, 0.65*inch)
 
 
+def _resolve_logo_path():
+    candidates = [
+        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.jpg'),
+        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.png'),
+    ]
+    for path in candidates:
+        if path and os.path.exists(path):
+            return path
+    return None
+
+
 def create_letterhead(elements, report_title, report_subtitle=None):
     """Create professional letterhead for reports"""
     styles = getSampleStyleSheet()
@@ -63,16 +74,6 @@ def create_letterhead(elements, report_title, report_subtitle=None):
         fontSize=24,
         textColor=colors.HexColor('#047857'),
         spaceAfter=6,
-        alignment=TA_CENTER,
-        fontName='Helvetica-Bold'
-    )
-    
-    org_style = ParagraphStyle(
-        'OrgName',
-        parent=styles['Normal'],
-        fontSize=20,
-        textColor=colors.HexColor('#0d9488'),
-        spaceAfter=4,
         alignment=TA_CENTER,
         fontName='Helvetica-Bold'
     )
@@ -96,20 +97,14 @@ def create_letterhead(elements, report_title, report_subtitle=None):
         spaceAfter=6
     )
     
-    # Organization name and title
-    elements.append(Paragraph("Solidact FDN", org_style))
-    elements.append(Paragraph("Information Management System", subtitle_style))
-    
-    # Decorative line
+    logo_path = _resolve_logo_path()
+    if logo_path:
+        logo = Image(logo_path, width=1.1 * inch, height=1.1 * inch)
+        logo.hAlign = 'CENTER'
+        elements.append(logo)
+        elements.append(Spacer(1, 8))
+    elements.append(Paragraph("Solidact Foundation", subtitle_style))
     elements.append(Spacer(1, 6))
-    line_data = [['', '']]
-    line_table = Table(line_data, colWidths=[letter[0] - 1.5*inch])
-    line_table.setStyle(TableStyle([
-        ('LINEABOVE', (0, 0), (-1, 0), 2, colors.HexColor('#047857')),
-        ('LINEBELOW', (0, 0), (-1, 0), 0.5, colors.HexColor('#0d9488')),
-    ]))
-    elements.append(line_table)
-    elements.append(Spacer(1, 20))
     
     # Report title
     elements.append(Paragraph(report_title, title_style))
@@ -156,7 +151,7 @@ def students_pdf(request):
             student.get_gender_display(),
             str(student.age),
             student.school.name if student.school else 'N/A',
-            student.location_display,
+            student.family_district_name,
             student.get_sponsorship_status_display(),
         ])
     
@@ -210,9 +205,19 @@ def sponsored_students_report(request):
         .filter(sponsorship_status='active')
         .order_by('last_name', 'first_name')
     )
+    total = students.count()
+    boys = students.filter(gender='M').count()
+    girls = students.filter(gender='F').count()
+    with_disability = students.filter(has_disability=True).count()
+    without_disability = students.filter(has_disability=False).count()
 
     context = {
         'students': students,
+        'total': total,
+        'boys': boys,
+        'girls': girls,
+        'with_disability': with_disability,
+        'without_disability': without_disability,
     }
     return render(request, 'reports/sponsored_students.html', context)
 

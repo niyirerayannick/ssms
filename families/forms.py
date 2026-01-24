@@ -10,6 +10,7 @@ class FamilyForm(forms.ModelForm):
         model = Family
         fields = [
             'head_of_family', 'national_id', 'phone_number', 'alternative_phone',
+            'father_name', 'mother_name', 'is_orphan', 'guardian_name', 'guardian_phone',
             'total_family_members',
             'province', 'district', 'sector', 'cell', 'village',
             'address_description', 'notes'
@@ -27,6 +28,25 @@ class FamilyForm(forms.ModelForm):
             }),
             'alternative_phone': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+            }),
+            'father_name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'placeholder': "Father's full name"
+            }),
+            'mother_name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'placeholder': "Mother's full name"
+            }),
+            'guardian_name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'placeholder': "Guardian's full name"
+            }),
+            'guardian_phone': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'placeholder': 'Guardian phone number'
+            }),
+            'is_orphan': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
             }),
             'total_family_members': forms.NumberInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
@@ -115,3 +135,17 @@ class FamilyForm(forms.ModelForm):
             self.fields['village'].queryset = Village.objects.filter(cell_id=cell_id)
         else:
             self.fields['village'].queryset = Village.objects.none()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        is_orphan = cleaned_data.get('is_orphan')
+        guardian_name = cleaned_data.get('guardian_name')
+        guardian_phone = cleaned_data.get('guardian_phone')
+
+        if is_orphan:
+            if not guardian_name:
+                self.add_error('guardian_name', 'Guardian name is required if the student is orphan.')
+            if not guardian_phone:
+                self.add_error('guardian_phone', 'Guardian phone is required if the student is orphan.')
+
+        return cleaned_data

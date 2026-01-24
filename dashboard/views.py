@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from students.models import Student
+from students.models import Student, StudentMark
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
 from families.models import Family, FamilyStudent
 from core.models import School
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q, Sum, Avg
 from django.utils import timezone
 from datetime import timedelta
 
@@ -70,6 +70,16 @@ def index(request):
     # Total schools with students
     schools_with_students = School.objects.filter(students__isnull=False).distinct().count()
     
+    # ===== PERFORMANCE STATISTICS =====
+    marks_by_term = (
+        StudentMark.objects.values('term')
+        .annotate(avg_marks=Avg('marks'))
+        .order_by('term')
+    )
+    term_order = ['Term 1', 'Term 2', 'Term 3']
+    term_averages = {item['term']: float(item['avg_marks'] or 0) for item in marks_by_term}
+    avg_marks_by_term = [round(term_averages.get(term, 0), 1) for term in term_order]
+
     # ===== FINANCIAL SUMMARY =====
     # Calculate total school fees from all schools
     total_school_fees_per_student = School.objects.aggregate(Count('fee_amount'))
@@ -114,6 +124,10 @@ def index(request):
         'recent_families': recent_families,
         'recent_schools': recent_schools,
         'has_recent_activity': recent_students + recent_families + recent_schools > 0,
+
+        # Performance
+        'marks_terms': term_order,
+        'avg_marks_by_term': avg_marks_by_term,
     }
     
     return render(request, 'dashboard/index.html', context)

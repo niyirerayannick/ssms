@@ -201,6 +201,20 @@
                             <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.sponsorship_status.errors.0 }}</div>
                         {% endif %}
                     </div>
+
+                    <!-- Sponsorship Start Year -->
+                    <div>
+                        <label for="{{ form.sponsorship_start_year.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.sponsorship_start_year.label }}
+                        </label>
+                        {{ form.sponsorship_start_year }}
+                        {% if form.sponsorship_start_year.help_text %}
+                            <p class="text-xs text-gray-500 mt-1">{{ form.sponsorship_start_year.help_text }}</p>
+                        {% endif %}
+                        {% if form.sponsorship_start_year.errors %}
+                            <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.sponsorship_start_year.errors.0 }}</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -425,6 +439,7 @@
             document.getElementById('disability-description-wrapper'),
             document.getElementById('disability-reference')
         ];
+        const draftStorageKey = 'studentFormDraft';
 
         function renderSteps() {
             steps.forEach((section) => {
@@ -476,8 +491,96 @@
             }
         }
 
+        function clearValidationStyles(section) {
+            const fields = section.querySelectorAll('input, select, textarea');
+            fields.forEach((field) => {
+                field.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+            });
+        }
+
+        function markInvalid(field) {
+            field.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+        }
+
+        function validateStep(stepNumber) {
+            const section = steps.find((step) => Number(step.dataset.step) === stepNumber);
+            if (!section) return true;
+            clearValidationStyles(section);
+
+            let isValid = true;
+            const requiredFields = Array.from(section.querySelectorAll('input, select, textarea'))
+                .filter((field) => field.required);
+
+            requiredFields.forEach((field) => {
+                if (field.type === 'checkbox') {
+                    if (!field.checked) {
+                        isValid = false;
+                        markInvalid(field);
+                    }
+                    return;
+                }
+
+                if (!field.value || field.value.trim() === '') {
+                    isValid = false;
+                    markInvalid(field);
+                }
+            });
+
+            if (hasDisabilitySelect?.value === 'true' && disabilityTypes && section.contains(disabilityTypes)) {
+                if (!disabilityTypes.value) {
+                    isValid = false;
+                    markInvalid(disabilityTypes);
+                }
+            }
+
+            if (!isValid) {
+                const firstInvalid = section.querySelector('.border-red-500');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+
+            return isValid;
+        }
+
+        function saveDraft() {
+            const data = {};
+            const fields = form.querySelectorAll('input, select, textarea');
+            fields.forEach((field) => {
+                if (!field.name || field.type === 'file' || field.name === 'csrfmiddlewaretoken') return;
+                if (field.type === 'checkbox') {
+                    data[field.name] = field.checked;
+                } else {
+                    data[field.name] = field.value;
+                }
+            });
+            localStorage.setItem(draftStorageKey, JSON.stringify(data));
+        }
+
+        function restoreDraft() {
+            const raw = localStorage.getItem(draftStorageKey);
+            if (!raw) return;
+            let data = {};
+            try {
+                data = JSON.parse(raw);
+            } catch (error) {
+                return;
+            }
+
+            Object.entries(data).forEach(([name, value]) => {
+                const field = form.querySelector(`[name="${name}"]`);
+                if (!field) return;
+                if (field.type === 'checkbox') {
+                    field.checked = Boolean(value);
+                } else {
+                    field.value = value;
+                }
+            });
+        }
+
         nextBtn.addEventListener('click', function() {
-            if (currentStep < totalSteps) {
+            if (currentStep < totalSteps && validateStep(currentStep)) {
+                saveDraft();
                 currentStep += 1;
                 renderSteps();
                 window.scrollTo({ top: form.offsetTop - 80, behavior: 'smooth' });
@@ -496,6 +599,19 @@
             hasDisabilitySelect.addEventListener('change', toggleDisabilityFields);
         }
 
+        form.addEventListener('input', () => {
+            saveDraft();
+        });
+
+        form.addEventListener('change', () => {
+            saveDraft();
+        });
+
+        form.addEventListener('submit', () => {
+            localStorage.removeItem(draftStorageKey);
+        });
+
+        restoreDraft();
         renderSteps();
         toggleDisabilityFields();
     });

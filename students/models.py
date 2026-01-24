@@ -69,6 +69,11 @@ class Student(models.Model):
         choices=SPONSORSHIP_STATUS_CHOICES,
         default='pending'
     )
+    sponsorship_start_year = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Year sponsorship started (e.g., 2022)"
+    )
     is_active = models.BooleanField(default=True)
     
     # Disability Information

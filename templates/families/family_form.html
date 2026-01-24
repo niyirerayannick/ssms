@@ -71,6 +71,56 @@
                             <p class="text-red-600 text-sm mt-1">{{ form.total_family_members.errors.0 }}</p>
                         {% endif %}
                     </div>
+
+                    <div>
+                        <label for="{{ form.father_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Father Name
+                        </label>
+                        {{ form.father_name }}
+                        {% if form.father_name.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.father_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.mother_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Mother Name
+                        </label>
+                        {{ form.mother_name }}
+                        {% if form.mother_name.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.mother_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        {{ form.is_orphan }}
+                        <label for="{{ form.is_orphan.id_for_label }}" class="text-sm font-medium text-gray-700">
+                            Student is orphan
+                        </label>
+                    </div>
+
+                    <div id="guardian-fields" class="md:col-span-2 hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-emerald-50/60 border border-emerald-100 rounded-xl p-4">
+                            <div>
+                                <label for="{{ form.guardian_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Guardian Name
+                                </label>
+                                {{ form.guardian_name }}
+                                {% if form.guardian_name.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.guardian_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.guardian_phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Guardian Phone
+                                </label>
+                                {{ form.guardian_phone }}
+                                {% if form.guardian_phone.errors %}
+                                    <p class="text-red-600 text-sm mt-1">{{ form.guardian_phone.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Family Contribution Information -->
@@ -195,6 +245,19 @@
 <script>
     // Cascading dropdowns for Rwanda location
     document.addEventListener('DOMContentLoaded', function() {
+        const orphanCheckbox = document.getElementById('{{ form.is_orphan.id_for_label }}');
+        const guardianFields = document.getElementById('guardian-fields');
+
+        function toggleGuardianFields() {
+            if (!guardianFields || !orphanCheckbox) return;
+            guardianFields.classList.toggle('hidden', !orphanCheckbox.checked);
+        }
+
+        if (orphanCheckbox) {
+            orphanCheckbox.addEventListener('change', toggleGuardianFields);
+            toggleGuardianFields();
+        }
+
         const provinceSelect = document.getElementById('id_province');
         const districtSelect = document.getElementById('id_district');
         const sectorSelect = document.getElementById('id_sector');

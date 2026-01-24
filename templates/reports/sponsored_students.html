@@ -14,85 +14,113 @@
         </a>
     </div>
 
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Family</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Province</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sector</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cell</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Village</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">School</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrollment</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mutuelle</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disability</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Officer</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for student in students %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            <div class="flex flex-col">
-                                <span>{{ student.full_name }}</span>
-                                <span class="text-xs text-gray-500">{{ student.sponsorship_status|capfirst }}</span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.get_gender_display }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.age }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {% if student.family %}
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Family</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Province</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sector</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cell</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Village</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">School</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrollment</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mutuelle</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disability</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Officer</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for student in students %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 <div class="flex flex-col">
-                                    <span>{{ student.family.head_of_family }}</span>
-                                    <span class="text-xs text-gray-400">{{ student.family.family_code }}</span>
+                                    <span>{{ student.full_name }}</span>
+                                    <span class="text-xs text-gray-500">{{ student.sponsorship_status|capfirst }}</span>
                                 </div>
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.province.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.district.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.sector.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.cell.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.village.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ student.school.name|default:student.school_name|default:"N/A" }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.class_level }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.get_enrollment_status_display }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {% if student.mutuelle_status %}
-                                {{ student.mutuelle_status|capfirst }}
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {% if student.has_disability %}
-                                {{ student.disability_display }}
-                            {% else %}
-                                No disability
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ student.program_officer.get_full_name|default:student.program_officer.username|default:"Unassigned" }}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="15" class="px-6 py-4 text-center text-gray-500">No sponsored students found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.get_gender_display }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.age }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if student.family %}
+                                    <div class="flex flex-col">
+                                        <span>{{ student.family.head_of_family }}</span>
+                                        <span class="text-xs text-gray-400">{{ student.family.family_code }}</span>
+                                    </div>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.province.name|default:"N/A" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.district.name|default:"N/A" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.sector.name|default:"N/A" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.cell.name|default:"N/A" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.village.name|default:"N/A" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ student.school.name|default:student.school_name|default:"N/A" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.class_level }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.get_enrollment_status_display }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if student.mutuelle_status %}
+                                    {{ student.mutuelle_status|capfirst }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if student.has_disability %}
+                                    {{ student.disability_display }}
+                                {% else %}
+                                    No disability
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ student.program_officer.get_full_name|default:student.program_officer.username|default:"Unassigned" }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="15" class="px-6 py-4 text-center text-gray-500">No sponsored students found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
+
+        <aside class="bg-white rounded-lg shadow-md p-5 border border-slate-100 h-fit">
+            <h2 class="text-lg font-semibold text-slate-800 mb-4">Summary</h2>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-500">Total Sponsored</span>
+                    <span class="text-xl font-bold text-slate-900">{{ total }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-500">Boys</span>
+                    <span class="text-lg font-semibold text-indigo-600">{{ boys }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-500">Girls</span>
+                    <span class="text-lg font-semibold text-pink-600">{{ girls }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-500">With Disability</span>
+                    <span class="text-lg font-semibold text-amber-600">{{ with_disability }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-500">Without Disability</span>
+                    <span class="text-lg font-semibold text-emerald-600">{{ without_disability }}</span>
+                </div>
+            </div>
+        </aside>
     </div>
 </div>
 {% endblock %}

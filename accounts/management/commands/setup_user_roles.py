@@ -18,6 +18,11 @@ class Command(BaseCommand):
                 'description': 'Full system access',
                 'permissions': 'all'
             },
+            'Board Member': {
+                'description': 'Read-only access to student performance',
+                'apps': ['students'],
+                'permissions': ['view'],
+            },
             'Data Entry': {
                 'description': 'Data entry for students, families, and schools',
                 'apps': ['students', 'families', 'core'],

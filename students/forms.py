@@ -8,12 +8,26 @@ from django.contrib.auth.models import User
 class StudentForm(forms.ModelForm):
     """Form for creating and editing students."""
 
+    SPONSORSHIP_YEAR_CHOICES = [('', 'Select year...')] + [
+        (str(year), str(year)) for year in range(2020, 2031)
+    ]
+
     has_disability = forms.TypedChoiceField(
         choices=[('false', 'No'), ('true', 'Yes')],
         coerce=lambda value: value == 'true',
         empty_value=False,
         required=True,
         label='Does student have any disability?',
+    )
+    sponsorship_start_year = forms.TypedChoiceField(
+        choices=SPONSORSHIP_YEAR_CHOICES,
+        required=False,
+        coerce=lambda value: int(value) if value else None,
+        empty_value=None,
+        label='Sponsorship Start Year',
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/90 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+        })
     )
     disability_types = forms.ChoiceField(
         choices=[('', 'Select disability type...')] + list(Student.DISABILITY_CHOICES),
@@ -31,7 +45,7 @@ class StudentForm(forms.ModelForm):
         fields = [
             'family', 'first_name', 'last_name', 'gender', 'date_of_birth',
             'school', 'school_name', 'class_level', 'enrollment_status', 'sponsorship_status',
-            'has_disability', 'disability_types', 'disability_description',
+            'sponsorship_start_year', 'has_disability', 'disability_types', 'disability_description',
             'is_active', 'profile_picture', 'program_officer'
         ]
         labels = {
@@ -45,6 +59,7 @@ class StudentForm(forms.ModelForm):
             'class_level': 'Class Level',
             'enrollment_status': 'Enrollment Status',
             'sponsorship_status': 'Sponsorship Status',
+            'sponsorship_start_year': 'Sponsorship Start Year',
             'has_disability': 'Does student have any disability?',
             'disability_types': 'Types of Disabilities',
             'disability_description': 'Disability Description & Special Needs',
@@ -59,6 +74,7 @@ class StudentForm(forms.ModelForm):
             'class_level': 'e.g., P1, P6, S1, S3',
             'enrollment_status': 'Current enrollment status of the student',
             'sponsorship_status': 'Current sponsorship status',
+            'sponsorship_start_year': 'Select the year the sponsorship started',
             'has_disability': 'Check if student has any disability',
             'disability_types': 'Select one or more disability types',
             'disability_description': 'Describe the disability and any special accommodations needed',
