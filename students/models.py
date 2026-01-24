@@ -126,6 +126,20 @@ class Student(models.Model):
         if self.family:
             return self.family.location_display
         return "Not specified"
+
+    @property
+    def family_district(self):
+        """Return district from family location."""
+        if self.family:
+            return self.family.district
+        return None
+
+    @property
+    def family_district_name(self):
+        """Return district name from family location."""
+        if self.family and self.family.district:
+            return self.family.district.name
+        return "N/A"
     
     @property
     def mutuelle_status(self):

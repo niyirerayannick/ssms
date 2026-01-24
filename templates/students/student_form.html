@@ -27,7 +27,7 @@
                 </div>
             </div>
             <div class="mt-3 h-2 w-full rounded-full bg-slate-200">
-                <div id="stepProgress" class="h-2 rounded-full bg-indigo-500 transition-all duration-300" style="width: 33%;"></div>
+                <div id="stepProgress" class="h-2 rounded-full bg-emerald-500 transition-all duration-300" style="width: 33%;"></div>
             </div>
         </div>
         
@@ -37,7 +37,7 @@
             <!-- Personal Information Section -->
             <div class="bg-white/70 border border-slate-200 p-6 rounded-xl shadow-sm" data-step="1">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
                     Personal Information
@@ -115,7 +115,7 @@
             <!-- School Information Section -->
             <div class="bg-white/70 border border-slate-200 p-6 rounded-xl shadow-sm" data-step="2">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                     </svg>
                     School Information
@@ -130,7 +130,7 @@
                             <label for="{{ form.school.id_for_label }}" class="block text-sm font-medium text-gray-700">
                                 {{ form.school.label }}
                             </label>
-                            <a href="{% url 'core:school_create' %}" target="_blank" class="text-xs bg-green-600 text-white hover:bg-green-700 px-3 py-1 rounded-full transition flex items-center">
+                            <a href="{% url 'core:school_create' %}" target="_blank" class="text-xs bg-emerald-600 text-white hover:bg-emerald-700 px-3 py-1 rounded-full transition flex items-center">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
@@ -206,15 +206,20 @@
 
             <!-- Disability & Special Needs Section -->
             <div class="bg-white/70 border border-slate-200 p-6 rounded-xl shadow-sm" data-step="1">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Disability & Special Needs Information
-                </h2>
+                <div class="flex flex-col gap-2 mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700 mr-3 shadow-sm">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </span>
+                        Disability & Special Needs Information
+                    </h2>
+                    <p class="text-sm text-slate-600">Select “Yes” to reveal options and document the support needed.</p>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Has Disability Select -->
-                    <div>
+                    <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4 shadow-sm">
                         <label for="{{ form.has_disability.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                             {{ form.has_disability.label }} <span class="text-red-500">*</span>
                         </label>
@@ -222,13 +227,19 @@
                         {% if form.has_disability.help_text %}
                             <p class="text-xs text-gray-500 mt-1">{{ form.has_disability.help_text }}</p>
                         {% endif %}
+                        <div class="mt-3 inline-flex items-center gap-2 text-xs text-emerald-700 bg-white/80 border border-emerald-100 px-3 py-1 rounded-full">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Choose “Yes” to show disability details
+                        </div>
                         {% if form.has_disability.errors %}
                             <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.has_disability.errors.0 }}</div>
                         {% endif %}
                     </div>
 
                     <!-- Disability Types -->
-                    <div id="disability-types-wrapper">
+                    <div id="disability-types-wrapper" class="hidden bg-white border border-emerald-100 rounded-xl p-4 shadow-sm">
                         <label for="{{ form.disability_types.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                             {{ form.disability_types.label }}
                         </label>
@@ -242,7 +253,7 @@
                     </div>
 
                     <!-- Disability Description -->
-                    <div class="md:col-span-2" id="disability-description-wrapper">
+                    <div class="md:col-span-2 hidden bg-white border border-emerald-100 rounded-xl p-4 shadow-sm" id="disability-description-wrapper">
                         <label for="{{ form.disability_description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                             {{ form.disability_description.label }}
                         </label>
@@ -257,25 +268,30 @@
                 </div>
 
                 <!-- Reference Box -->
-                <div class="mt-4 p-3 bg-white rounded-lg border-l-4 border-red-500" id="disability-reference">
-                    <p class="text-xs text-gray-700 font-semibold mb-2">Available Disability Types:</p>
-                    <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                        <p>• visual - Visual Impairment</p>
-                        <p>• hearing - Hearing Impairment</p>
-                        <p>• mobility - Mobility Impairment</p>
-                        <p>• intellectual - Intellectual Disability</p>
-                        <p>• autism - Autism Spectrum</p>
-                        <p>• speech - Speech Impairment</p>
-                        <p>• learning - Learning Disability</p>
-                        <p>• emotional - Emotional/Behavioral</p>
-                        <p>• other - Other Disability</p>
+                <div class="mt-4 p-4 bg-emerald-50/60 rounded-xl border border-emerald-100 hidden" id="disability-reference">
+                    <div class="flex items-center gap-2 text-sm font-semibold text-emerald-800 mb-3">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/>
+                        </svg>
+                        Available Disability Types
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-xs text-emerald-800">
+                        <span class="px-2 py-1 rounded-full bg-white border border-emerald-100">visual</span>
+                        <span class="px-2 py-1 rounded-full bg-white border border-emerald-100">hearing</span>
+                        <span class="px-2 py-1 rounded-full bg-white border border-emerald-100">mobility</span>
+                        <span class="px-2 py-1 rounded-full bg-white border border-emerald-100">intellectual</span>
+                        <span class="px-2 py-1 rounded-full bg-white border border-emerald-100">autism</span>
+                        <span class="px-2 py-1 rounded-full bg-white border border-emerald-100">speech</span>
+                        <span class="px-2 py-1 rounded-full bg-white border border-emerald-100">learning</span>
+                        <span class="px-2 py-1 rounded-full bg-white border border-emerald-100">emotional</span>
+                        <span class="px-2 py-1 rounded-full bg-white border border-emerald-100">other</span>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white/70 border border-slate-200 p-6 rounded-xl shadow-sm" data-step="3">
                 <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.856-1.487M9 20H4v-2a3 3 0 015.856-1.487M15 6a3 3 0 11-6 0 3 3 0 016 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zM5 20a2 2 0 01-2-2v-2a2 2 0 012-2h10a2 2 0 012 2v2a2 2 0 01-2 2H5z"/>
                     </svg>
                     Family & Administration
@@ -287,7 +303,7 @@
                             <label for="{{ form.family.id_for_label }}" class="block text-sm font-medium text-gray-700">
                                 {{ form.family.label }}
                             </label>
-                            <a href="{% url 'families:family_create' %}" target="_blank" class="text-xs bg-purple-600 text-white hover:bg-purple-700 px-3 py-1 rounded-full transition flex items-center">
+                            <a href="{% url 'families:family_create' %}" target="_blank" class="text-xs bg-teal-600 text-white hover:bg-teal-700 px-3 py-1 rounded-full transition flex items-center">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
@@ -342,13 +358,13 @@
                     </svg>
                     Back
                 </button>
-                <button type="button" id="nextStep" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
+                <button type="button" id="nextStep" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
                     Next
                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                 </button>
-                <button type="submit" id="submitStep" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
+                <button type="submit" id="submitStep" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
@@ -364,9 +380,9 @@
         </form>
 
         <!-- Info Box -->
-        <div class="mt-6 bg-indigo-50 border border-indigo-100 p-4 rounded-xl">
-            <h4 class="text-sm font-semibold text-indigo-900 mb-2">Quick tips</h4>
-            <ul class="text-sm text-indigo-900/80 space-y-1 list-disc list-inside">
+        <div class="mt-6 bg-emerald-50 border border-emerald-100 p-4 rounded-xl">
+            <h4 class="text-sm font-semibold text-emerald-900 mb-2">Quick tips</h4>
+            <ul class="text-sm text-emerald-900/80 space-y-1 list-disc list-inside">
                 <li>Use “Add New Family/School” if not in the list.</li>
                 <li>You can enter a school name manually.</li>
                 <li>Save appears on the last step.</li>
@@ -428,10 +444,10 @@
                 const dot = label.querySelector('.step-dot');
                 if (!dot) return;
                 if (stepNumber <= currentStep) {
-                    dot.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
+                    dot.classList.add('bg-emerald-500', 'text-white', 'border-emerald-500');
                     dot.classList.remove('bg-white', 'text-slate-600', 'border-slate-300');
                 } else {
-                    dot.classList.remove('bg-indigo-500', 'text-white', 'border-indigo-500');
+                    dot.classList.remove('bg-emerald-500', 'text-white', 'border-emerald-500');
                     dot.classList.add('bg-white', 'text-slate-600', 'border-slate-300');
                 }
             });

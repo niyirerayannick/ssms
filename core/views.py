@@ -1,10 +1,10 @@
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q
-from .models import District, Sector, Cell, Village, Province, School
+from .models import District, Sector, Cell, Village, Province, School, Notification
 from .forms import SchoolForm
 
 
@@ -125,3 +125,24 @@ def school_edit(request, pk):
         form = SchoolForm(instance=school)
     
     return render(request, 'core/school_form.html', {'form': form, 'school': school, 'title': 'Edit School'})
+
+
+@login_required
+@require_POST
+def notifications_mark_all_read(request):
+    """Mark all notifications as read for current user."""
+    Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    messages.success(request, 'All notifications marked as read.')
+    return redirect(request.META.get('HTTP_REFERER', 'dashboard:index'))
+
+
+@login_required
+def notification_go(request, pk):
+    """Mark a notification as read and redirect."""
+    notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
+    if not notification.is_read:
+        notification.is_read = True
+        notification.save(update_fields=['is_read'])
+    if notification.link:
+        return redirect(notification.link)
+    return redirect('dashboard:index')

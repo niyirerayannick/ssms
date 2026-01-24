@@ -19,11 +19,11 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
         :root {
-            --brand-50: #eef2ff;
-            --brand-100: #e0e7ff;
-            --brand-500: #6366f1;
-            --brand-600: #4f46e5;
-            --brand-700: #4338ca;
+            --brand-50: #ecfdf5;
+            --brand-100: #d1fae5;
+            --brand-500: #10b981;
+            --brand-600: #059669;
+            --brand-700: #047857;
             --surface: rgba(255, 255, 255, 0.8);
             --surface-border: rgba(226, 232, 240, 0.8);
             --shadow-soft: 0 20px 45px rgba(15, 23, 42, 0.08);
@@ -58,7 +58,7 @@
         }
 
         table thead {
-            background: linear-gradient(90deg, rgba(99, 102, 241, 0.08), rgba(59, 130, 246, 0.08));
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.08), rgba(13, 148, 136, 0.08));
         }
 
         table tbody tr {
@@ -66,7 +66,7 @@
         }
 
         table tbody tr:hover {
-            background-color: rgba(99, 102, 241, 0.05);
+            background-color: rgba(16, 185, 129, 0.05);
         }
 
         input, select, textarea {
@@ -76,8 +76,8 @@
         }
 
         input:focus, select:focus, textarea:focus {
-            border-color: rgba(99, 102, 241, 0.8);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            border-color: rgba(16, 185, 129, 0.8);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
         }
 
         .glass {
@@ -127,7 +127,84 @@
             {% block content %}{% endblock %}
         </main>
     </div>
-    
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        function createExportButton(label, classes, onClick) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = classes;
+            button.textContent = label;
+            button.addEventListener('click', onClick);
+            return button;
+        }
+
+        function getTableMatrix(table) {
+            const head = [];
+            const body = [];
+            const headRow = table.querySelector('thead tr');
+            if (headRow) {
+                head.push(Array.from(headRow.querySelectorAll('th')).map((cell) => cell.textContent.trim()));
+            }
+            Array.from(table.querySelectorAll('tbody tr')).forEach((row) => {
+                const cells = row.querySelectorAll('th, td');
+                if (!cells.length) return;
+                body.push(Array.from(cells).map((cell) => cell.textContent.trim()));
+            });
+            return { head, body };
+        }
+
+        function getFileBaseName(tableIndex) {
+            const title = (document.title || 'table').trim().toLowerCase();
+            const safeTitle = title.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            return `${safeTitle || 'table'}-${tableIndex + 1}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tables = Array.from(document.querySelectorAll('table')).filter(
+                (table) => table.dataset.export !== 'false'
+            );
+
+            tables.forEach((table, index) => {
+                const wrapper = table.parentElement?.classList.contains('overflow-x-auto')
+                    ? table.parentElement
+                    : table;
+                const controls = document.createElement('div');
+                controls.className = 'flex flex-wrap items-center justify-end gap-2 mb-3';
+
+                const excelButton = createExportButton(
+                    'Export Excel',
+                    'px-3 py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition',
+                    () => {
+                        const book = XLSX.utils.table_to_book(table, { sheet: 'Sheet1' });
+                        XLSX.writeFile(book, `${getFileBaseName(index)}.xlsx`);
+                    }
+                );
+
+                const pdfButton = createExportButton(
+                    'Export PDF',
+                    'px-3 py-2 text-sm font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition',
+                    () => {
+                        const { head, body } = getTableMatrix(table);
+                        const doc = new window.jspdf.jsPDF('l', 'pt', 'a4');
+                        doc.autoTable({
+                            head,
+                            body,
+                            styles: { fontSize: 9 },
+                            headStyles: { fillColor: [16, 185, 129] }
+                        });
+                        doc.save(`${getFileBaseName(index)}.pdf`);
+                    }
+                );
+
+                controls.appendChild(excelButton);
+                controls.appendChild(pdfButton);
+                wrapper.parentElement?.insertBefore(controls, wrapper);
+            });
+        });
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

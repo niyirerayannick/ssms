@@ -21,7 +21,7 @@
                 </svg>
                 Import
             </a>
-            <a href="{% url 'students:student_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+            <a href="{% url 'students:student_create' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition duration-200">
                 + Add Student
             </a>
             {% endif %}
@@ -32,19 +32,19 @@
     <div class="bg-white p-4 rounded-lg shadow-md">
         <form method="get" class="flex flex-wrap gap-4">
             <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name, district, or school..."
-                   class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                   class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+            <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                 <option value="">All Status</option>
                 <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
                 <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
                 <option value="graduated" {% if status_filter == 'graduated' %}selected{% endif %}>Graduated</option>
             </select>
-            <select name="gender" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <select name="gender" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                 <option value="">All Genders</option>
                 <option value="M" {% if gender_filter == 'M' %}selected{% endif %}>Male</option>
                 <option value="F" {% if gender_filter == 'F' %}selected{% endif %}>Female</option>
             </select>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200">
+            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg transition duration-200">
                 Filter
             </button>
         </form>
@@ -83,7 +83,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.get_gender_display }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.age }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.school.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.district }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family_district_name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full 
                                 {% if student.sponsorship_status == 'active' %}bg-green-100 text-green-800
@@ -93,9 +93,9 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="{% url 'students:student_detail' student.pk %}" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
+                            <a href="{% url 'students:student_detail' student.pk %}" class="text-emerald-600 hover:text-emerald-800 mr-3">View</a>
                             {% if perms.students.change_student %}
-                            <a href="{% url 'students:student_edit' student.pk %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                            <a href="{% url 'students:student_edit' student.pk %}" class="text-teal-600 hover:text-teal-800">Edit</a>
                             {% endif %}
                         </td>
                     </tr>

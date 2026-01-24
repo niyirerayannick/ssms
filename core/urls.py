@@ -32,4 +32,6 @@ urlpatterns = [
     path('templates/students/', import_export.download_student_template, name='download_student_template'),
     path('templates/families/', import_export.download_family_template, name='download_family_template'),
     path('templates/schools/', import_export.download_school_template, name='download_school_template'),
+    path('notifications/mark-all/', views.notifications_mark_all_read, name='notifications_mark_all_read'),
+    path('notifications/<int:pk>/go/', views.notification_go, name='notification_go'),
 ]

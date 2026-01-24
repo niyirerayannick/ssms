@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q
 from .models import Student, StudentPhoto, StudentMark
+from core.models import Notification
 from .forms import StudentForm, StudentPhotoForm, StudentMarkForm
 from families.models import FamilyStudent
 
@@ -18,7 +20,7 @@ def student_list(request):
     if search_query:
         students = students.filter(
             Q(full_name__icontains=search_query) |
-            Q(district__name__icontains=search_query) |
+            Q(family__district__name__icontains=search_query) |
             Q(school__name__icontains=search_query)
         )
     
@@ -49,6 +51,12 @@ def student_create(request):
         form = StudentForm(request.POST, request.FILES)
         if form.is_valid():
             student = form.save()
+            Notification.objects.create(
+                recipient=request.user,
+                actor=request.user,
+                verb=f"Added student {student.full_name}",
+                link=reverse('students:student_detail', kwargs={'pk': student.pk})
+            )
             messages.success(request, f'Student {student.full_name} created successfully!')
             return redirect('students:student_detail', pk=student.pk)
     else:

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import School, District, Sector, Cell, Village
+from .models import School, District, Sector, Cell, Village, Notification
 
 
 @admin.register(School)
@@ -38,3 +38,10 @@ class VillageAdmin(admin.ModelAdmin):
     search_fields = ['name', 'cell__name']
     list_filter = ['cell__sector__district', 'cell__sector', 'cell']
     ordering = ['cell', 'name']
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ['recipient', 'verb', 'is_read', 'created_at']
+    list_filter = ['is_read', 'created_at']
+    search_fields = ['recipient__username', 'verb', 'description']
