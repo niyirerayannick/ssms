@@ -219,3 +219,30 @@ class StudentMark(models.Model):
 
     def __str__(self):
         return f"{self.student.full_name} - {self.subject} - {self.term} ({self.academic_year}) - {self.marks}%"
+
+
+class StudentMaterial(models.Model):
+    """Track school materials given to sponsored students per academic year."""
+
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='material_records')
+    academic_year = models.CharField(max_length=20, help_text="e.g., 2024")
+    books_received = models.BooleanField(default=False)
+    bag_received = models.BooleanField(default=False)
+    shoes_received = models.BooleanField(default=False)
+    uniforms_received = models.BooleanField(default=False)
+    special_request = models.TextField(blank=True, help_text="Special needs or requests")
+    notes = models.TextField(blank=True)
+    received_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-academic_year', 'student__first_name']
+        unique_together = ['student', 'academic_year']
+
+    @property
+    def all_required_received(self):
+        return self.books_received and self.bag_received
+
+    def __str__(self):
+        return f"{self.student.full_name} - {self.academic_year}"

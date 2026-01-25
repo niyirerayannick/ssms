@@ -3,10 +3,11 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q, Avg
+from django.utils import timezone
 from django.contrib.auth import get_user_model
-from .models import Student, StudentPhoto, StudentMark
+from .models import Student, StudentPhoto, StudentMark, StudentMaterial
 from core.models import Notification
-from .forms import StudentForm, StudentPhotoForm, StudentMarkForm
+from .forms import StudentForm, StudentPhotoForm, StudentMarkForm, StudentMaterialForm
 from families.models import FamilyStudent
 
 
@@ -106,6 +107,98 @@ def student_edit(request, pk):
         form = StudentForm(instance=student)
     
     return render(request, 'students/student_form.html', {'form': form, 'student': student, 'title': 'Edit Student'})
+
+
+@login_required
+@permission_required('students.view_studentmaterial', raise_exception=True)
+def student_materials(request):
+    """List sponsored students and their school material status."""
+    academic_year = request.GET.get('academic_year', str(timezone.now().year))
+    status_filter = request.GET.get('status', '')
+    search_query = request.GET.get('search', '')
+
+    students_qs = Student.objects.filter(sponsorship_status='active')
+    if search_query:
+        students_qs = students_qs.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(family__family_code__icontains=search_query)
+        )
+
+    materials_qs = StudentMaterial.objects.filter(academic_year=academic_year).select_related('student')
+    materials_by_student = {material.student_id: material for material in materials_qs}
+
+    rows = []
+    for student in students_qs.order_by('first_name', 'last_name'):
+        material = materials_by_student.get(student.id)
+        has_all_required = material.all_required_received if material else False
+        if status_filter == 'complete' and not has_all_required:
+            continue
+        if status_filter == 'missing' and has_all_required:
+            continue
+        rows.append({
+            'student': student,
+            'material': material,
+            'has_all_required': has_all_required,
+        })
+
+    total_rows = len(rows)
+    complete_rows = sum(1 for row in rows if row['has_all_required'])
+    missing_rows = total_rows - complete_rows
+
+    available_years = list(
+        StudentMaterial.objects.values_list('academic_year', flat=True)
+        .distinct().order_by('-academic_year')
+    )
+    if academic_year and academic_year not in available_years:
+        available_years.insert(0, academic_year)
+
+    context = {
+        'rows': rows,
+        'academic_year': academic_year,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'available_years': available_years,
+        'total_rows': total_rows,
+        'complete_rows': complete_rows,
+        'missing_rows': missing_rows,
+    }
+    return render(request, 'students/student_materials.html', context)
+
+
+@login_required
+@permission_required('students.add_studentmaterial', raise_exception=True)
+def student_material_create(request):
+    """Create a school material record."""
+    initial = {}
+    student_id = request.GET.get('student')
+    if student_id:
+        initial['student'] = student_id
+    if request.method == 'POST':
+        form = StudentMaterialForm(request.POST)
+        if form.is_valid():
+            record = form.save()
+            messages.success(request, f"Materials saved for {record.student.full_name}.")
+            return redirect('students:student_materials')
+    else:
+        form = StudentMaterialForm(initial=initial)
+    return render(request, 'students/student_material_form.html', {'form': form, 'title': 'Add School Materials'})
+
+
+@login_required
+@permission_required('students.change_studentmaterial', raise_exception=True)
+def student_material_edit(request, pk):
+    """Edit a school material record."""
+    record = get_object_or_404(StudentMaterial, pk=pk)
+    if request.method == 'POST':
+        form = StudentMaterialForm(request.POST, instance=record)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Materials updated for {record.student.full_name}.")
+            return redirect('students:student_materials')
+    else:
+        form = StudentMaterialForm(instance=record)
+    return render(request, 'students/student_material_form.html', {'form': form, 'title': 'Edit School Materials'})
 
 
 @login_required

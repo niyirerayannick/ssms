@@ -1,5 +1,5 @@
 from django import forms
-from .models import Student, StudentPhoto, StudentMark
+from .models import Student, StudentPhoto, StudentMark, StudentMaterial
 from core.models import School
 from families.models import Family
 from django.contrib.auth.models import User
@@ -214,3 +214,60 @@ class StudentMarkForm(forms.ModelForm):
                 'accept': 'image/*'
             }),
         }
+
+
+class StudentMaterialForm(forms.ModelForm):
+    """Form for recording school materials for sponsored students."""
+
+    class Meta:
+        model = StudentMaterial
+        fields = [
+            'student',
+            'academic_year',
+            'books_received',
+            'bag_received',
+            'shoes_received',
+            'uniforms_received',
+            'received_date',
+            'special_request',
+            'notes',
+        ]
+        widgets = {
+            'student': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+            }),
+            'academic_year': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'placeholder': 'e.g., 2024'
+            }),
+            'books_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'bag_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'shoes_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'uniforms_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'received_date': forms.DateInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'type': 'date'
+            }),
+            'special_request': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'rows': 3,
+                'placeholder': 'Special needs or requests...'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'rows': 3,
+                'placeholder': 'Additional notes...'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['student'].queryset = Student.objects.filter(sponsorship_status='active').order_by('first_name', 'last_name')

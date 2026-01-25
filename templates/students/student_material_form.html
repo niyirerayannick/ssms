@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - SIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto animate-fade-in">
+    <div class="bg-white rounded-xl shadow-md p-6 md:p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ title }}</h1>
+        <p class="text-gray-600 mb-6">Record school materials provided at the start of the academic year.</p>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.student.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Student
+                    </label>
+                    {{ form.student }}
+                    {% if form.student.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.student.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.academic_year.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Academic Year
+                    </label>
+                    {{ form.academic_year }}
+                    {% if form.academic_year.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.academic_year.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4">
+                <p class="text-sm font-semibold text-emerald-800 mb-4">Materials Provided</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label class="flex items-center gap-3">
+                        {{ form.books_received }}
+                        <span class="text-sm text-gray-700">Books (required)</span>
+                    </label>
+                    <label class="flex items-center gap-3">
+                        {{ form.bag_received }}
+                        <span class="text-sm text-gray-700">Bag (required)</span>
+                    </label>
+                    <label class="flex items-center gap-3">
+                        {{ form.shoes_received }}
+                        <span class="text-sm text-gray-700">Shoes (optional)</span>
+                    </label>
+                    <label class="flex items-center gap-3">
+                        {{ form.uniforms_received }}
+                        <span class="text-sm text-gray-700">Uniforms (optional)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.received_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        Date Received
+                    </label>
+                    {{ form.received_date }}
+                    {% if form.received_date.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.received_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label for="{{ form.special_request.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Special Request / Needs
+                </label>
+                {{ form.special_request }}
+                {% if form.special_request.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.special_request.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Notes
+                </label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.notes.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex justify-end gap-4 pt-4 border-t border-gray-200">
+                <a href="{% url 'students:student_materials' %}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition duration-200 shadow-md hover:shadow-lg">
+                    Save Materials
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
