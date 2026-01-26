@@ -18,7 +18,7 @@ class Command(BaseCommand):
                 'description': 'Full system access',
                 'permissions': 'all'
             },
-            'Board Member': {
+            'Council Member': {
                 'description': 'Read-only access to student performance',
                 'apps': ['students'],
                 'permissions': ['view'],
