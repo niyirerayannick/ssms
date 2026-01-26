@@ -44,8 +44,9 @@ class StudentForm(forms.ModelForm):
         model = Student
         fields = [
             'family', 'first_name', 'last_name', 'gender', 'date_of_birth',
-            'school', 'school_name', 'class_level', 'enrollment_status', 'sponsorship_status',
-            'sponsorship_start_year', 'has_disability', 'disability_types', 'disability_description',
+            'school', 'school_name', 'class_level', 'school_level', 'boarding_status',
+            'enrollment_status', 'sponsorship_status',
+            'sponsorship_start_year', 'sponsorship_reason', 'has_disability', 'disability_types', 'disability_description',
             'is_active', 'profile_picture', 'program_officer'
         ]
         labels = {
@@ -57,9 +58,12 @@ class StudentForm(forms.ModelForm):
             'school': 'School',
             'school_name': 'Or Enter School Name',
             'class_level': 'Class Level',
+            'school_level': 'School Level',
+            'boarding_status': 'Boarding Status',
             'enrollment_status': 'Enrollment Status',
             'sponsorship_status': 'Sponsorship Status',
             'sponsorship_start_year': 'Sponsorship Start Year',
+            'sponsorship_reason': 'Reason for Support',
             'has_disability': 'Does student have any disability?',
             'disability_types': 'Types of Disabilities',
             'disability_description': 'Disability Description & Special Needs',
@@ -72,9 +76,12 @@ class StudentForm(forms.ModelForm):
             'school': 'Select from existing schools or create a new one using the link below',
             'school_name': 'Alternative: if school is not in database, enter name here',
             'class_level': 'e.g., P1, P6, S1, S3',
+            'school_level': 'Select the school level',
+            'boarding_status': 'Select boarding or non-boarding',
             'enrollment_status': 'Current enrollment status of the student',
             'sponsorship_status': 'Current sponsorship status',
             'sponsorship_start_year': 'Select the year the sponsorship started',
+            'sponsorship_reason': 'Why Solidact is supporting this student',
             'has_disability': 'Check if student has any disability',
             'disability_types': 'Select one or more disability types',
             'disability_description': 'Describe the disability and any special accommodations needed',
@@ -110,11 +117,22 @@ class StudentForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
                 'placeholder': 'e.g., P1, P6, S1, S3'
             }),
+            'school_level': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+            }),
+            'boarding_status': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+            }),
             'enrollment_status': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
             }),
             'sponsorship_status': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+            }),
+            'sponsorship_reason': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'rows': 3,
+                'placeholder': 'Explain why Solidact should support this student...'
             }),
             'has_disability': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'

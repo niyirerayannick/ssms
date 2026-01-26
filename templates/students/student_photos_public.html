@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.full_name }} Photos - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-fade-in">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-3xl font-bold text-gray-800">Photo Gallery</h1>
+        <p class="text-gray-600 mt-1">{{ student.full_name }}</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        {% if photos %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for photo in photos %}
+            <a href="{{ photo.image.url }}" target="_blank" class="border border-slate-200 rounded-lg overflow-hidden shadow-sm block">
+                <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:student.full_name }}" class="w-full h-56 object-cover">
+                <div class="p-3">
+                    <p class="text-sm font-semibold text-gray-800">
+                        {{ photo.caption|default:"Student photo" }}
+                    </p>
+                    <p class="text-xs text-gray-500">{{ photo.created_at|date:"M d, Y" }}</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No photos uploaded yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

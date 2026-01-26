@@ -28,6 +28,7 @@ def index(request):
     # Disability statistics
     students_with_disability = Student.objects.filter(has_disability=True).count()
     students_without_disability = Student.objects.filter(has_disability=False).count()
+
     
     # ===== FAMILY STATISTICS =====
     total_families = Family.objects.count()

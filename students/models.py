@@ -25,6 +25,18 @@ class Student(models.Model):
         ('pending', 'Pending'),
         ('graduated', 'Graduated'),
     ]
+
+    BOARDING_STATUS_CHOICES = [
+        ('boarding', 'Boarding'),
+        ('non_boarding', 'Non-boarding'),
+    ]
+
+    SCHOOL_LEVEL_CHOICES = [
+        ('nursery', 'Nursery'),
+        ('primary', 'Primary'),
+        ('secondary', 'Secondary'),
+        ('tvet', 'TVET'),
+    ]
     
     DISABILITY_CHOICES = [
         ('visual', 'Visual Impairment (Blind/Low Vision)'),
@@ -57,12 +69,22 @@ class Student(models.Model):
     school_name = models.CharField(max_length=200, blank=True)
     school = models.ForeignKey(School, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
     class_level = models.CharField(max_length=50)
+    school_level = models.CharField(
+        max_length=20,
+        choices=SCHOOL_LEVEL_CHOICES,
+        default='primary'
+    )
     
     # Status
     enrollment_status = models.CharField(
         max_length=20, 
         choices=ENROLLMENT_STATUS_CHOICES, 
         default='enrolled'
+    )
+    boarding_status = models.CharField(
+        max_length=20,
+        choices=BOARDING_STATUS_CHOICES,
+        default='non_boarding'
     )
     sponsorship_status = models.CharField(
         max_length=20,
@@ -73,6 +95,10 @@ class Student(models.Model):
         null=True,
         blank=True,
         help_text="Year sponsorship started (e.g., 2022)"
+    )
+    sponsorship_reason = models.TextField(
+        blank=True,
+        help_text="Reason Solidact is supporting this student"
     )
     is_active = models.BooleanField(default=True)
     

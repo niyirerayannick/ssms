@@ -5,7 +5,7 @@
 {% block content %}
 <div class="space-y-6 animate-fade-in">
     <!-- Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+    <div class="bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 rounded-xl shadow-lg p-6 text-white">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div class="flex items-center space-x-4 mb-4 md:mb-0">
                 {% if student.profile_picture %}
@@ -17,13 +17,23 @@
                 {% endif %}
                 <div>
                     <h1 class="text-3xl font-bold">{{ student.full_name }}</h1>
-                    <p class="text-blue-100">{{ student.get_gender_display }} • Age {{ student.age }}</p>
+                    <p class="text-emerald-100">{{ student.get_gender_display }} • Age {{ student.age }}</p>
                 </div>
             </div>
             {% if perms.students.change_student %}
-            <a href="{% url 'students:student_edit' student.pk %}" class="bg-white text-blue-600 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition duration-200 shadow-md">
-                Edit Student
-            </a>
+            <div class="flex flex-wrap items-center gap-3">
+                {% if student.sponsorship_status == 'pending' and can_approve_student %}
+                <form method="post" action="{% url 'students:student_approve' student.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-semibold transition duration-200 shadow-md">
+                        Approve Student
+                    </button>
+                </form>
+                {% endif %}
+                <a href="{% url 'students:student_edit' student.pk %}" class="bg-white text-emerald-700 px-6 py-2 rounded-lg font-semibold hover:bg-emerald-50 transition duration-200 shadow-md">
+                    Edit Student
+                </a>
+            </div>
             {% endif %}
         </div>
     </div>
@@ -51,6 +61,24 @@
             </div>
         </a>
         {% endif %}
+        <a href="{% url 'students:student_photos' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-4 rounded-lg shadow-md flex items-center space-x-3 border-l-4 border-purple-500">
+            <svg class="w-8 h-8 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <div>
+                <p class="font-semibold text-gray-900">Photo Gallery</p>
+                <p class="text-xs text-gray-500">View student photos</p>
+            </div>
+        </a>
+        <a href="{% url 'students:student_report_cards' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-4 rounded-lg shadow-md flex items-center space-x-3 border-l-4 border-green-500">
+            <svg class="w-8 h-8 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+            <div>
+                <p class="font-semibold text-gray-900">Academic Records</p>
+                <p class="text-xs text-gray-500">View marks history</p>
+            </div>
+        </a>
     </div>
     
         <!-- Main Content -->
@@ -85,6 +113,14 @@
                         <p class="font-medium text-gray-900">{{ student.class_level }}</p>
                     </div>
                     <div>
+                        <p class="text-sm text-gray-600">School Level</p>
+                        <p class="font-medium text-gray-900">{{ student.get_school_level_display }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Boarding Status</p>
+                        <p class="font-medium text-gray-900">{{ student.get_boarding_status_display }}</p>
+                    </div>
+                    <div>
                         <p class="text-sm text-gray-600">School</p>
                         <p class="font-medium text-gray-900">
                             {% if student.school %}
@@ -104,6 +140,12 @@
                             {{ student.get_enrollment_status_display }}
                         </span>
                     </div>
+                    {% if student.sponsorship_reason %}
+                    <div class="col-span-2">
+                        <p class="text-sm text-gray-600">Reason for Support</p>
+                        <p class="font-medium text-gray-900 whitespace-pre-wrap">{{ student.sponsorship_reason }}</p>
+                    </div>
+                    {% endif %}
                     <div>
                         <p class="text-sm text-gray-600">Account Status</p>
                         <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full 
@@ -152,7 +194,7 @@
             {% endif %}
             
             <!-- Photo Gallery -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
+            <div id="photo-gallery" class="bg-white p-6 rounded-xl shadow-md">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold text-gray-800 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,12 +207,12 @@
                 {% if student.photos.all %}
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {% for photo in student.photos.all %}
-                    <div class="relative group">
+                    <a href="{{ photo.image.url }}" target="_blank" class="relative group block">
                         <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:student.full_name }}" class="w-full h-32 object-cover rounded-lg shadow-md hover:shadow-xl transition duration-200">
                         {% if photo.caption %}
                         <p class="text-xs text-gray-600 mt-1">{{ photo.caption }}</p>
                         {% endif %}
-                    </div>
+                    </a>
                     {% endfor %}
                 </div>
                 {% else %}
@@ -179,7 +221,7 @@
             </div>
             
             <!-- Academic Records -->
-            <div class="bg-white p-6 rounded-xl shadow-md">
+            <div id="academic-records" class="bg-white p-6 rounded-xl shadow-md">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold text-gray-800 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,8 +251,8 @@
                                 <td class="px-4 py-3 text-sm text-gray-500">{{ record.term }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-500">{{ record.academic_year }}</td>
                                 <td class="px-4 py-3 text-sm">
-                                    {% if record.report_photo %}
-                                    <a href="{{ record.report_photo.url }}" target="_blank" class="text-blue-600 hover:text-blue-800">View Report</a>
+                                    {% if record.report_card_image %}
+                                    <a href="{{ record.report_card_image.url }}" target="_blank" class="text-blue-600 hover:text-blue-800">View Report</a>
                                     {% endif %}
                                 </td>
                             </tr>

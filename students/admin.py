@@ -4,8 +4,8 @@ from .models import Student, StudentPhoto, StudentMark, StudentMaterial
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ['full_name', 'gender', 'age', 'school', 'enrollment_status', 'program_officer']
-    list_filter = ['gender', 'enrollment_status', 'school']
+    list_display = ['full_name', 'gender', 'age', 'school', 'school_level', 'boarding_status', 'enrollment_status', 'program_officer']
+    list_filter = ['gender', 'school_level', 'boarding_status', 'enrollment_status', 'school']
     search_fields = ['first_name', 'last_name', 'school__name']
     readonly_fields = ['created_at', 'updated_at']
 

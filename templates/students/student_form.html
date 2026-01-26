@@ -174,6 +174,34 @@
                         {% endif %}
                     </div>
 
+                    <!-- School Level -->
+                    <div>
+                        <label for="{{ form.school_level.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.school_level.label }}
+                        </label>
+                        {{ form.school_level }}
+                        {% if form.school_level.help_text %}
+                            <p class="text-xs text-gray-500 mt-1">{{ form.school_level.help_text }}</p>
+                        {% endif %}
+                        {% if form.school_level.errors %}
+                            <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.school_level.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Boarding Status -->
+                    <div>
+                        <label for="{{ form.boarding_status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.boarding_status.label }}
+                        </label>
+                        {{ form.boarding_status }}
+                        {% if form.boarding_status.help_text %}
+                            <p class="text-xs text-gray-500 mt-1">{{ form.boarding_status.help_text }}</p>
+                        {% endif %}
+                        {% if form.boarding_status.errors %}
+                            <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.boarding_status.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
                     <!-- Enrollment Status -->
                     <div>
                         <label for="{{ form.enrollment_status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
@@ -213,6 +241,20 @@
                         {% endif %}
                         {% if form.sponsorship_start_year.errors %}
                             <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.sponsorship_start_year.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Sponsorship Reason -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.sponsorship_reason.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.sponsorship_reason.label }}
+                        </label>
+                        {{ form.sponsorship_reason }}
+                        {% if form.sponsorship_reason.help_text %}
+                            <p class="text-xs text-gray-500 mt-1">{{ form.sponsorship_reason.help_text }}</p>
+                        {% endif %}
+                        {% if form.sponsorship_reason.errors %}
+                            <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.sponsorship_reason.errors.0 }}</div>
                         {% endif %}
                     </div>
                 </div>

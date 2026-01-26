@@ -2,8 +2,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
-from django.db.models import Q, Avg
+from django.db.models import Q, Avg, Count
 from django.utils import timezone
+from django.core import signing
+from django.http import Http404
+from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from .models import Student, StudentPhoto, StudentMark, StudentMaterial
 from core.models import Notification
@@ -35,12 +38,21 @@ def student_list(request):
     gender_filter = request.GET.get('gender', '')
     if gender_filter:
         students = students.filter(gender=gender_filter)
+
+    boarding_counts = {item['boarding_status']: item['total'] for item in students.values('boarding_status').annotate(total=Count('id'))}
+    level_counts = {item['school_level']: item['total'] for item in students.values('school_level').annotate(total=Count('id'))}
     
     context = {
         'students': students,
         'search_query': search_query,
         'status_filter': status_filter,
         'gender_filter': gender_filter,
+        'boarding_count': boarding_counts.get('boarding', 0),
+        'non_boarding_count': boarding_counts.get('non_boarding', 0),
+        'nursery_count': level_counts.get('nursery', 0),
+        'primary_count': level_counts.get('primary', 0),
+        'secondary_count': level_counts.get('secondary', 0),
+        'tvet_count': level_counts.get('tvet', 0),
     }
     return render(request, 'students/student_list.html', context)
 
@@ -65,6 +77,13 @@ def _notify_admins_and_exec(actor, verb, link):
         Notification.objects.bulk_create(notifications)
 
 
+def _can_approve_student(user):
+    return (
+        user.is_superuser or
+        user.groups.filter(name__in=['Admin', 'Executive Secretary']).exists()
+    )
+
+
 @login_required
 @permission_required('students.add_student', raise_exception=True)
 def student_create(request):
@@ -72,7 +91,10 @@ def student_create(request):
     if request.method == 'POST':
         form = StudentForm(request.POST, request.FILES)
         if form.is_valid():
-            student = form.save()
+            student = form.save(commit=False)
+            student.sponsorship_status = 'pending'
+            student.save()
+            form.save_m2m()
             _notify_admins_and_exec(
                 actor=request.user,
                 verb=f"Added student {student.full_name}",
@@ -142,6 +164,9 @@ def student_materials(request):
             'has_all_required': has_all_required,
         })
 
+    boarding_counts = {item['boarding_status']: item['total'] for item in students_qs.values('boarding_status').annotate(total=Count('id'))}
+    level_counts = {item['school_level']: item['total'] for item in students_qs.values('school_level').annotate(total=Count('id'))}
+
     total_rows = len(rows)
     complete_rows = sum(1 for row in rows if row['has_all_required'])
     missing_rows = total_rows - complete_rows
@@ -162,6 +187,12 @@ def student_materials(request):
         'total_rows': total_rows,
         'complete_rows': complete_rows,
         'missing_rows': missing_rows,
+        'boarding_count': boarding_counts.get('boarding', 0),
+        'non_boarding_count': boarding_counts.get('non_boarding', 0),
+        'nursery_count': level_counts.get('nursery', 0),
+        'primary_count': level_counts.get('primary', 0),
+        'secondary_count': level_counts.get('secondary', 0),
+        'tvet_count': level_counts.get('tvet', 0),
     }
     return render(request, 'students/student_materials.html', context)
 
@@ -219,8 +250,27 @@ def student_detail(request, pk):
         'family_member': family_member,
         'fees': fees,
         'insurance_records': insurance_records,
+        'can_approve_student': _can_approve_student(request.user),
     }
     return render(request, 'students/student_detail.html', context)
+
+
+@login_required
+@require_POST
+def student_approve(request, pk):
+    """Approve a student (Executive Secretary or Admin)."""
+    if not _can_approve_student(request.user):
+        raise Http404()
+    student = get_object_or_404(Student, pk=pk)
+    student.sponsorship_status = 'active'
+    student.save(update_fields=['sponsorship_status'])
+    _notify_admins_and_exec(
+        actor=request.user,
+        verb=f"Approved student {student.full_name}",
+        link=reverse('students:student_detail', kwargs={'pk': student.pk})
+    )
+    messages.success(request, f'Student {student.full_name} approved successfully!')
+    return redirect('students:student_detail', pk=student.pk)
 
 
 @login_required
@@ -254,6 +304,33 @@ def add_photo(request, pk):
 
 
 @login_required
+@permission_required('students.view_student', raise_exception=True)
+def student_photos(request, pk):
+    """View photos for a specific student."""
+    student = get_object_or_404(Student, pk=pk)
+    photos = student.photos.all().order_by('-created_at')
+    token = signing.dumps({'student_id': student.pk}, salt='student-photos')
+    share_url = request.build_absolute_uri(
+        reverse('students:student_photos_public', kwargs={'token': token})
+    )
+    return render(request, 'students/student_photos.html', {'student': student, 'photos': photos, 'share_url': share_url})
+
+
+def student_photos_public(request, token):
+    """Public view for student photos via signed link."""
+    try:
+        data = signing.loads(token, salt='student-photos', max_age=60 * 60 * 24 * 7)
+    except signing.SignatureExpired as exc:
+        raise Http404('Share link expired.') from exc
+    except signing.BadSignature as exc:
+        raise Http404('Invalid share link.') from exc
+
+    student_id = data.get('student_id')
+    student = get_object_or_404(Student, pk=student_id)
+    photos = student.photos.all().order_by('-created_at')
+    return render(request, 'students/student_photos_public.html', {'student': student, 'photos': photos})
+
+@login_required
 def add_academic_record(request, pk):
     """Add academic record to student."""
     student = get_object_or_404(Student, pk=pk)
@@ -271,6 +348,14 @@ def add_academic_record(request, pk):
     
     return render(request, 'students/add_academic_record.html', {'form': form, 'student': student})
 
+
+@login_required
+@permission_required('students.view_student', raise_exception=True)
+def student_report_cards(request, pk):
+    """View report card images for a specific student."""
+    student = get_object_or_404(Student, pk=pk)
+    records = student.academic_records.exclude(report_card_image='').exclude(report_card_image__isnull=True)
+    return render(request, 'students/student_report_cards.html', {'student': student, 'records': records})
 
 @login_required
 @permission_required('students.view_studentmark', raise_exception=True)

@@ -561,5 +561,20 @@ def insurance_pdf(request):
 @login_required
 def reports_index(request):
     """Reports index page."""
-    return render(request, 'reports/index.html')
+    boarding_count = Student.objects.filter(boarding_status='boarding').count()
+    non_boarding_count = Student.objects.filter(boarding_status='non_boarding').count()
+    nursery_count = Student.objects.filter(school_level='nursery').count()
+    primary_count = Student.objects.filter(school_level='primary').count()
+    secondary_count = Student.objects.filter(school_level='secondary').count()
+    tvet_count = Student.objects.filter(school_level='tvet').count()
+
+    context = {
+        'boarding_count': boarding_count,
+        'non_boarding_count': non_boarding_count,
+        'nursery_count': nursery_count,
+        'primary_count': primary_count,
+        'secondary_count': secondary_count,
+        'tvet_count': tvet_count,
+    }
+    return render(request, 'reports/index.html', context)
 

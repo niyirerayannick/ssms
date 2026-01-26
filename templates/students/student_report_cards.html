@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.full_name }} Report Cards - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-fade-in">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Report Card Photos</h1>
+            <p class="text-gray-600 mt-1">{{ student.full_name }}</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'students:student_detail' student.pk %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                Back to Student
+            </a>
+            {% if perms.students.change_student %}
+            <a href="{% url 'students:add_academic_record' student.pk %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                + Add Record
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md p-6">
+        {% if records %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for record in records %}
+            <div class="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                <img src="{{ record.report_card_image.url }}" alt="{{ student.full_name }} report card" class="w-full h-56 object-cover">
+                <div class="p-3">
+                    <p class="text-sm font-semibold text-gray-800">{{ record.subject }} • {{ record.term }}</p>
+                    <p class="text-xs text-gray-500">Year {{ record.academic_year }} • Marks {{ record.marks }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 text-center py-8">No report card photos uploaded yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -32,12 +32,14 @@ class Command(BaseCommand):
                 'description': 'Financial management and reporting - Full view access to all finance-related data',
                 'apps': ['finance', 'insurance', 'students', 'families', 'core', 'reports'],
                 'permissions': ['view', 'add', 'change'],
-                'models': ['schoolfee', 'familyinsurance']
+                'models': ['schoolfee', 'familyinsurance'],
+                'extra_permissions': ['manage_fees', 'manage_insurance'],
             },
             'Executive Secretary': {
                 'description': 'Overall coordination and reporting',
                 'apps': ['students', 'families', 'core', 'finance', 'insurance', 'reports'],
                 'permissions': ['view', 'add', 'change'],
+                'extra_permissions': ['manage_fees', 'manage_insurance'],
             },
             'Program Officer': {
                 'description': 'Student and family management',
@@ -51,9 +53,9 @@ class Command(BaseCommand):
             group, created = Group.objects.get_or_create(name=role_name)
             
             if created:
-                self.stdout.write(self.style.SUCCESS(f'✓ Created role: {role_name}'))
+                self.stdout.write(self.style.SUCCESS(f'Created role: {role_name}'))
             else:
-                self.stdout.write(self.style.WARNING(f'○ Role already exists: {role_name}'))
+                self.stdout.write(self.style.WARNING(f'- Role already exists: {role_name}'))
                 # Clear existing permissions to reset
                 group.permissions.clear()
             
@@ -62,7 +64,7 @@ class Command(BaseCommand):
                 # Admin gets all permissions
                 all_permissions = Permission.objects.all()
                 group.permissions.set(all_permissions)
-                self.stdout.write(self.style.SUCCESS(f'  → Assigned ALL permissions to {role_name}'))
+                self.stdout.write(self.style.SUCCESS(f'  Assigned ALL permissions to {role_name}'))
             else:
                 # Assign specific permissions based on apps
                 permission_count = 0
@@ -87,11 +89,18 @@ class Command(BaseCommand):
                             except Permission.DoesNotExist:
                                 pass
                 
-                self.stdout.write(self.style.SUCCESS(f'  → Assigned {permission_count} permissions to {role_name}'))
+                extra_permissions = role_config.get('extra_permissions', [])
+                if extra_permissions:
+                    extra_perms = Permission.objects.filter(codename__in=extra_permissions)
+                    if extra_perms:
+                        group.permissions.add(*extra_perms)
+                        permission_count += extra_perms.count()
+
+                self.stdout.write(self.style.SUCCESS(f'  Assigned {permission_count} permissions to {role_name}'))
             
             self.stdout.write(self.style.SUCCESS(f'  Description: {role_config["description"]}\n'))
         
-        self.stdout.write(self.style.SUCCESS('\n✓ User roles setup complete!'))
+        self.stdout.write(self.style.SUCCESS('\nUser roles setup complete!'))
         self.stdout.write(self.style.SUCCESS('\nAvailable roles:'))
         for role_name, role_config in roles.items():
-            self.stdout.write(f'  • {role_name}: {role_config["description"]}')
+            self.stdout.write(f'  - {role_name}: {role_config["description"]}')
