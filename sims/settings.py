@@ -193,7 +193,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Tailwind CSS Configuration
 TAILWIND_APP_NAME = 'theme'
-NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"  # Update this path if needed
+# Default for Linux containers; can override via env
+NPM_BIN_PATH = os.environ.get('NPM_BIN_PATH', '/usr/bin/npm')
 INTERNAL_IPS = [
     "127.0.0.1",
 ]

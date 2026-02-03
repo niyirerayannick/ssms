@@ -29,8 +29,17 @@ class Command(BaseCommand):
         change_student = Permission.objects.get(codename='change_student', content_type=student_ct)
         view_student = Permission.objects.get(codename='view_student', content_type=student_ct)
         
-        manage_fees = Permission.objects.get(codename='manage_fees', content_type=fees_ct)
-        manage_insurance = Permission.objects.get(codename='manage_insurance', content_type=insurance_ct)
+        # Ensure custom permissions exist (migration may not have created them yet)
+        manage_fees, _ = Permission.objects.get_or_create(
+            codename='manage_fees',
+            content_type=fees_ct,
+            defaults={'name': 'Can manage fees'},
+        )
+        manage_insurance, _ = Permission.objects.get_or_create(
+            codename='manage_insurance',
+            content_type=insurance_ct,
+            defaults={'name': 'Can manage insurance'},
+        )
 
         # Admin group - all permissions
         admin_group.permissions.add(
