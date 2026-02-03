@@ -1,15 +1,24 @@
 {% if user.is_authenticated %}
+{% load static %}
 <aside id="sidebar" class="hidden md:block w-64 bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 text-white min-h-screen shadow-2xl ring-1 ring-white/10 overflow-y-auto" style="font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;">
     <nav class="p-4">
+        <div class="mb-6 flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-3">
+            <div class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+                <img src="{% static 'image/logo.jpg' %}" alt="Solidact FDN Logo" class="h-10 w-10 rounded-xl object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <span class="material-symbols-rounded text-xl text-emerald-100 hidden">school</span>
+            </div>
+            <div class="min-w-0">
+                <p class="text-sm font-semibold text-white truncate">Solidact FDN</p>
+                <p class="text-[11px] text-emerald-200 uppercase tracking-wide">SIMS</p>
+            </div>
+        </div>
         <!-- Main Navigation -->
         <div class="mb-6">
             <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Main Menu</h3>
             <ul class="space-y-2">
                 <li>
                     <a href="{% url 'dashboard:index' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'dashboard' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[20px]">dashboard</span>
                         <span class="font-medium">Dashboard</span>
                     </a>
                 </li>
@@ -23,18 +32,14 @@
             <ul class="space-y-2">
                 <li>
                     <a href="{% url 'students:student_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'students' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[20px]">groups</span>
                         <span class="font-medium">View Students</span>
                     </a>
                 </li>
                 {% if perms.students.view_studentmark %}
                 <li>
                     <a href="{% url 'students:student_performance' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[18px]">insights</span>
                         <span>Student Performance</span>
                     </a>
                 </li>
@@ -42,9 +47,7 @@
                 {% if perms.students.view_studentmaterial %}
                 <li>
                     <a href="{% url 'students:student_materials' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[18px]">menu_book</span>
                         <span>School Materials</span>
                     </a>
                 </li>
@@ -52,9 +55,7 @@
                 {% if perms.students.add_student %}
                 <li>
                     <a href="{% url 'students:student_create' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[18px]">person_add</span>
                         <span>Add Student</span>
                     </a>
                 </li>
@@ -70,18 +71,14 @@
             <ul class="space-y-2">
                 <li>
                     <a href="{% url 'families:family_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'families' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.856-1.487M15 10a3 3 0 11-6 0 3 3 0 016 0zM6 20H1v-2a3 3 0 015.856-1.487M13 16a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[20px]">family_restroom</span>
                         <span class="font-medium">View Families</span>
                     </a>
                 </li>
                 {% if perms.families.add_family %}
                 <li>
                     <a href="{% url 'families:family_create' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[18px]">person_add</span>
                         <span>Add Family</span>
                     </a>
                 </li>
@@ -97,18 +94,14 @@
             <ul class="space-y-2">
                 <li>
                     <a href="{% url 'core:school_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'core' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5.581m0 0H9.42m5.999 0C17.338 16.999 16.5 15.173 16.5 13s.75-3.999 2.419-5"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[20px]">school</span>
                         <span class="font-medium">View Schools</span>
                     </a>
                 </li>
                 {% if perms.core.add_school %}
                 <li>
                     <a href="{% url 'core:school_create' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[18px]">add_home_work</span>
                         <span>Add School</span>
                     </a>
                 </li>
@@ -126,9 +119,7 @@
                 {% if perms.finance.view_schoolfee %}
                 <li>
                     <a href="{% url 'finance:dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'finance' and request.resolver_match.url_name == 'dashboard' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[20px]">analytics</span>
                         <span class="font-medium">Finance Dashboard</span>
                     </a>
                 </li>
@@ -137,38 +128,28 @@
                 <li class="pt-2">
                     <details class="group">
                         <summary class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer hover:bg-white/10">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
+                            <span class="material-symbols-rounded text-[20px]">payments</span>
                             <span class="font-medium">School Fees</span>
-                            <svg class="w-4 h-4 ml-auto group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-                            </svg>
+                            <span class="material-symbols-rounded text-[18px] ml-auto group-open:rotate-180 transition-transform">expand_more</span>
                         </summary>
                         <ul class="pl-4 mt-2 space-y-1 border-l border-white/10">
                             <li>
                                 <a href="{% url 'finance:fees_list' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                                    </svg>
+                                    <span class="material-symbols-rounded text-[18px]">receipt_long</span>
                                     <span>View All Fees</span>
                                 </a>
                             </li>
                             {% if perms.finance.add_schoolfee %}
                             <li>
                                 <a href="{% url 'finance:fee_create' %}?type=school_fee" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                    </svg>
+                                    <span class="material-symbols-rounded text-[18px]">add_circle</span>
                                     <span>Record Fee Payment</span>
                                 </a>
                             </li>
                             {% endif %}
                             <li>
                                 <a href="{% url 'finance:overdue_fees' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0 5v1m0-16h.01M9.03 4h5.94c1.105 0 2.029.905 2.029 2.02v11.96c0 1.115-.924 2.02-2.029 2.02H9.03c-1.105 0-2.029-.905-2.029-2.02V6.02C7.001 4.905 7.925 4 9.03 4z"/>
-                                    </svg>
+                                    <span class="material-symbols-rounded text-[18px]">report</span>
                                     <span>Overdue Fees</span>
                                 </a>
                             </li>
@@ -182,29 +163,21 @@
                 <li class="pt-2">
                     <details class="group">
                         <summary class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer hover:bg-white/10">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                            </svg>
+                            <span class="material-symbols-rounded text-[20px]">health_and_safety</span>
                             <span class="font-medium">Mutuelle de Santé</span>
-                            <svg class="w-4 h-4 ml-auto group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-                            </svg>
+                            <span class="material-symbols-rounded text-[18px] ml-auto group-open:rotate-180 transition-transform">expand_more</span>
                         </summary>
                         <ul class="pl-4 mt-2 space-y-1 border-l border-white/10">
                             <li>
                                 <a href="{% url 'insurance:insurance_list' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                                    </svg>
+                                    <span class="material-symbols-rounded text-[18px]">folder_open</span>
                                     <span>View All Records</span>
                                 </a>
                             </li>
                             {% if perms.insurance.add_familyinsurance %}
                             <li>
                                 <a href="{% url 'finance:fee_create' %}?type=insurance" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                    </svg>
+                                    <span class="material-symbols-rounded text-[18px]">add_circle</span>
                                     <span>Record Payment</span>
                                 </a>
                             </li>
@@ -226,9 +199,7 @@
             <ul class="space-y-2">
                 <li>
                     <a href="{% url 'reports:index' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'reports' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[20px]">description</span>
                         <span class="font-medium">Reports</span>
                     </a>
                 </li>
@@ -243,22 +214,15 @@
             <ul class="space-y-2">
                 <li>
                     <a href="{% url 'accounts:user_list' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-white/10">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[20px]">manage_accounts</span>
                         <span class="font-medium">User Management</span>
                     </a>
                 </li>
                 <li>
                     <a href="{% url 'admin:index' %}" target="_blank" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-white/10">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[20px]">admin_panel_settings</span>
                         <span class="font-medium">Django Admin</span>
-                        <svg class="w-3 h-3 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-4-4l8-8m0 0H8m8 0v8"/>
-                        </svg>
+                        <span class="material-symbols-rounded text-[16px] ml-auto">open_in_new</span>
                     </a>
                 </li>
             </ul>
@@ -267,29 +231,37 @@
     </nav>
 </aside>
 
-<!-- Mobile menu button -->
-<button id="mobile-menu-btn" class="md:hidden fixed top-4 left-4 z-50 p-2 bg-gradient-to-br from-emerald-900/90 to-teal-900/90 text-white rounded-xl shadow-lg ring-1 ring-white/10 backdrop-blur">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-    </svg>
-</button>
-
 <!-- Mobile sidebar overlay -->
 <div id="mobile-sidebar" class="md:hidden fixed inset-0 z-40 hidden">
     <div class="fixed inset-0 bg-black bg-opacity-50" onclick="document.getElementById('mobile-sidebar').classList.add('hidden')"></div>
-    <aside class="fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 text-white shadow-2xl ring-1 ring-white/10 overflow-y-auto" style="font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;">
+    <aside class="fixed left-0 top-0 h-full w-72 bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 text-white shadow-2xl ring-1 ring-white/10 overflow-y-auto" style="font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;">
         <div class="p-4">
-            <button onclick="document.getElementById('mobile-sidebar').classList.add('hidden')" class="mb-4 p-2 hover:bg-white/10 rounded-lg">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
+            <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+                        <img src="{% static 'image/logo.jpg' %}" alt="Solidact FDN Logo" class="h-10 w-10 rounded-xl object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <span class="material-symbols-rounded text-xl text-emerald-100 hidden">school</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-white">Solidact FDN</p>
+                        <p class="text-[11px] text-emerald-200 uppercase tracking-wide">SIMS</p>
+                    </div>
+                </div>
+                <button aria-label="Close menu" onclick="document.getElementById('mobile-sidebar').classList.add('hidden')" class="p-2 hover:bg-white/10 rounded-lg">
+                    <span class="material-symbols-rounded text-[24px]">close</span>
+                </button>
+            </div>
             
             <!-- Main Menu -->
             <div class="mb-4">
                 <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Main</h3>
                 <ul class="space-y-1">
-                    <li><a href="{% url 'dashboard:index' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">📊 Dashboard</a></li>
+                    <li>
+                        <a href="{% url 'dashboard:index' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
+                            <span class="material-symbols-rounded text-[18px]">dashboard</span>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
@@ -297,14 +269,34 @@
             <div class="mb-4">
                 <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Students</h3>
                 <ul class="space-y-1">
-                    <li><a href="{% url 'students:student_list' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">👥 View Students</a></li>
+                    <li>
+                        <a href="{% url 'students:student_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
+                            <span class="material-symbols-rounded text-[18px]">groups</span>
+                            <span>View Students</span>
+                        </a>
+                    </li>
                     {% if perms.students.view_studentmark %}
-                    <li><a href="{% url 'students:student_performance' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">📈 Student Performance</a></li>
+                    <li>
+                        <a href="{% url 'students:student_performance' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
+                            <span class="material-symbols-rounded text-[18px]">insights</span>
+                            <span>Student Performance</span>
+                        </a>
+                    </li>
                     {% endif %}
                     {% if perms.students.view_studentmaterial %}
-                    <li><a href="{% url 'students:student_materials' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">🎒 School Materials</a></li>
+                    <li>
+                        <a href="{% url 'students:student_materials' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
+                            <span class="material-symbols-rounded text-[18px]">menu_book</span>
+                            <span>School Materials</span>
+                        </a>
+                    </li>
                     {% endif %}
-                    <li><a href="{% url 'students:student_create' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">+ Add Student</a></li>
+                    <li>
+                        <a href="{% url 'students:student_create' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
+                            <span class="material-symbols-rounded text-[18px]">person_add</span>
+                            <span>Add Student</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
@@ -312,8 +304,18 @@
             <div class="mb-4">
                 <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Families</h3>
                 <ul class="space-y-1">
-                    <li><a href="{% url 'families:family_list' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">👨‍👩‍👧‍👦 View Families</a></li>
-                    <li><a href="{% url 'families:family_create' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">+ Add Family</a></li>
+                    <li>
+                        <a href="{% url 'families:family_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
+                            <span class="material-symbols-rounded text-[18px]">family_restroom</span>
+                            <span>View Families</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'families:family_create' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
+                            <span class="material-symbols-rounded text-[18px]">person_add</span>
+                            <span>Add Family</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
@@ -321,8 +323,18 @@
             <div class="mb-4">
                 <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Schools</h3>
                 <ul class="space-y-1">
-                    <li><a href="{% url 'core:school_list' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">🏫 View Schools</a></li>
-                    <li><a href="{% url 'core:school_create' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">+ Add School</a></li>
+                    <li>
+                        <a href="{% url 'core:school_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
+                            <span class="material-symbols-rounded text-[18px]">school</span>
+                            <span>View Schools</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'core:school_create' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
+                            <span class="material-symbols-rounded text-[18px]">add_home_work</span>
+                            <span>Add School</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
@@ -330,12 +342,42 @@
             <div class="mb-4">
                 <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Finance & Payments</h3>
                 <ul class="space-y-1">
-                    <li><a href="{% url 'finance:dashboard' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">📊 Finance Dashboard</a></li>
-                    <li><a href="{% url 'finance:fees_list' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">💰 School Fees</a></li>
-                    <li><a href="{% url 'finance:fee_create' %}?type=school_fee" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">+ Record Fee</a></li>
-                    <li><a href="{% url 'finance:overdue_fees' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">⚠️ Overdue Fees</a></li>
-                    <li><a href="{% url 'insurance:insurance_list' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">🏥 Mutuelle Records</a></li>
-                    <li><a href="{% url 'finance:fee_create' %}?type=insurance" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">+ Record Mutuelle</a></li>
+                    <li>
+                        <a href="{% url 'finance:dashboard' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
+                            <span class="material-symbols-rounded text-[18px]">analytics</span>
+                            <span>Finance Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'finance:fees_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
+                            <span class="material-symbols-rounded text-[18px]">payments</span>
+                            <span>School Fees</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'finance:fee_create' %}?type=school_fee" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
+                            <span class="material-symbols-rounded text-[18px]">add_circle</span>
+                            <span>Record Fee</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'finance:overdue_fees' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
+                            <span class="material-symbols-rounded text-[18px]">report</span>
+                            <span>Overdue Fees</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'insurance:insurance_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
+                            <span class="material-symbols-rounded text-[18px]">health_and_safety</span>
+                            <span>Mutuelle Records</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'finance:fee_create' %}?type=insurance" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
+                            <span class="material-symbols-rounded text-[18px]">add_circle</span>
+                            <span>Record Mutuelle</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
@@ -343,7 +385,12 @@
             <div class="mb-4">
                 <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Reports</h3>
                 <ul class="space-y-1">
-                    <li><a href="{% url 'reports:index' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">📄 Reports</a></li>
+                    <li>
+                        <a href="{% url 'reports:index' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
+                            <span class="material-symbols-rounded text-[18px]">description</span>
+                            <span>Reports</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
@@ -352,8 +399,18 @@
             <div class="mb-4 pt-4 border-t border-white/10">
                 <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Admin</h3>
                 <ul class="space-y-1">
-                    <li><a href="{% url 'accounts:user_list' %}" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">👥 User Management</a></li>
-                    <li><a href="{% url 'admin:index' %}" target="_blank" class="block px-4 py-2 rounded-lg hover:bg-white/10 text-sm">⚙️ Django Admin</a></li>
+                    <li>
+                        <a href="{% url 'accounts:user_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
+                            <span class="material-symbols-rounded text-[18px]">manage_accounts</span>
+                            <span>User Management</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'admin:index' %}" target="_blank" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
+                            <span class="material-symbols-rounded text-[18px]">admin_panel_settings</span>
+                            <span>Django Admin</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
             {% endif %}
