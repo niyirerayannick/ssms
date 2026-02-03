@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from students.models import Student
-from finance.models import SchoolFees
+from finance.models import SchoolFee
 from insurance.models import HealthInsurance
 
 
@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
         # Get content types
         student_ct = ContentType.objects.get_for_model(Student)
-        fees_ct = ContentType.objects.get_for_model(SchoolFees)
+        fees_ct = ContentType.objects.get_for_model(SchoolFee)
         insurance_ct = ContentType.objects.get_for_model(HealthInsurance)
 
         # Get permissions
