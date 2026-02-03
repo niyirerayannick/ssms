@@ -22,13 +22,13 @@ services:
     command: >
       sh -c "until pg_isready -h $DB_HOST -p $DB_PORT -U $DB_USER; do echo 'Waiting for DB...'; sleep 1; done;
              python manage.py migrate &&
-             gunicorn --bind 0.0.0.0:8000 --workers 3 sims.wsgi:application"
+            gunicorn --bind 0.0.0.0:8001 --workers 3 sims.wsgi:application"
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     ports:
-      - "8000:8000"
+      - "8001:8001"
     environment:
       SECRET_KEY: ${SECRET_KEY:-django-insecure-change-this-in-production}
       DEBUG: ${DEBUG:-True}
