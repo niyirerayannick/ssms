@@ -23,7 +23,7 @@ default_allowed_hosts = [
     'localhost',
     '127.0.0.1',
     'z0sw44wk8wck88g0k8wg8w4w.76.13.138.71.sslip.io',
-    'ims-saf.cloud',
+    'safrwanda.online',
 ]
 raw_hosts = os.environ.get('ALLOWED_HOSTS', ','.join(default_allowed_hosts))
 ALLOWED_HOSTS = [host.strip() for host in raw_hosts.split(',') if host.strip()]
