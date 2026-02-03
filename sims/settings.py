@@ -19,7 +19,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-produc
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 # ALLOWED_HOSTS configuration with Coolify support
-raw_hosts = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1')
+raw_hosts = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1', "z0sw44wk8wck88g0k8wg8w4w.76.13.138.71.sslip.io", "ims-saf.cloud")
 ALLOWED_HOSTS = [host.strip() for host in raw_hosts.split(',') if host.strip()]
 # Add wildcard support for sslip.io (Coolify default domain)
 if not any('sslip.io' in host for host in ALLOWED_HOSTS):
