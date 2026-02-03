@@ -4,6 +4,7 @@ Django settings for sims project.
 
 from pathlib import Path
 import os
+from urllib.parse import urlparse, unquote
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -105,17 +106,30 @@ WSGI_APPLICATION = 'sims.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# Support for Docker environment variables
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    parsed_url = urlparse(DATABASE_URL)
+    if parsed_url.scheme not in ['postgres', 'postgresql']:
+        raise ValueError('DATABASE_URL must use postgres or postgresql scheme')
 
-# Database configuration - supports both local and Docker
-# For local: set DB_HOST=localhost (default)
-# For Docker: set DB_HOST=db in environment
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': parsed_url.path.lstrip('/') or 'postgres',
+            'USER': unquote(parsed_url.username or ''),
+            'PASSWORD': unquote(parsed_url.password or ''),
+            'HOST': parsed_url.hostname or '',
+            'PORT': str(parsed_url.port or 5432),
+        }
     }
-}
+else:
+    # Default to SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # Uncomment below to use SQLite for quick local development (no PostgreSQL needed)
 # For local development, you can use SQLite instead:
