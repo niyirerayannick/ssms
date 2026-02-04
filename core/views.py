@@ -4,7 +4,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q, Count
+from django.db import models
 from .models import District, Sector, Cell, Village, Province, School, Notification
+from students.models import Student
 from .forms import SchoolForm
 
 
@@ -95,7 +97,9 @@ def school_list(request):
 def school_detail(request, pk):
     """View school profile with students and banking info."""
     school = get_object_or_404(School, pk=pk)
-    students = school.students.select_related('family').all()
+    students = Student.objects.select_related('family', 'school').filter(
+        models.Q(school=school) | models.Q(school_name=school.name)
+    ).distinct()
     
     context = {
         'school': school,

@@ -85,7 +85,10 @@ class Family(models.Model):
     @property
     def total_students(self):
         """Get count of students in this family."""
-        return self.family_students.count()
+        from students.models import Student
+        linked_ids = set(self.family_students.values_list('student_id', flat=True))
+        direct_ids = set(Student.objects.filter(family=self).values_list('id', flat=True))
+        return len(linked_ids | direct_ids)
     
     @property
     def students(self):

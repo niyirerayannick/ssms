@@ -42,7 +42,18 @@ def family_edit(request, pk):
 def family_detail(request, pk):
     """View family profile with students, insurance, and location."""
     family = get_object_or_404(Family, pk=pk)
-    family_students = FamilyStudent.objects.filter(family=family).select_related('student')
+    linked_students = list(
+        FamilyStudent.objects.filter(family=family).select_related('student')
+    )
+    linked_ids = {fs.student_id for fs in linked_students}
+    direct_students = Student.objects.filter(family=family).exclude(id__in=linked_ids)
+    family_students = [
+        {'student': fs.student, 'relationship': fs.relationship, 'from_direct': False}
+        for fs in linked_students
+    ] + [
+        {'student': student, 'relationship': 'Child', 'from_direct': True}
+        for student in direct_students
+    ]
     insurance_records = family.insurance_records.all().order_by('-insurance_year')
     
     context = {
