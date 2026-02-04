@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Group
+from django.core.mail import send_mail
+from django.conf import settings
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
@@ -123,6 +125,23 @@ def user_create(request):
                 user.is_staff = True
                 user.save()
             
+            if email and settings.DEFAULT_FROM_EMAIL and settings.EMAIL_HOST_USER:
+                login_url = request.build_absolute_uri('/accounts/login/')
+                send_mail(
+                    subject='Your SIMS account credentials',
+                    message=(
+                        f"Hello {first_name or username},\n\n"
+                        "Your SIMS account has been created.\n\n"
+                        f"Username: {username}\n"
+                        f"Password: {password}\n"
+                        f"Login: {login_url}\n\n"
+                        "Please change your password after logging in.\n\n"
+                        "— SIMS"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=True,
+                )
             messages.success(request, f'User "{username}" created successfully with role: {role}')
             return redirect('accounts:user_list')
         except Group.DoesNotExist:

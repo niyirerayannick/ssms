@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from datetime import datetime
+import re
 from io import BytesIO
 
 from students.models import Student
@@ -16,6 +17,31 @@ from core.models import School, Province, District, Sector, Cell, Village
 
 
 # ========== TEMPLATE GENERATION ==========
+
+def _normalize_row(row, expected_len):
+    row_values = list(row or [])
+    if len(row_values) < expected_len:
+        row_values.extend([None] * (expected_len - len(row_values)))
+    return row_values
+
+
+def _normalize_header(value):
+    if value is None:
+        return ''
+    text = str(value).strip().lower()
+    text = text.replace('*', '')
+    text = re.sub(r'\([^)]*\)', '', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
+
+
+def _build_header_index(header_row):
+    header_index = {}
+    for idx, cell in enumerate(header_row or []):
+        key = _normalize_header(cell)
+        if key:
+            header_index[key] = idx
+    return header_index
 
 @login_required
 def download_student_template(request):
@@ -303,11 +329,45 @@ def import_students(request):
     """Handle student Excel file import."""
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
+        expected_columns = 19
+        expected_headers = [
+            ('first name', True),
+            ('last name', True),
+            ('gender', True),
+            ('date of birth', True),
+            ('family code', False),
+            ('school name', True),
+            ('class level', True),
+            ('enrollment status', False),
+            ('sponsorship status', False),
+            ('has disability', False),
+            ('disability types', False),
+            ('disability description', False),
+            ('province', False),
+            ('district', False),
+            ('sector', False),
+            ('cell', False),
+            ('village', False),
+            ('program officer name', False),
+            ('national id', False),
+        ]
         
         try:
             # Load workbook
             wb = load_workbook(excel_file)
             ws = wb.active
+
+            header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True), ())
+            header_index = _build_header_index(header_row)
+            missing_required = [name for name, required in expected_headers if required and name not in header_index]
+            if missing_required:
+                messages.error(
+                    request,
+                    "Missing required columns: "
+                    + ", ".join(missing_required)
+                    + ". Please download the latest template and try again."
+                )
+                return redirect('students:student_list')
             
             success_count = 0
             error_count = 0
@@ -320,26 +380,28 @@ def import_students(request):
                     continue
                 
                 try:
+                    row = _normalize_row(row, expected_columns)
+                    get_value = lambda key: row[header_index.get(key, -1)] if header_index.get(key, -1) >= 0 and header_index.get(key, -1) < len(row) else None
                     # Extract data
-                    first_name = row[0]
-                    last_name = row[1]
-                    gender = row[2]
-                    dob_str = row[3]
-                    family_code = row[4]
-                    school_name = row[5]
-                    class_level = row[6]
-                    enrollment_status = row[7] or 'enrolled'
-                    sponsorship_status = row[8] or 'pending'
-                    has_disability_str = row[9]
-                    disability_types = row[10]
-                    disability_description = row[11]
-                    province_name = row[12]
-                    district_name = row[13]
-                    sector_name = row[14]
-                    cell_name = row[15]
-                    village_name = row[16]
-                    program_officer = row[17]
-                    national_id = row[18]
+                    first_name = get_value('first name')
+                    last_name = get_value('last name')
+                    gender = get_value('gender')
+                    dob_str = get_value('date of birth')
+                    family_code = get_value('family code')
+                    school_name = get_value('school name')
+                    class_level = get_value('class level')
+                    enrollment_status = get_value('enrollment status') or 'enrolled'
+                    sponsorship_status = get_value('sponsorship status') or 'pending'
+                    has_disability_str = get_value('has disability')
+                    disability_types = get_value('disability types')
+                    disability_description = get_value('disability description')
+                    province_name = get_value('province')
+                    district_name = get_value('district')
+                    sector_name = get_value('sector')
+                    cell_name = get_value('cell')
+                    village_name = get_value('village')
+                    program_officer = get_value('program officer name')
+                    national_id = get_value('national id')
                     
                     # Validate required fields
                     if not all([first_name, last_name, gender, dob_str, school_name, class_level]):
@@ -433,10 +495,37 @@ def import_families(request):
     """Handle family Excel file import."""
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
+        expected_columns = 12
+        expected_headers = [
+            ('head of family name', True),
+            ('national id', True),
+            ('phone number', True),
+            ('alternative phone', False),
+            ('province', True),
+            ('district', True),
+            ('sector', False),
+            ('cell', False),
+            ('village', False),
+            ('total family members', True),
+            ('address description', False),
+            ('notes', False),
+        ]
         
         try:
             wb = load_workbook(excel_file)
             ws = wb.active
+
+            header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True), ())
+            header_index = _build_header_index(header_row)
+            missing_required = [name for name, required in expected_headers if required and name not in header_index]
+            if missing_required:
+                messages.error(
+                    request,
+                    "Missing required columns: "
+                    + ", ".join(missing_required)
+                    + ". Please download the latest template and try again."
+                )
+                return redirect('families:family_list')
             
             success_count = 0
             error_count = 0
@@ -447,18 +536,20 @@ def import_families(request):
                     continue
                 
                 try:
-                    head_of_family = row[0]
-                    national_id = row[1]
-                    phone_number = row[2]
-                    alternative_phone = row[3]
-                    province_name = row[4]
-                    district_name = row[5]
-                    sector_name = row[6]
-                    cell_name = row[7]
-                    village_name = row[8]
-                    total_family_members = row[9]
-                    address_description = row[10]
-                    notes = row[11]
+                    row = _normalize_row(row, expected_columns)
+                    get_value = lambda key: row[header_index.get(key, -1)] if header_index.get(key, -1) >= 0 and header_index.get(key, -1) < len(row) else None
+                    head_of_family = get_value('head of family name')
+                    national_id = get_value('national id')
+                    phone_number = get_value('phone number')
+                    alternative_phone = get_value('alternative phone')
+                    province_name = get_value('province')
+                    district_name = get_value('district')
+                    sector_name = get_value('sector')
+                    cell_name = get_value('cell')
+                    village_name = get_value('village')
+                    total_family_members = get_value('total family members')
+                    address_description = get_value('address description')
+                    notes = get_value('notes')
                     
                     # Validate required fields
                     if not all([head_of_family, national_id, phone_number, province_name, district_name, total_family_members]):
@@ -536,10 +627,36 @@ def import_schools(request):
     """Handle school Excel file import."""
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
+        expected_columns = 11
+        expected_headers = [
+            ('school name', True),
+            ('province', False),
+            ('district', True),
+            ('sector', False),
+            ('headteacher name', False),
+            ('headteacher mobile', False),
+            ('headteacher email', False),
+            ('bank name', False),
+            ('bank account name', False),
+            ('bank account number', False),
+            ('fee amount', False),
+        ]
         
         try:
             wb = load_workbook(excel_file)
             ws = wb.active
+
+            header_row = next(ws.iter_rows(min_row=1, max_row=1, values_only=True), ())
+            header_index = _build_header_index(header_row)
+            missing_required = [name for name, required in expected_headers if required and name not in header_index]
+            if missing_required:
+                messages.error(
+                    request,
+                    "Missing required columns: "
+                    + ", ".join(missing_required)
+                    + ". Please download the latest template and try again."
+                )
+                return redirect('core:school_list')
             
             success_count = 0
             error_count = 0
@@ -550,17 +667,19 @@ def import_schools(request):
                     continue
                 
                 try:
-                    school_name = row[0]
-                    province_name = row[1]
-                    district_name = row[2]
-                    sector_name = row[3]
-                    headteacher_name = row[4]
-                    headteacher_mobile = row[5]
-                    headteacher_email = row[6]
-                    bank_name = row[7]
-                    bank_account_name = row[8]
-                    bank_account_number = row[9]
-                    fee_amount = row[10]
+                    row = _normalize_row(row, expected_columns)
+                    get_value = lambda key: row[header_index.get(key, -1)] if header_index.get(key, -1) >= 0 and header_index.get(key, -1) < len(row) else None
+                    school_name = get_value('school name')
+                    province_name = get_value('province')
+                    district_name = get_value('district')
+                    sector_name = get_value('sector')
+                    headteacher_name = get_value('headteacher name')
+                    headteacher_mobile = get_value('headteacher mobile')
+                    headteacher_email = get_value('headteacher email')
+                    bank_name = get_value('bank name')
+                    bank_account_name = get_value('bank account name')
+                    bank_account_number = get_value('bank account number')
+                    fee_amount = get_value('fee amount')
                     
                     # Validate required fields
                     if not all([school_name, district_name]):
