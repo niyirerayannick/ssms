@@ -126,9 +126,9 @@ def user_create(request):
                 user.save()
             
             if email and settings.DEFAULT_FROM_EMAIL and settings.EMAIL_HOST_USER:
-                login_url = request.build_absolute_uri('/accounts/login/')
+                login_url = request.build_absolute_uri('/login/')
                 send_mail(
-                    subject='Your SIMS account credentials',
+                    subject='Your SAF IMS account credentials',
                     message=(
                         f"Hello {first_name or username},\n\n"
                         "Your SIMS account has been created.\n\n"
@@ -136,7 +136,7 @@ def user_create(request):
                         f"Password: {password}\n"
                         f"Login: {login_url}\n\n"
                         "Please change your password after logging in.\n\n"
-                        "— SIMS"
+                        "— SAF IMS"
                     ),
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[email],
