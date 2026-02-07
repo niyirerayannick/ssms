@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import School, District, Sector, Cell, Village, Notification
+from .models import School, District, Sector, Cell, Village, Notification, AcademicYear
 
 
 @admin.register(School)
@@ -45,3 +45,10 @@ class NotificationAdmin(admin.ModelAdmin):
     list_display = ['recipient', 'verb', 'is_read', 'created_at']
     list_filter = ['is_read', 'created_at']
     search_fields = ['recipient__username', 'verb', 'description']
+
+
+@admin.register(AcademicYear)
+class AcademicYearAdmin(admin.ModelAdmin):
+    list_display = ['name', 'is_active', 'created_at']
+    list_filter = ['is_active']
+    search_fields = ['name']

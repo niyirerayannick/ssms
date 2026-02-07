@@ -23,6 +23,22 @@
         <form method="get" class="flex flex-wrap gap-4">
             <input type="text" name="search" value="{{ search_query }}" placeholder="Search by family name or code..."
                    class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <select name="district" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">All Districts</option>
+                {% for district in districts %}
+                    <option value="{{ district.id }}" {% if district_filter|add:""|stringformat:"s" == district.id|stringformat:"s" %}selected{% endif %}>
+                        {{ district.name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <select name="academic_year" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">All Academic Years</option>
+                {% for year in academic_years %}
+                    <option value="{{ year.id }}" {% if academic_year_filter|add:""|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>
+                        {{ year.name }}
+                    </option>
+                {% endfor %}
+            </select>
             <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">All Status</option>
                 <option value="covered" {% if status_filter == 'covered' %}selected{% endif %}>Covered</option>
@@ -59,7 +75,7 @@
                                 <span class="text-xs text-gray-500">{{ insurance.family.family_code }}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.insurance_year }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.insurance_year.name|default:"N/A" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.required_amount }} FRW</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.amount_paid }} FRW</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.balance }} FRW</td>

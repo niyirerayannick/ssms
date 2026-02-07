@@ -1,6 +1,6 @@
 from django import forms
 from .models import Student, StudentPhoto, StudentMark, StudentMaterial
-from core.models import School
+from core.models import School, AcademicYear
 from families.models import Family
 from django.contrib.auth.models import User
 
@@ -201,6 +201,14 @@ class StudentPhotoForm(forms.ModelForm):
 
 class StudentMarkForm(forms.ModelForm):
     """Form for adding academic marks."""
+    academic_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.none(),
+        required=True,
+        empty_label="Select academic year",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+        })
+    )
     
     class Meta:
         model = StudentMark
@@ -211,10 +219,6 @@ class StudentMarkForm(forms.ModelForm):
             }),
             'term': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
-            }),
-            'academic_year': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'placeholder': 'e.g., 2024'
             }),
             'marks': forms.NumberInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
@@ -233,9 +237,25 @@ class StudentMarkForm(forms.ModelForm):
             }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        years = AcademicYear.objects.order_by('-name')
+        self.fields['academic_year'].queryset = years
+        active_year = years.filter(is_active=True).first()
+        if active_year and not self.instance.pk:
+            self.fields['academic_year'].initial = active_year
+
 
 class StudentMaterialForm(forms.ModelForm):
     """Form for recording school materials for sponsored students."""
+    academic_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.none(),
+        required=True,
+        empty_label="Select academic year",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+        })
+    )
 
     class Meta:
         model = StudentMaterial
@@ -253,10 +273,6 @@ class StudentMaterialForm(forms.ModelForm):
         widgets = {
             'student': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
-            }),
-            'academic_year': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'placeholder': 'e.g., 2024'
             }),
             'books_received': forms.CheckboxInput(attrs={
                 'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
@@ -289,3 +305,8 @@ class StudentMaterialForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['student'].queryset = Student.objects.filter(sponsorship_status='active').order_by('first_name', 'last_name')
+        years = AcademicYear.objects.order_by('-name')
+        self.fields['academic_year'].queryset = years
+        active_year = years.filter(is_active=True).first()
+        if active_year and not self.instance.pk:
+            self.fields['academic_year'].initial = active_year

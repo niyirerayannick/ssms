@@ -216,7 +216,7 @@
                         {% for insurance in families_top_outstanding %}
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ insurance.family.family_code }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ insurance.insurance_year }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ insurance.insurance_year.name|default:"N/A" }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">FRW {{ insurance.required_amount|floatformat:2 }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">FRW {{ insurance.amount_paid|floatformat:2 }}</td>
                             <td class="px-6 py-4 text-sm font-bold text-red-600">FRW {{ insurance.balance|floatformat:2 }}</td>

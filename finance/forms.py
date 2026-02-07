@@ -1,11 +1,19 @@
 from django import forms
 from .models import SchoolFee
 from insurance.models import FamilyInsurance
-from core.models import School
+from core.models import School, AcademicYear
 
 
 class FeeForm(forms.ModelForm):
     """Form for creating and editing school fees."""
+    academic_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.none(),
+        required=True,
+        empty_label="Select academic year",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+        })
+    )
     
     # Override school_name as a ChoiceField
     school_name = forms.ChoiceField(
@@ -24,10 +32,6 @@ class FeeForm(forms.ModelForm):
         widgets = {
             'student': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
-            }),
-            'academic_year': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'placeholder': 'e.g., 2024'
             }),
             'term': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
@@ -64,6 +68,12 @@ class FeeForm(forms.ModelForm):
         schools = School.objects.all().order_by('name')
         school_choices = [('', '--- Select School ---')] + [(school.name, school.name) for school in schools]
         self.fields['school_name'].choices = school_choices
+
+        years = AcademicYear.objects.all().order_by('-name')
+        self.fields['academic_year'].queryset = years
+        active_year = years.filter(is_active=True).first()
+        if active_year and not self.instance.pk:
+            self.fields['academic_year'].initial = active_year
         
         # If editing and instance has a student with a school, pre-select it
         if self.instance and self.instance.pk:  # Check if it's an existing instance
@@ -76,6 +86,14 @@ class FeeForm(forms.ModelForm):
 
 class FamilyInsuranceForm(forms.ModelForm):
     """Form for creating and editing family Mutuelle de Santé payments."""
+    insurance_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.none(),
+        required=True,
+        empty_label="Select academic year",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent'
+        })
+    )
     
     class Meta:
         model = FamilyInsurance
@@ -86,10 +104,6 @@ class FamilyInsuranceForm(forms.ModelForm):
         widgets = {
             'family': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent'
-            }),
-            'insurance_year': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent',
-                'placeholder': 'e.g., 2024'
             }),
             'required_amount': forms.NumberInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent',
@@ -113,3 +127,11 @@ class FamilyInsuranceForm(forms.ModelForm):
                 'placeholder': 'Additional remarks or notes'
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        years = AcademicYear.objects.order_by('-name')
+        self.fields['insurance_year'].queryset = years
+        active_year = years.filter(is_active=True).first()
+        if active_year and not self.instance.pk:
+            self.fields['insurance_year'].initial = active_year

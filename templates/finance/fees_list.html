@@ -23,6 +23,22 @@
         <form method="get" class="flex flex-wrap gap-4">
             <input type="text" name="search" value="{{ search_query }}" placeholder="Search by student name or term..."
                    class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <select name="district" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">All Districts</option>
+                {% for district in districts %}
+                    <option value="{{ district.id }}" {% if district_filter|add:""|stringformat:"s" == district.id|stringformat:"s" %}selected{% endif %}>
+                        {{ district.name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <select name="academic_year" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <option value="">All Academic Years</option>
+                {% for year in academic_years %}
+                    <option value="{{ year.id }}" {% if academic_year_filter|add:""|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>
+                        {{ year.name }}
+                    </option>
+                {% endfor %}
+            </select>
             <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 <option value="">All Status</option>
                 <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
@@ -48,6 +64,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Required</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
@@ -61,21 +78,22 @@
                     {% for fee in fees %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ fee.student.full_name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.term }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.required_fees }} RWF</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.academic_year.name|default:"N/A" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.get_term_display }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.total_fees }} RWF</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.amount_paid }} RWF</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium {% if fee.balance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
                             {{ fee.balance }} RWF
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                {% if fee.status == 'paid' %}bg-green-100 text-green-800
-                                {% elif fee.status == 'overdue' %}bg-red-100 text-red-800
+                                {% if fee.payment_status == 'paid' %}bg-green-100 text-green-800
+                                {% elif fee.payment_status == 'overdue' %}bg-red-100 text-red-800
                                 {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                                {{ fee.get_status_display }}
+                                {{ fee.get_payment_status_display }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.payment_date|default:"N/A" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.payment_dates|default:"N/A" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             {% if perms.finance.manage_fees %}
                             <a href="{% url 'finance:fee_edit' fee.pk %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
@@ -84,7 +102,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">No fee records found.</td>
+                        <td colspan="9" class="px-6 py-4 text-center text-gray-500">No fee records found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

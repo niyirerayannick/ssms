@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q, Sum, Count
+from core.models import District, AcademicYear
 from django.http import JsonResponse
 from .models import SchoolFee
 from .forms import FeeForm, FamilyInsuranceForm
@@ -31,15 +32,32 @@ def fees_list(request):
         fees = fees.filter(payment_status=status_filter)
     
     # Filter by academic year
-    year_filter = request.GET.get('year', '')
-    if year_filter:
-        fees = fees.filter(academic_year=year_filter)
+    academic_year_filter = request.GET.get('academic_year', '')
+    if academic_year_filter:
+        fees = fees.filter(academic_year_id=academic_year_filter)
+
+    # Filter by term
+    term_filter = request.GET.get('term', '')
+    if term_filter:
+        fees = fees.filter(term=term_filter)
+
+    # Filter by district (family or school district)
+    district_filter = request.GET.get('district', '')
+    if district_filter:
+        fees = fees.filter(
+            Q(student__family__district_id=district_filter) |
+            Q(student__school__district_id=district_filter)
+        )
     
     context = {
         'fees': fees,
         'search_query': search_query,
         'status_filter': status_filter,
-        'year_filter': year_filter,
+        'academic_year_filter': academic_year_filter,
+        'term_filter': term_filter,
+        'district_filter': district_filter,
+        'districts': District.objects.order_by('name'),
+        'academic_years': AcademicYear.objects.order_by('-name'),
     }
     return render(request, 'finance/fees_list.html', context)
 
@@ -203,7 +221,7 @@ def student_payment_history(request, student_id):
     student = get_object_or_404(Student, pk=student_id)
     
     # Get all fees for this student
-    fees = SchoolFee.objects.filter(student=student).order_by('-academic_year', '-created_at')
+    fees = SchoolFee.objects.filter(student=student).order_by('-academic_year__name', '-created_at')
     
     # Calculate totals for this student
     total_required = fees.aggregate(Sum('total_fees'))['total_fees__sum'] or 0
@@ -289,7 +307,7 @@ def get_family_insurance_details(request, family_id):
         family = get_object_or_404(Family, pk=family_id)
         
         # Get the latest insurance record for this family
-        latest_insurance = FamilyInsurance.objects.filter(family=family).order_by('-insurance_year').first()
+        latest_insurance = FamilyInsurance.objects.filter(family=family).order_by('-insurance_year__name').first()
         
         # Calculate total contribution across all years
         total_contribution = FamilyInsurance.objects.filter(family=family).aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
@@ -308,14 +326,17 @@ def get_family_insurance_details(request, family_id):
         }
         
         if latest_insurance:
-            data['insurance_year'] = latest_insurance.insurance_year
+            data['insurance_year_id'] = latest_insurance.insurance_year_id
+            data['insurance_year'] = latest_insurance.insurance_year.name if latest_insurance.insurance_year else ''
             data['required_amount'] = str(latest_insurance.required_amount)
             data['amount_paid'] = str(latest_insurance.amount_paid)
             data['balance'] = str(latest_insurance.balance)
             data['coverage_status'] = latest_insurance.get_coverage_status_display()
             data['has_existing_record'] = True
         else:
-            data['insurance_year'] = str(__import__('datetime').datetime.now().year)
+            active_year = AcademicYear.objects.filter(is_active=True).order_by('-name').first()
+            data['insurance_year_id'] = active_year.id if active_year else ''
+            data['insurance_year'] = active_year.name if active_year else ''
             data['required_amount'] = '0'
             data['amount_paid'] = '0'
             data['balance'] = '0'

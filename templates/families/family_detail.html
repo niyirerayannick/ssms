@@ -278,7 +278,7 @@
                     {% for record in insurance_records|slice:":3" %}
                     <div class="p-3 bg-gray-50 rounded-lg text-sm">
                         <div class="flex justify-between">
-                            <span class="font-medium text-gray-800">{{ record.insurance_year }}</span>
+                            <span class="font-medium text-gray-800">{{ record.insurance_year.name|default:"N/A" }}</span>
                             <span class="text-xs font-semibold {% if record.is_active %}text-green-600{% else %}text-gray-600{% endif %}">
                                 {% if record.is_active %}Active{% else %}Inactive{% endif %}
                             </span>

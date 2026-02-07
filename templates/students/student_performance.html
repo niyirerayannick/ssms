@@ -26,7 +26,7 @@
                 <select name="academic_year" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white/90 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                     <option value="">All years</option>
                     {% for year in available_years %}
-                        <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                        <option value="{{ year.id }}" {% if selected_year|add:""|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>{{ year.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -124,7 +124,7 @@
                             {{ row.student__first_name }} {{ row.student__last_name }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ row.student__class_level|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ row.academic_year|default:"N/A" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ row.academic_year__name|default:"N/A" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ row.term|default:"N/A" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                             {{ avg|floatformat:1 }}

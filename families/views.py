@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Family, FamilyStudent
+from core.models import District
 from .forms import FamilyForm
 from students.models import Student
 
@@ -54,7 +55,7 @@ def family_detail(request, pk):
         {'student': student, 'relationship': 'Child', 'from_direct': True}
         for student in direct_students
     ]
-    insurance_records = family.insurance_records.all().order_by('-insurance_year')
+    insurance_records = family.insurance_records.all().order_by('-insurance_year__name')
     
     context = {
         'family': family,
@@ -84,10 +85,17 @@ def family_list(request):
     province_filter = request.GET.get('province', '')
     if province_filter:
         families = families.filter(province_id=province_filter)
+
+    # Filter by district
+    district_filter = request.GET.get('district', '')
+    if district_filter:
+        families = families.filter(district_id=district_filter)
     
     context = {
         'families': families,
         'search_query': search_query,
         'province_filter': province_filter,
+        'district_filter': district_filter,
+        'districts': District.objects.order_by('name'),
     }
     return render(request, 'families/family_list.html', context)

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q
+from core.models import District, AcademicYear
 from .models import FamilyInsurance
 from .forms import InsuranceForm
 
@@ -24,11 +25,25 @@ def insurance_list(request):
     status_filter = request.GET.get('status', '')
     if status_filter:
         insurance_records = insurance_records.filter(coverage_status=status_filter)
+
+    # Filter by academic year
+    academic_year_filter = request.GET.get('academic_year', '')
+    if academic_year_filter:
+        insurance_records = insurance_records.filter(insurance_year_id=academic_year_filter)
+
+    # Filter by district
+    district_filter = request.GET.get('district', '')
+    if district_filter:
+        insurance_records = insurance_records.filter(family__district_id=district_filter)
     
     context = {
         'insurance_records': insurance_records,
         'search_query': search_query,
         'status_filter': status_filter,
+        'district_filter': district_filter,
+        'districts': District.objects.order_by('name'),
+        'academic_year_filter': academic_year_filter,
+        'academic_years': AcademicYear.objects.order_by('-name'),
     }
     return render(request, 'insurance/insurance_list.html', context)
 

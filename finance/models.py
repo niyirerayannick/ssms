@@ -1,5 +1,6 @@
 from django.db import models
 from students.models import Student
+from core.models import AcademicYear
 
 
 class SchoolFee(models.Model):
@@ -23,7 +24,13 @@ class SchoolFee(models.Model):
         on_delete=models.CASCADE, 
         related_name='fees'
     )
-    academic_year = models.CharField(max_length=20, default='2024')
+    academic_year = models.ForeignKey(
+        AcademicYear,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='school_fees'
+    )
     term = models.CharField(max_length=1, choices=TERM_CHOICES, default='1')
     school_name = models.CharField(max_length=200, blank=True, help_text="School name for this fee record")
     class_level = models.CharField(max_length=50, blank=True)
@@ -38,7 +45,7 @@ class SchoolFee(models.Model):
 
     class Meta:
         verbose_name_plural = 'School Fees'
-        ordering = ['-academic_year', '-created_at']
+        ordering = ['-academic_year__name', '-created_at']
         permissions = [
             ('manage_fees', 'Can manage fees'),
         ]
@@ -60,4 +67,5 @@ class SchoolFee(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.student.full_name} - {self.academic_year} - {self.get_payment_status_display()}"
+        year_display = self.academic_year.name if self.academic_year else "N/A"
+        return f"{self.student.full_name} - {year_display} - {self.get_payment_status_display()}"

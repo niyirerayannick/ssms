@@ -111,7 +111,7 @@
                 <tbody class="divide-y divide-gray-200">
                     {% for fee in fees %}
                     <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ fee.academic_year }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ fee.academic_year.name|default:"N/A" }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ fee.school_name }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ fee.class_level }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">FRW {{ fee.total_fees|floatformat:2 }}</td>
@@ -160,7 +160,7 @@
         {% for fee in fees %}
             {% if fee.comments %}
             <div class="mb-3 pb-3 border-b border-blue-200 last:border-b-0">
-                <p class="text-sm font-medium text-blue-900">{{ fee.academic_year }} - {{ fee.school_name }}</p>
+                <p class="text-sm font-medium text-blue-900">{{ fee.academic_year.name|default:"N/A" }} - {{ fee.school_name }}</p>
                 <p class="text-sm text-blue-800 mt-1">{{ fee.comments }}</p>
             </div>
             {% endif %}

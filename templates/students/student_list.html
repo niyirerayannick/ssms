@@ -60,6 +60,14 @@
         <form method="get" class="flex flex-wrap gap-4">
             <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name, district, or school..."
                    class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+            <select name="district" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                <option value="">All Districts</option>
+                {% for district in districts %}
+                    <option value="{{ district.id }}" {% if district_filter|add:""|stringformat:"s" == district.id|stringformat:"s" %}selected{% endif %}>
+                        {{ district.name }}
+                    </option>
+                {% endfor %}
+            </select>
             <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
                 <option value="">All Status</option>
                 <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>

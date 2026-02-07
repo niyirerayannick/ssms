@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
-from core.models import School
+from core.models import School, AcademicYear
 from families.models import Family
 
 
@@ -227,7 +227,13 @@ class StudentMark(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='academic_records')
     subject = models.CharField(max_length=100)
     term = models.CharField(max_length=20, choices=TERM_CHOICES)
-    academic_year = models.CharField(max_length=20, default='2024')
+    academic_year = models.ForeignKey(
+        AcademicYear,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_marks'
+    )
     marks = models.DecimalField(
         max_digits=5, 
         decimal_places=2,
@@ -240,18 +246,25 @@ class StudentMark(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-academic_year', 'term', 'subject']
+        ordering = ['-academic_year__name', 'term', 'subject']
         unique_together = ['student', 'subject', 'term', 'academic_year']
 
     def __str__(self):
-        return f"{self.student.full_name} - {self.subject} - {self.term} ({self.academic_year}) - {self.marks}%"
+        year_display = self.academic_year.name if self.academic_year else "N/A"
+        return f"{self.student.full_name} - {self.subject} - {self.term} ({year_display}) - {self.marks}%"
 
 
 class StudentMaterial(models.Model):
     """Track school materials given to sponsored students per academic year."""
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='material_records')
-    academic_year = models.CharField(max_length=20, help_text="e.g., 2024")
+    academic_year = models.ForeignKey(
+        AcademicYear,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_materials'
+    )
     books_received = models.BooleanField(default=False)
     bag_received = models.BooleanField(default=False)
     shoes_received = models.BooleanField(default=False)
@@ -263,7 +276,7 @@ class StudentMaterial(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-academic_year', 'student__first_name']
+        ordering = ['-academic_year__name', 'student__first_name']
         unique_together = ['student', 'academic_year']
 
     @property
@@ -271,4 +284,5 @@ class StudentMaterial(models.Model):
         return self.books_received and self.bag_received
 
     def __str__(self):
-        return f"{self.student.full_name} - {self.academic_year}"
+        year_display = self.academic_year.name if self.academic_year else "N/A"
+        return f"{self.student.full_name} - {year_display}"

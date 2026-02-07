@@ -3,13 +3,14 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q, Avg, Count
+from core.models import District
 from django.utils import timezone
 from django.core import signing
 from django.http import Http404
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from .models import Student, StudentPhoto, StudentMark, StudentMaterial
-from core.models import Notification
+from core.models import Notification, AcademicYear
 from .forms import StudentForm, StudentPhotoForm, StudentMarkForm, StudentMaterialForm
 from families.models import FamilyStudent
 
@@ -39,6 +40,11 @@ def student_list(request):
     if gender_filter:
         students = students.filter(gender=gender_filter)
 
+    # Filter by district (family district)
+    district_filter = request.GET.get('district', '')
+    if district_filter:
+        students = students.filter(family__district_id=district_filter)
+
     boarding_counts = {item['boarding_status']: item['total'] for item in students.values('boarding_status').annotate(total=Count('id'))}
     level_counts = {item['school_level']: item['total'] for item in students.values('school_level').annotate(total=Count('id'))}
     
@@ -47,6 +53,8 @@ def student_list(request):
         'search_query': search_query,
         'status_filter': status_filter,
         'gender_filter': gender_filter,
+        'district_filter': district_filter,
+        'districts': District.objects.order_by('name'),
         'boarding_count': boarding_counts.get('boarding', 0),
         'non_boarding_count': boarding_counts.get('non_boarding', 0),
         'nursery_count': level_counts.get('nursery', 0),
@@ -367,7 +375,7 @@ def student_performance(request):
 
     marks_qs = StudentMark.objects.select_related('student')
     if academic_year:
-        marks_qs = marks_qs.filter(academic_year=academic_year)
+        marks_qs = marks_qs.filter(academic_year_id=academic_year)
     if term:
         marks_qs = marks_qs.filter(term=term)
     if class_level:
@@ -379,7 +387,7 @@ def student_performance(request):
             'student__first_name',
             'student__last_name',
             'student__class_level',
-            'academic_year',
+            'academic_year__name',
             'term'
         ).annotate(avg_marks=Avg('marks')).order_by('student__first_name', 'student__last_name')
     )
@@ -389,10 +397,7 @@ def student_performance(request):
     failed = total_records - passed
     pass_rate = round((passed / total_records) * 100, 1) if total_records else 0
 
-    available_years = (
-        StudentMark.objects.values_list('academic_year', flat=True)
-        .distinct().order_by('-academic_year')
-    )
+    available_years = AcademicYear.objects.order_by('-name')
     available_classes = (
         StudentMark.objects.values_list('student__class_level', flat=True)
         .exclude(student__class_level__isnull=True)
@@ -403,7 +408,7 @@ def student_performance(request):
 
     trend_qs = StudentMark.objects.all()
     if academic_year:
-        trend_qs = trend_qs.filter(academic_year=academic_year)
+        trend_qs = trend_qs.filter(academic_year_id=academic_year)
     if class_level:
         trend_qs = trend_qs.filter(student__class_level=class_level)
     trend_data = {

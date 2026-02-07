@@ -492,7 +492,7 @@ def insurance_pdf(request):
         balance = float(insurance.required_amount) - float(insurance.amount_paid)
         data.append([
             insurance.family.head_of_family,
-            insurance.insurance_year,
+            insurance.insurance_year.name if insurance.insurance_year else '',
             f"{insurance.required_amount:,.0f}",
             f"{insurance.amount_paid:,.0f}",
             f"{balance:,.0f}",

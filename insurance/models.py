@@ -1,5 +1,6 @@
 from django.db import models
 from families.models import Family
+from core.models import AcademicYear
 
 
 class FamilyInsurance(models.Model):
@@ -16,7 +17,13 @@ class FamilyInsurance(models.Model):
         on_delete=models.CASCADE, 
         related_name='insurance_records'
     )
-    insurance_year = models.CharField(max_length=4, default='2024', help_text="Year of insurance coverage")
+    insurance_year = models.ForeignKey(
+        AcademicYear,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='insurance_records'
+    )
     required_amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -31,7 +38,7 @@ class FamilyInsurance(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-insurance_year', '-created_at']
+        ordering = ['-insurance_year__name', '-created_at']
         unique_together = ['family', 'insurance_year']
         permissions = [
             ('manage_insurance', 'Can manage insurance'),
@@ -52,7 +59,8 @@ class FamilyInsurance(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.family.family_code} - {self.insurance_year} - {self.get_coverage_status_display()}"
+        year_display = self.insurance_year.name if self.insurance_year else "N/A"
+        return f"{self.family.family_code} - {year_display} - {self.get_coverage_status_display()}"
 
 
 # Legacy model - kept for backward compatibility
