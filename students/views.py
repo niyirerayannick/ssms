@@ -317,6 +317,7 @@ def student_approve(request, pk):
     student.sponsorship_status = 'active'
     student.save(update_fields=['sponsorship_status'])
     _notify_admins_and_exec(
+        request=request,
         actor=request.user,
         verb=f"Approved student {student.full_name}",
         link=reverse('students:student_detail', kwargs={'pk': student.pk})
