@@ -3,6 +3,8 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from django.conf import settings
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
@@ -127,19 +129,23 @@ def user_create(request):
             
             if email and settings.DEFAULT_FROM_EMAIL and settings.EMAIL_HOST_USER:
                 login_url = request.build_absolute_uri('/login/')
+                
+                # Prepare HTML content
+                context = {
+                    'name': first_name or username,
+                    'username': username,
+                    'password': password,
+                    'login_url': login_url,
+                }
+                html_message = render_to_string('emails/user_welcome.html', context)
+                plain_message = strip_tags(html_message)
+                
                 send_mail(
-                    subject='Your SAF IMS account credentials',
-                    message=(
-                        f"Hello {first_name or username},\n\n"
-                        "Your SIMS account has been created.\n\n"
-                        f"Username: {username}\n"
-                        f"Password: {password}\n"
-                        f"Login: {login_url}\n\n"
-                        "Please change your password after logging in.\n\n"
-                        "— SAF IMS"
-                    ),
+                    subject='Your SIMS account credentials',
+                    message=plain_message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[email],
+                    html_message=html_message,
                     fail_silently=True,
                 )
             messages.success(request, f'User "{username}" created successfully with role: {role}')

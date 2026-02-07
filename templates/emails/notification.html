@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMS Notification</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%;">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <!-- Container -->
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="background-color: #059669; padding: 24px;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">SIMS Notification</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 32px 24px;">
+                            <h2 style="color: #1e293b; margin-top: 0; margin-bottom: 16px; font-size: 20px; font-weight: 600;">Action Required</h2>
+                            
+                            <p style="color: #475569; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
+                                Hello,
+                            </p>
+                            
+                            <p style="color: #475569; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
+                                A new action has been performed in the SolidAct Information Management System (SIMS).
+                            </p>
+
+                            <!-- Details Box -->
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 24px;">
+                                <tr>
+                                    <td style="padding: 16px;">
+                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td style="padding-bottom: 8px; color: #64748b; font-size: 14px; font-weight: 500;">Action:</td>
+                                                <td style="padding-bottom: 8px; color: #0f172a; font-size: 14px; font-weight: 600;">{{ verb }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #64748b; font-size: 14px; font-weight: 500;">User:</td>
+                                                <td style="color: #0f172a; font-size: 14px; font-weight: 600;">{{ actor_name }}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="color: #475569; font-size: 16px; line-height: 1.5; margin-bottom: 32px;">
+                                Please review the details and take appropriate action.
+                            </p>
+
+                            <!-- CTA Button -->
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ full_link }}" target="_blank" style="display: inline-block; background-color: #059669; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 16px; transition: background-color 0.2s;">
+                                            View Details & Approve
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="color: #94a3b8; font-size: 14px; margin-top: 32px; text-align: center;">
+                                If the button above doesn't work, copy and paste this link into your browser:<br>
+                                <a href="{{ full_link }}" style="color: #059669; text-decoration: none; word-break: break-all;">{{ full_link }}</a>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+                            <p style="color: #64748b; font-size: 12px; margin: 0;">
+                                &copy; {% now "Y" %} SolidAct. All rights reserved.
+                            </p>
+                            <p style="color: #94a3b8; font-size: 12px; margin: 8px 0 0 0;">
+                                This is an automated message. Please do not reply directly to this email.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.db.models import Q, Avg, Count
 from django.core.mail import send_mail
 from django.conf import settings
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from core.models import District
 from django.utils import timezone
 from django.core import signing
@@ -102,24 +104,24 @@ def _notify_admins_and_exec(request, actor, verb, link, send_email=False):
         if email_recipients:
             subject = f"SIMS Notification: {verb}"
             full_link = request.build_absolute_uri(link)
+            actor_name = actor.get_full_name() or actor.username
             
-            message = (
-                f"Hello,\n\n"
-                f"A new action has been performed in the SIMS system.\n"
-                f"Action: {verb}\n"
-                f"User: {actor.get_full_name() or actor.username}\n\n"
-                f"Please click the link below to view details and approve if necessary:\n"
-                f"{full_link}\n\n"
-                f"Best regards,\n"
-                f"SIMS Team"
-            )
+            # Prepare HTML content
+            context = {
+                'verb': verb,
+                'actor_name': actor_name,
+                'full_link': full_link,
+            }
+            html_message = render_to_string('emails/notification.html', context)
+            plain_message = strip_tags(html_message)
             
             try:
                 send_mail(
                     subject=subject,
-                    message=message,
-                    from_email=settings.DEFAULT_FROM_EMAIL or 'noreply@sims.com',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=list(email_recipients),
+                    html_message=html_message,
                     fail_silently=True
                 )
             except Exception as e:

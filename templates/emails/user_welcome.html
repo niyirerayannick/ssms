@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to SIMS</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%;">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="background-color: #059669; padding: 24px;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Welcome to SIMS</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 32px 24px;">
+                            <p style="color: #475569; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
+                                Hello {{ name }},
+                            </p>
+                            
+                            <p style="color: #475569; font-size: 16px; line-height: 1.5; margin-bottom: 24px;">
+                                Your account for the Student Information Management System (SIMS) has been successfully created.
+                            </p>
+
+                            <!-- Credentials Box -->
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 24px;">
+                                <tr>
+                                    <td style="padding: 16px;">
+                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                            <tr>
+                                                <td style="padding-bottom: 8px; color: #64748b; font-size: 14px; font-weight: 500;">Username:</td>
+                                                <td style="padding-bottom: 8px; color: #0f172a; font-size: 14px; font-weight: 600;">{{ username }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #64748b; font-size: 14px; font-weight: 500;">Password:</td>
+                                                <td style="color: #0f172a; font-size: 14px; font-weight: 600;">{{ password }}</td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p style="color: #dc2626; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">
+                                <strong>Important:</strong> For security reasons, please change your password immediately after logging in.
+                            </p>
+
+                            <!-- CTA Button -->
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{ login_url }}" target="_blank" style="display: inline-block; background-color: #059669; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                                            Login to SIMS
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid #e2e8f0;">
+                            <p style="color: #64748b; font-size: 12px; margin: 0;">
+                                &copy; {% now "Y" %} SolidAct. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
