@@ -4,7 +4,7 @@ from students.models import Student, StudentMark
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
 from families.models import Family, FamilyStudent
-from core.models import School
+from core.models import School, AcademicYear
 from django.db.models import Count, Q, Sum, Avg
 from django.utils import timezone
 from datetime import timedelta
@@ -13,6 +13,12 @@ from datetime import timedelta
 @login_required
 def index(request):
     """Dashboard home with comprehensive system statistics."""
+    
+    # ===== FILTERING PARAMETERS =====
+    selected_year_id = request.GET.get('academic_year')
+    selected_term = request.GET.get('term')
+    
+    academic_years = AcademicYear.objects.all().order_by('-name')
     
     # ===== STUDENT STATISTICS =====
     total_students = Student.objects.count()
@@ -39,16 +45,33 @@ def index(request):
     total_schools = School.objects.count()
     
     # ===== FEES STATISTICS =====
-    total_fees = SchoolFee.objects.count()
-    paid_fees = SchoolFee.objects.filter(payment_status='paid').count()
-    unpaid_fees = SchoolFee.objects.filter(payment_status__in=['pending', 'overdue']).count()
+    fees_queryset = SchoolFee.objects.all()
+    
+    if selected_year_id:
+        fees_queryset = fees_queryset.filter(academic_year_id=selected_year_id)
+    
+    if selected_term:
+        # Map "Term 1" -> "1", etc.
+        term_map = {'Term 1': '1', 'Term 2': '2', 'Term 3': '3'}
+        mapped_term = term_map.get(selected_term)
+        if mapped_term:
+            fees_queryset = fees_queryset.filter(term=mapped_term)
+
+    total_fees = fees_queryset.count()
+    paid_fees = fees_queryset.filter(payment_status='paid').count()
+    unpaid_fees = fees_queryset.filter(payment_status__in=['pending', 'overdue']).count()
     
     # ===== INSURANCE STATISTICS =====
+    insurance_queryset = FamilyInsurance.objects.all()
+    
+    if selected_year_id:
+        insurance_queryset = insurance_queryset.filter(insurance_year_id=selected_year_id)
+
     # Students covered = students whose family has insurance status = 'covered'
-    families_covered = FamilyInsurance.objects.filter(coverage_status='covered').values_list('family_id', flat=True)
+    families_covered = insurance_queryset.filter(coverage_status='covered').values_list('family_id', flat=True)
     students_covered = FamilyStudent.objects.filter(family_id__in=families_covered).count()
     
-    families_not_covered = FamilyInsurance.objects.exclude(coverage_status='covered').values_list('family_id', flat=True)
+    families_not_covered = insurance_queryset.exclude(coverage_status='covered').values_list('family_id', flat=True)
     students_not_covered = FamilyStudent.objects.filter(family_id__in=families_not_covered).count()
     
     # If student has no family insurance record, count as not covered
@@ -56,10 +79,15 @@ def index(request):
     students_not_covered += students_without_family
     
     # Family insurance statistics
-    families_with_insurance = FamilyInsurance.objects.filter(coverage_status='covered').count()
-    families_without_insurance = Family.objects.exclude(
-        insurance_records__coverage_status='covered'
-    ).distinct().count()
+    families_with_insurance = insurance_queryset.filter(coverage_status='covered').count()
+    
+    if selected_year_id:
+        # If a specific year is selected, families without insurance are Total - Covered
+        families_without_insurance = total_families - families_with_insurance
+    else:
+        families_without_insurance = Family.objects.exclude(
+            insurance_records__coverage_status='covered'
+        ).distinct().count()
     
     # ===== RECENT DATA =====
     # Recent students (last 7 days)
@@ -72,8 +100,16 @@ def index(request):
     schools_with_students = School.objects.filter(students__isnull=False).distinct().count()
     
     # ===== PERFORMANCE STATISTICS =====
+    marks_queryset = StudentMark.objects.all()
+    
+    if selected_year_id:
+        marks_queryset = marks_queryset.filter(academic_year_id=selected_year_id)
+        
+    if selected_term:
+        marks_queryset = marks_queryset.filter(term=selected_term)
+
     marks_by_term = (
-        StudentMark.objects.values('term')
+        marks_queryset.values('term')
         .annotate(avg_marks=Avg('marks'))
         .order_by('term')
     )
@@ -86,6 +122,11 @@ def index(request):
     total_school_fees_per_student = School.objects.aggregate(Count('fee_amount'))
     
     context = {
+        # Filters
+        'academic_years': academic_years,
+        'selected_year_id': int(selected_year_id) if selected_year_id else None,
+        'selected_term': selected_term,
+
         # Student Stats
         'total_students': total_students,
         'boys': boys,

@@ -4,6 +4,26 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+def link_academic_years(apps, schema_editor):
+    """
+    Convert academic_year string values (e.g., '2024-2025') to foreign key IDs.
+    """
+    StudentMaterial = apps.get_model('students', 'StudentMaterial')
+    AcademicYear = apps.get_model('core', 'AcademicYear')
+    
+    for material in StudentMaterial.objects.all():
+        year_str = material.academic_year
+        if year_str:
+            # Try to find the academic year by name
+            academic_year, created = AcademicYear.objects.get_or_create(
+                name=year_str
+            )
+            # Update the field to be the ID (as a string, since it's still a CharField in DB)
+            # This allows the subsequent AlterField to cast it to an integer foreign key
+            material.academic_year = str(academic_year.id)
+            material.save()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -12,6 +32,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(link_academic_years),
         migrations.AlterModelOptions(
             name='studentmaterial',
             options={'ordering': ['-academic_year__name', 'student__first_name']},

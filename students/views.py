@@ -3,6 +3,8 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q, Avg, Count
+from django.core.mail import send_mail
+from django.conf import settings
 from core.models import District
 from django.utils import timezone
 from django.core import signing
@@ -65,24 +67,63 @@ def student_list(request):
     return render(request, 'students/student_list.html', context)
 
 
-def _notify_admins_and_exec(actor, verb, link):
+def _notify_admins_and_exec(request, actor, verb, link, send_email=False):
     User = get_user_model()
-    recipient_ids = set(
-        User.objects.filter(
-            Q(groups__name__in=['Admin', 'Executive Secretary']) |
-            Q(is_superuser=True) |
-            Q(is_staff=True)
-        ).values_list('id', flat=True)
-    )
+    # Users who should receive notifications and emails (Admins, Execs, Superusers)
+    admin_exec_users = User.objects.filter(
+        Q(groups__name__in=['Admin', 'Executive Secretary']) |
+        Q(is_superuser=True)
+    ).distinct()
+
+    # Set of IDs for notification creation
+    recipient_ids = set(admin_exec_users.values_list('id', flat=True))
+    
+    # Also include staff in notifications (but maybe not email if not admin/exec)
+    staff_ids = User.objects.filter(is_staff=True).values_list('id', flat=True)
+    recipient_ids.update(staff_ids)
+
     if actor:
         recipient_ids.add(actor.id)
+    
     recipients = User.objects.filter(id__in=recipient_ids)
+    
+    # Create DB Notifications
     notifications = [
         Notification(recipient=user, actor=actor, verb=verb, link=link)
         for user in recipients
     ]
     if notifications:
         Notification.objects.bulk_create(notifications)
+
+    # Send Email if requested (Only to Admins and Executive Secretaries)
+    if send_email:
+        email_recipients = admin_exec_users.exclude(email='').values_list('email', flat=True)
+        
+        if email_recipients:
+            subject = f"SIMS Notification: {verb}"
+            full_link = request.build_absolute_uri(link)
+            
+            message = (
+                f"Hello,\n\n"
+                f"A new action has been performed in the SIMS system.\n"
+                f"Action: {verb}\n"
+                f"User: {actor.get_full_name() or actor.username}\n\n"
+                f"Please click the link below to view details and approve if necessary:\n"
+                f"{full_link}\n\n"
+                f"Best regards,\n"
+                f"SIMS Team"
+            )
+            
+            try:
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL or 'noreply@sims.com',
+                    recipient_list=list(email_recipients),
+                    fail_silently=True
+                )
+            except Exception as e:
+                print(f"Failed to send email: {e}")
 
 
 def _can_approve_student(user):
@@ -104,9 +145,11 @@ def student_create(request):
             student.save()
             form.save_m2m()
             _notify_admins_and_exec(
+                request=request,
                 actor=request.user,
                 verb=f"Added student {student.full_name}",
-                link=reverse('students:student_detail', kwargs={'pk': student.pk})
+                link=reverse('students:student_detail', kwargs={'pk': student.pk}),
+                send_email=True
             )
             messages.success(request, f'Student {student.full_name} created successfully!')
             return redirect('students:student_detail', pk=student.pk)
@@ -127,6 +170,7 @@ def student_edit(request, pk):
         if form.is_valid():
             student = form.save()
             _notify_admins_and_exec(
+                request=request,
                 actor=request.user,
                 verb=f"Updated student {student.full_name}",
                 link=reverse('students:student_detail', kwargs={'pk': student.pk})
