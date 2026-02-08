@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}Analysis Dashboard - SIMS{% endblock %}
+
+{% block content %}
+<div class="p-6 space-y-8 animate-[fadeIn_0.5s_ease-out]">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Analysis Dashboard</h1>
+            <p class="text-slate-500 mt-1">Overview of student demographics and financial metrics</p>
+        </div>
+        <div class="text-sm text-slate-500 bg-white/50 px-3 py-1.5 rounded-lg border border-slate-200">
+            Data as of {% now "F j, Y" %}
+        </div>
+    </div>
+
+    <!-- Key Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Students -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                    <span class="material-symbols-rounded text-3xl">groups</span>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Total Students</p>
+                    <p class="text-2xl font-bold text-slate-800">{{ total_students }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expected Fees -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <span class="material-symbols-rounded text-3xl">payments</span>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Expected Fees</p>
+                    <p class="text-2xl font-bold text-slate-800">{{ total_fees_expected|floatformat:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paid Fees -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-green-50 text-green-600 rounded-xl">
+                    <span class="material-symbols-rounded text-3xl">check_circle</span>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Fees Paid</p>
+                    <p class="text-2xl font-bold text-slate-800">{{ total_fees_paid|floatformat:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Outstanding Balance -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                    <span class="material-symbols-rounded text-3xl">pending</span>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-slate-500">Outstanding Balance</p>
+                    <p class="text-2xl font-bold text-slate-800">{{ total_balance|floatformat:0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Gender Distribution -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Student Gender Distribution</h3>
+            <div class="h-64 flex justify-center">
+                <canvas id="genderChart"></canvas>
+            </div>
+        </div>
+
+        <!-- School Level Distribution -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Students by School Level</h3>
+            <div class="h-64">
+                <canvas id="levelChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Fee Payment Status -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Fee Payment Status</h3>
+            <div class="h-64">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Financial Overview -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Financial Overview</h3>
+            <div class="h-64">
+                <canvas id="financeChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Common chart options
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        family: "'Manrope', sans-serif"
+                    }
+                }
+            }
+        }
+    };
+
+    // Gender Chart
+    new Chart(document.getElementById('genderChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ gender_labels|safe }},
+            datasets: [{
+                data: {{ gender_counts|safe }},
+                backgroundColor: ['#3b82f6', '#ec4899', '#94a3b8'],
+                borderWidth: 0
+            }]
+        },
+        options: commonOptions
+    });
+
+    // School Level Chart
+    new Chart(document.getElementById('levelChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ level_labels|safe }},
+            datasets: [{
+                label: 'Number of Students',
+                data: {{ level_counts|safe }},
+                backgroundColor: '#10b981',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            ...commonOptions,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    // Payment Status Chart
+    new Chart(document.getElementById('statusChart'), {
+        type: 'pie',
+        data: {
+            labels: {{ status_labels|safe }},
+            datasets: [{
+                data: {{ status_counts|safe }},
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#6366f1'],
+                borderWidth: 0
+            }]
+        },
+        options: commonOptions
+    });
+
+    // Financial Overview Chart
+    new Chart(document.getElementById('financeChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Expected', 'Paid', 'Balance'],
+            datasets: [{
+                label: 'Amount (RWF)',
+                data: [{{ total_fees_expected }}, {{ total_fees_paid }}, {{ total_balance }}],
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            ...commonOptions,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

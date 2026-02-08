@@ -198,9 +198,15 @@
             <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Reports & Analytics</h3>
             <ul class="space-y-2">
                 <li>
-                    <a href="{% url 'reports:index' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'reports' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
+                    <a href="{% url 'reports:index' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'reports' and request.resolver_match.url_name != 'analysis' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
                         <span class="material-symbols-rounded text-[20px]">description</span>
                         <span class="font-medium">Reports</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'reports:analysis' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.url_name == 'analysis' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
+                        <span class="material-symbols-rounded text-[20px]">analytics</span>
+                        <span class="font-medium">Analysis</span>
                     </a>
                 </li>
             </ul>

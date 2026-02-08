@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
-from django.db.models import Sum
+from django.db.models import Sum, Count
 from students.models import Student
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
@@ -745,3 +745,52 @@ def financial_report_pdf(request):
     filename = f"financial_report_{year_id if year_id else 'all_time'}.pdf"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+@login_required
+@permission_required(('finance.view_schoolfee', 'insurance.view_familyinsurance', 'students.view_student'), raise_exception=True)
+def analysis_dashboard(request):
+    """
+    Dashboard view for statistical analysis and visualizations.
+    """
+    # Student Analysis
+    total_students = Student.objects.count()
+    
+    # Gender Distribution
+    gender_map = dict(Student.GENDER_CHOICES)
+    gender_data = Student.objects.values('gender').annotate(count=Count('id'))
+    gender_labels = [gender_map.get(item['gender'], item['gender']) for item in gender_data]
+    gender_counts = [item['count'] for item in gender_data]
+    
+    # School Level Distribution
+    level_map = dict(Student.SCHOOL_LEVEL_CHOICES)
+    level_data = Student.objects.values('school_level').annotate(count=Count('id'))
+    level_labels = [level_map.get(item['school_level'], item['school_level']) for item in level_data]
+    level_counts = [item['count'] for item in level_data]
+
+    # Finance Analysis
+    total_fees_expected = SchoolFee.objects.aggregate(total=Sum('total_fees'))['total'] or 0
+    total_fees_paid = SchoolFee.objects.aggregate(total=Sum('amount_paid'))['total'] or 0
+    total_balance = SchoolFee.objects.aggregate(total=Sum('balance'))['total'] or 0
+    
+    # Payment Status Distribution
+    status_map = dict(SchoolFee.PAYMENT_STATUS_CHOICES)
+    payment_status_data = SchoolFee.objects.values('payment_status').annotate(count=Count('id'))
+    status_labels = [status_map.get(item['payment_status'], item['payment_status']) for item in payment_status_data]
+    status_counts = [item['count'] for item in payment_status_data]
+
+    context = {
+        'page_title': 'Analysis Dashboard',
+        'total_students': total_students,
+        'gender_labels': gender_labels,
+        'gender_counts': gender_counts,
+        'level_labels': level_labels,
+        'level_counts': level_counts,
+        'total_fees_expected': float(total_fees_expected),
+        'total_fees_paid': float(total_fees_paid),
+        'total_balance': float(total_balance),
+        'status_labels': status_labels,
+        'status_counts': status_counts,
+    }
+    return render(request, 'reports/analysis.html', context)
+
