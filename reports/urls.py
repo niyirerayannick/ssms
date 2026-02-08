@@ -9,6 +9,7 @@ urlpatterns = [
     path('students/sponsored/', views.sponsored_students_report, name='sponsored_students_report'),
     path('fees/pdf/', views.fees_pdf, name='fees_pdf'),
     path('fees/excel/', views.fees_excel, name='fees_excel'),
+    path('financial/pdf/', views.financial_report_pdf, name='financial_report_pdf'),
     path('insurance/pdf/', views.insurance_pdf, name='insurance_pdf'),
 ]
 

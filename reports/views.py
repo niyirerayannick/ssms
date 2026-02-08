@@ -1,10 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
 from django.db.models import Sum
 from students.models import Student
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
+from core.models import AcademicYear
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak
@@ -567,6 +568,9 @@ def reports_index(request):
     primary_count = Student.objects.filter(school_level='primary').count()
     secondary_count = Student.objects.filter(school_level='secondary').count()
     tvet_count = Student.objects.filter(school_level='tvet').count()
+    
+    # Get all academic years for filter dropdown
+    academic_years = AcademicYear.objects.all().order_by('-name')
 
     context = {
         'boarding_count': boarding_count,
@@ -575,6 +579,169 @@ def reports_index(request):
         'primary_count': primary_count,
         'secondary_count': secondary_count,
         'tvet_count': tvet_count,
+        'academic_years': academic_years,
     }
     return render(request, 'reports/index.html', context)
 
+
+@login_required
+@permission_required('finance.view_schoolfee', raise_exception=True)
+def financial_report_pdf(request):
+    """Generate comprehensive financial report PDF."""
+    year_id = request.GET.get('year')
+    
+    # Base querysets
+    fees_qs = SchoolFee.objects.all()
+    insurance_qs = FamilyInsurance.objects.all()
+    
+    subtitle = "All Years"
+    
+    if year_id:
+        academic_year = get_object_or_404(AcademicYear, id=year_id)
+        fees_qs = fees_qs.filter(academic_year=academic_year)
+        insurance_qs = insurance_qs.filter(insurance_year=academic_year)
+        subtitle = f"Academic Year: {academic_year.name}"
+    
+    # Calculate Fees Totals
+    fees_total_req = fees_qs.aggregate(Sum('total_fees'))['total_fees__sum'] or 0
+    fees_total_paid = fees_qs.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+    fees_total_bal = fees_qs.aggregate(Sum('balance'))['balance__sum'] or 0
+    
+    # Calculate Insurance Totals
+    insurance_total_req = insurance_qs.aggregate(Sum('required_amount'))['required_amount__sum'] or 0
+    insurance_total_paid = insurance_qs.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+    # Insurance balance is calculated differently in model save, but we can sum it up or calc here
+    # Since FamilyInsurance has 'balance' field:
+    insurance_total_bal = insurance_qs.aggregate(Sum('balance'))['balance__sum'] or 0
+    
+    # Grand Totals
+    grand_total_req = fees_total_req + insurance_total_req
+    grand_total_paid = fees_total_paid + insurance_total_paid
+    grand_total_bal = fees_total_bal + insurance_total_bal
+    
+    # Create PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        rightMargin=0.75*inch,
+        leftMargin=0.75*inch,
+        topMargin=0.75*inch,
+        bottomMargin=1*inch
+    )
+    elements = []
+    
+    # Letterhead
+    create_letterhead(elements, "Comprehensive Financial Report", subtitle)
+    
+    styles = getSampleStyleSheet()
+    h2_style = ParagraphStyle(
+        'Heading2Custom',
+        parent=styles['Heading2'],
+        textColor=colors.HexColor('#047857'),
+        spaceBefore=12,
+        spaceAfter=6
+    )
+    
+    # 1. Executive Summary Table
+    elements.append(Paragraph("Executive Summary", h2_style))
+    
+    summary_data = [
+        ['Category', 'Required Amount (RWF)', 'Paid Amount (RWF)', 'Outstanding Balance (RWF)', 'Collection Rate'],
+        ['School Fees', f"{fees_total_req:,.0f}", f"{fees_total_paid:,.0f}", f"{fees_total_bal:,.0f}", 
+         f"{(fees_total_paid/fees_total_req*100 if fees_total_req else 0):.1f}%"],
+        ['Insurance', f"{insurance_total_req:,.0f}", f"{insurance_total_paid:,.0f}", f"{insurance_total_bal:,.0f}",
+         f"{(insurance_total_paid/insurance_total_req*100 if insurance_total_req else 0):.1f}%"],
+        ['TOTAL', f"{grand_total_req:,.0f}", f"{grand_total_paid:,.0f}", f"{grand_total_bal:,.0f}",
+         f"{(grand_total_paid/grand_total_req*100 if grand_total_req else 0):.1f}%"]
+    ]
+    
+    summary_table = Table(summary_data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1.5*inch, 1*inch])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#047857')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        
+        ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),  # Numbers right aligned
+        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
+        
+        # Total Row
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#d1fae5')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 20))
+    
+    # 2. Detailed Breakdown by Term (for Fees) if available
+    # Only if specific year is selected or generally useful
+    if fees_qs.exists():
+        elements.append(Paragraph("School Fees Breakdown by Term", h2_style))
+        term_stats = []
+        for term_code, term_name in SchoolFee.TERM_CHOICES:
+            term_fees = fees_qs.filter(term=term_code)
+            t_req = term_fees.aggregate(Sum('total_fees'))['total_fees__sum'] or 0
+            t_paid = term_fees.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+            t_bal = term_fees.aggregate(Sum('balance'))['balance__sum'] or 0
+            term_stats.append([term_name, t_req, t_paid, t_bal])
+            
+        term_data = [['Term', 'Required', 'Paid', 'Balance']]
+        for t in term_stats:
+            term_data.append([
+                t[0],
+                f"{t[1]:,.0f}",
+                f"{t[2]:,.0f}",
+                f"{t[3]:,.0f}"
+            ])
+            
+        term_table = Table(term_data, colWidths=[2*inch, 1.8*inch, 1.8*inch, 1.8*inch])
+        term_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#065f46')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ]))
+        elements.append(term_table)
+        elements.append(Spacer(1, 20))
+
+    # 3. Insurance Status Breakdown
+    if insurance_qs.exists():
+        elements.append(Paragraph("Insurance Coverage Status", h2_style))
+        covered = insurance_qs.filter(coverage_status='covered').count()
+        partial = insurance_qs.filter(coverage_status='partially_covered').count()
+        not_covered = insurance_qs.filter(coverage_status='not_covered').count()
+        
+        ins_data = [
+            ['Status', 'Count', 'Percentage'],
+            ['Covered', str(covered), f"{(covered/insurance_qs.count()*100):.1f}%"],
+            ['Partially Covered', str(partial), f"{(partial/insurance_qs.count()*100):.1f}%"],
+            ['Not Covered', str(not_covered), f"{(not_covered/insurance_qs.count()*100):.1f}%"],
+        ]
+        
+        ins_table = Table(ins_data, colWidths=[3*inch, 2*inch, 2*inch])
+        ins_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#065f46')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ]))
+        elements.append(ins_table)
+
+    # Build PDF
+    doc.build(elements, canvasmaker=NumberedCanvas)
+    
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    filename = f"financial_report_{year_id if year_id else 'all_time'}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
