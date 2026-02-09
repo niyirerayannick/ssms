@@ -7,7 +7,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from core.models import District
+from core.models import District, School, Partner
 from django.utils import timezone
 from django.core import signing
 from django.http import Http404
@@ -49,6 +49,11 @@ def student_list(request):
     if district_filter:
         students = students.filter(family__district_id=district_filter)
 
+    # Filter by partner
+    partner_filter = request.GET.get('partner', '')
+    if partner_filter:
+        students = students.filter(partner_id=partner_filter)
+
     boarding_counts = {item['boarding_status']: item['total'] for item in students.values('boarding_status').annotate(total=Count('id'))}
     level_counts = {item['school_level']: item['total'] for item in students.values('school_level').annotate(total=Count('id'))}
     
@@ -58,13 +63,16 @@ def student_list(request):
         'status_filter': status_filter,
         'gender_filter': gender_filter,
         'district_filter': district_filter,
+        'partner_filter': partner_filter,
         'districts': District.objects.order_by('name'),
+        'partners': Partner.objects.order_by('name'),
         'boarding_count': boarding_counts.get('boarding', 0),
         'non_boarding_count': boarding_counts.get('non_boarding', 0),
         'nursery_count': level_counts.get('nursery', 0),
         'primary_count': level_counts.get('primary', 0),
         'secondary_count': level_counts.get('secondary', 0),
         'tvet_count': level_counts.get('tvet', 0),
+        'university_count': level_counts.get('university', 0),
     }
     return render(request, 'students/student_list.html', context)
 
@@ -481,3 +489,38 @@ def student_performance(request):
         'trend_values': trend_values,
     }
     return render(request, 'students/student_performance.html', context)
+
+
+@login_required
+@permission_required('students.view_student', raise_exception=True)
+def photo_gallery(request):
+    """
+    View all student photos with filtering options.
+    """
+    photos = StudentPhoto.objects.select_related('student', 'student__family__district', 'student__school').order_by('-created_at')
+    
+    # Filter by District
+    district_id = request.GET.get('district')
+    if district_id:
+        photos = photos.filter(student__family__district_id=district_id)
+        
+    # Filter by School
+    school_id = request.GET.get('school')
+    if school_id:
+        photos = photos.filter(student__school_id=school_id)
+        
+    # Filter by Level
+    level = request.GET.get('level')
+    if level:
+        photos = photos.filter(student__school_level=level)
+
+    context = {
+        'photos': photos,
+        'districts': District.objects.order_by('name'),
+        'schools': School.objects.order_by('name'),
+        'levels': Student.SCHOOL_LEVEL_CHOICES,
+        'selected_district': int(district_id) if district_id and district_id.isdigit() else None,
+        'selected_school': int(school_id) if school_id and school_id.isdigit() else None,
+        'selected_level': level,
+    }
+    return render(request, 'students/photo_gallery.html', context)

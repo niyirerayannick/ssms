@@ -216,6 +216,20 @@
                         {% endif %}
                     </div>
 
+                    <!-- Partner Organization -->
+                    <div>
+                        <label for="{{ form.partner.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.partner.label }}
+                        </label>
+                        {{ form.partner }}
+                        {% if form.partner.help_text %}
+                            <p class="text-xs text-gray-500 mt-1">{{ form.partner.help_text }}</p>
+                        {% endif %}
+                        {% if form.partner.errors %}
+                            <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.partner.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
                     <!-- Sponsorship Status -->
                     <div>
                         <label for="{{ form.sponsorship_status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
@@ -466,6 +480,22 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Tom Select for Family and School
+        ['id_family', 'id_school', 'id_partner'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                new TomSelect(el, {
+                    create: false,
+                    sortField: {
+                        field: "text",
+                        direction: "asc"
+                    },
+                    placeholder: el.getAttribute('placeholder') || "Select an option...",
+                    plugins: ['clear_button'],
+                });
+            }
+        });
+
         const form = document.getElementById('studentForm');
         const steps = Array.from(form.querySelectorAll('[data-step]'));
         const nextBtn = document.getElementById('nextStep');
@@ -537,11 +567,25 @@
             const fields = section.querySelectorAll('input, select, textarea');
             fields.forEach((field) => {
                 field.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                // Handle Tom Select validation styles
+                if (field.tomselect) {
+                    const tsControl = field.tomselect.wrapper.querySelector('.ts-control');
+                    if (tsControl) {
+                        tsControl.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                    }
+                }
             });
         }
 
         function markInvalid(field) {
             field.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+            // Handle Tom Select validation styles
+            if (field.tomselect) {
+                const tsControl = field.tomselect.wrapper.querySelector('.ts-control');
+                if (tsControl) {
+                    tsControl.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                }
+            }
         }
 
         function validateStep(stepNumber) {

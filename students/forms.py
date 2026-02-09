@@ -45,6 +45,7 @@ class StudentForm(forms.ModelForm):
         fields = [
             'family', 'first_name', 'last_name', 'gender', 'date_of_birth',
             'school', 'school_name', 'class_level', 'school_level', 'boarding_status',
+            'partner',
             'enrollment_status', 'sponsorship_status',
             'sponsorship_start_year', 'sponsorship_reason', 'has_disability', 'disability_types', 'disability_description',
             'is_active', 'profile_picture', 'program_officer'
@@ -60,6 +61,7 @@ class StudentForm(forms.ModelForm):
             'class_level': 'Class Level',
             'school_level': 'School Level',
             'boarding_status': 'Boarding Status',
+            'partner': 'Partner Organization',
             'enrollment_status': 'Enrollment Status',
             'sponsorship_status': 'Sponsorship Status',
             'sponsorship_start_year': 'Sponsorship Start Year',
@@ -78,6 +80,7 @@ class StudentForm(forms.ModelForm):
             'class_level': 'e.g., P1, P6, S1, S3',
             'school_level': 'Select the school level',
             'boarding_status': 'Select boarding or non-boarding',
+            'partner': 'Select partner organization if applicable',
             'enrollment_status': 'Current enrollment status of the student',
             'sponsorship_status': 'Current sponsorship status',
             'sponsorship_start_year': 'Select the year the sponsorship started',
@@ -89,6 +92,9 @@ class StudentForm(forms.ModelForm):
         }
         widgets = {
             'family': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+            }),
+            'partner': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
             }),
             'first_name': forms.TextInput(attrs={

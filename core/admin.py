@@ -1,5 +1,12 @@
 from django.contrib import admin
-from .models import School, District, Sector, Cell, Village, Notification, AcademicYear
+from .models import School, District, Sector, Cell, Village, Notification, AcademicYear, Partner
+
+
+@admin.register(Partner)
+class PartnerAdmin(admin.ModelAdmin):
+    list_display = ['name', 'contact_person', 'email', 'phone', 'created_at']
+    search_fields = ['name', 'contact_person', 'email']
+    list_filter = ['created_at']
 
 
 @admin.register(School)

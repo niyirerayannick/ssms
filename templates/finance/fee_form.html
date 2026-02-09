@@ -294,6 +294,22 @@
         const schoolNameInput = document.getElementById('id_school_name');
         const classLevelInput = document.getElementById('id_class_level');
         
+        // Initialize Tom Select
+        if (studentSelect) {
+            new TomSelect(studentSelect, {
+                create: false,
+                sortField: {field: "text", direction: "asc"},
+                placeholder: "Select Student..."
+            });
+        }
+        if (schoolNameInput && schoolNameInput.tagName === 'SELECT') {
+            new TomSelect(schoolNameInput, {
+                create: false,
+                sortField: {field: "text", direction: "asc"},
+                placeholder: "Select School..."
+            });
+        }
+        
         if (!studentSelect) return;
         
         // Function to fetch and populate student data
@@ -347,6 +363,16 @@
     // Fetch family insurance details and display existing amounts
     document.addEventListener('DOMContentLoaded', function() {
         const familySelect = document.getElementById('id_family');
+        
+        // Initialize Tom Select
+        if (familySelect) {
+            new TomSelect(familySelect, {
+                create: false,
+                sortField: {field: "text", direction: "asc"},
+                placeholder: "Select Family..."
+            });
+        }
+
         const summaryDiv = document.getElementById('family-insurance-summary');
         const requiredAmountInput = document.getElementById('id_required_amount');
         const amountPaidInput = document.getElementById('id_amount_paid');

@@ -123,6 +123,23 @@ class School(models.Model):
         return f"{self.name} - {self.district.name if self.district else 'N/A'}"
 
 
+class Partner(models.Model):
+    """Partner model for student sourcing organizations."""
+    name = models.CharField(max_length=200, unique=True)
+    description = models.TextField(blank=True)
+    contact_person = models.CharField(max_length=100, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class Notification(models.Model):
     """Persistent notifications for users."""
 

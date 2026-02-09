@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found - SIMS{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center">
+    <div class="text-center max-w-lg mx-auto p-8 bg-white/50 backdrop-blur-sm rounded-3xl border border-white/20 shadow-xl">
+        <div class="mb-6 inline-flex p-4 bg-red-50 rounded-2xl text-red-500 ring-1 ring-red-100">
+            <span class="material-symbols-rounded text-6xl">error</span>
+        </div>
+        
+        <h1 class="text-4xl font-extrabold text-slate-800 mb-4 tracking-tight">
+            Page Not Found
+        </h1>
+        
+        <p class="text-lg text-slate-600 mb-8 leading-relaxed">
+            Oops! The page you're looking for seems to have gone on a little adventure. We couldn't locate it at this address.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'dashboard:index' %}" 
+               class="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-white transition-all duration-200 bg-emerald-600 border border-transparent rounded-xl hover:bg-emerald-700 hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+                <span class="material-symbols-rounded mr-2 text-xl">dashboard</span>
+                Back to Dashboard
+            </a>
+            
+            <button onclick="history.back()" 
+                    class="inline-flex items-center justify-center px-6 py-3 text-base font-semibold text-slate-700 transition-all duration-200 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2">
+                <span class="material-symbols-rounded mr-2 text-xl">arrow_back</span>
+                Go Back
+            </button>
+        </div>
+
+        <div class="mt-12 pt-8 border-t border-slate-200/60">
+            <p class="text-sm text-slate-400">
+                Error Code: 404
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

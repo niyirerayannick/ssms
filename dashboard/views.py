@@ -4,7 +4,7 @@ from students.models import Student, StudentMark
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
 from families.models import Family, FamilyStudent
-from core.models import School, AcademicYear
+from core.models import School, AcademicYear, Partner
 from django.db.models import Count, Q, Sum, Avg
 from django.utils import timezone
 from datetime import timedelta
@@ -43,6 +43,10 @@ def index(request):
     
     # ===== SCHOOL STATISTICS =====
     total_schools = School.objects.count()
+
+    # ===== PARTNER STATISTICS =====
+    total_partners = Partner.objects.count()
+    students_with_partner = Student.objects.filter(partner__isnull=False).count()
     
     # ===== FEES STATISTICS =====
     fees_queryset = SchoolFee.objects.all()
@@ -146,6 +150,10 @@ def index(request):
         # School Stats
         'total_schools': total_schools,
         'schools_with_students': schools_with_students,
+        
+        # Partner Stats
+        'total_partners': total_partners,
+        'students_with_partner': students_with_partner,
         
         # Fees Stats
         'total_fees': total_fees,

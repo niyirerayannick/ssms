@@ -1,11 +1,11 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
-from django.db.models import Sum, Count
-from students.models import Student
+from django.db.models import Sum, Count, Avg, Q
+from students.models import Student, StudentMark, StudentMaterial
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
-from core.models import AcademicYear
+from core.models import AcademicYear, Partner, District
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak
@@ -751,33 +751,108 @@ def financial_report_pdf(request):
 @permission_required(('finance.view_schoolfee', 'insurance.view_familyinsurance', 'students.view_student'), raise_exception=True)
 def analysis_dashboard(request):
     """
-    Dashboard view for statistical analysis and visualizations.
+    Dashboard view for statistical analysis and visualizations with filters.
     """
+    # Get Filter Parameters
+    year_id = request.GET.get('year')
+    term_val = request.GET.get('term')
+    district_id = request.GET.get('district')
+    partner_id = request.GET.get('partner')
+    level_val = request.GET.get('level')
+
+    # Base QuerySets
+    students_qs = Student.objects.all()
+    marks_qs = StudentMark.objects.all()
+    materials_qs = StudentMaterial.objects.all()
+    fees_qs = SchoolFee.objects.all()
+
+    # Apply Student Filters (Level, Partner, District)
+    if level_val:
+        students_qs = students_qs.filter(school_level=level_val)
+    if partner_id:
+        students_qs = students_qs.filter(partner_id=partner_id)
+    if district_id:
+        students_qs = students_qs.filter(family__district_id=district_id)
+
+    # Filter related data by filtered students
+    # We apply this even if no student filters are set, to ensure consistency 
+    # (though if no student filters, students_qs is all, so it's a no-op efficiently handled by DB usually)
+    if level_val or partner_id or district_id:
+        marks_qs = marks_qs.filter(student__in=students_qs)
+        materials_qs = materials_qs.filter(student__in=students_qs)
+        fees_qs = fees_qs.filter(student__in=students_qs)
+
+    # Apply Year Filter
+    if year_id:
+        marks_qs = marks_qs.filter(academic_year_id=year_id)
+        materials_qs = materials_qs.filter(academic_year_id=year_id)
+        fees_qs = fees_qs.filter(academic_year_id=year_id)
+
+    # Apply Term Filter
+    if term_val:
+        # StudentMark uses 'Term X' format
+        marks_qs = marks_qs.filter(term=f"Term {term_val}")
+        # SchoolFee uses 'X' format
+        fees_qs = fees_qs.filter(term=term_val)
+        # StudentMaterial is annual, so term filter doesn't apply directly
+
     # Student Analysis
-    total_students = Student.objects.count()
+    total_students = students_qs.count()
     
     # Gender Distribution
     gender_map = dict(Student.GENDER_CHOICES)
-    gender_data = Student.objects.values('gender').annotate(count=Count('id'))
+    gender_data = students_qs.values('gender').annotate(count=Count('id'))
     gender_labels = [gender_map.get(item['gender'], item['gender']) for item in gender_data]
     gender_counts = [item['count'] for item in gender_data]
     
     # School Level Distribution
     level_map = dict(Student.SCHOOL_LEVEL_CHOICES)
-    level_data = Student.objects.values('school_level').annotate(count=Count('id'))
+    level_data = students_qs.values('school_level').annotate(count=Count('id'))
     level_labels = [level_map.get(item['school_level'], item['school_level']) for item in level_data]
     level_counts = [item['count'] for item in level_data]
 
     # Finance Analysis
-    total_fees_expected = SchoolFee.objects.aggregate(total=Sum('total_fees'))['total'] or 0
-    total_fees_paid = SchoolFee.objects.aggregate(total=Sum('amount_paid'))['total'] or 0
-    total_balance = SchoolFee.objects.aggregate(total=Sum('balance'))['total'] or 0
+    total_fees_expected = fees_qs.aggregate(total=Sum('total_fees'))['total'] or 0
+    total_fees_paid = fees_qs.aggregate(total=Sum('amount_paid'))['total'] or 0
+    total_balance = fees_qs.aggregate(total=Sum('balance'))['total'] or 0
     
     # Payment Status Distribution
     status_map = dict(SchoolFee.PAYMENT_STATUS_CHOICES)
-    payment_status_data = SchoolFee.objects.values('payment_status').annotate(count=Count('id'))
+    payment_status_data = fees_qs.values('payment_status').annotate(count=Count('id'))
     status_labels = [status_map.get(item['payment_status'], item['payment_status']) for item in payment_status_data]
     status_counts = [item['count'] for item in payment_status_data]
+
+    # Performance Analysis
+    avg_marks = marks_qs.aggregate(avg=Avg('marks'))['avg'] or 0
+    total_marks_count = marks_qs.count()
+    passed_count = marks_qs.filter(marks__gte=50).count()
+    pass_rate = (passed_count / total_marks_count * 100) if total_marks_count > 0 else 0
+
+    # Materials Analysis
+    # If term filter is active, materials might show annual data still, which is fine, 
+    # or we could clear it. For now, we show annual data filtered by year/student.
+    total_materials_records = materials_qs.count()
+    
+    materials_stats = {
+        'books': materials_qs.filter(books_received=True).count(),
+        'bags': materials_qs.filter(bag_received=True).count(),
+        'shoes': materials_qs.filter(shoes_received=True).count(),
+        'uniforms': materials_qs.filter(uniforms_received=True).count(),
+    }
+    materials_labels = ['Books', 'Bags', 'Shoes', 'Uniforms']
+    materials_counts = [materials_stats['books'], materials_stats['bags'], materials_stats['shoes'], materials_stats['uniforms']]
+
+    # Partner Analysis
+    partner_data = students_qs.values('partner__name').annotate(count=Count('id')).order_by('-count')
+    partner_labels = [item['partner__name'] or 'No Partner' for item in partner_data]
+    partner_counts = [item['count'] for item in partner_data]
+
+    # Context for Filters
+    academic_years = AcademicYear.objects.all().order_by('-name')
+    districts = District.objects.all().order_by('name')
+    partners = Partner.objects.all().order_by('name')
+    school_levels = Student.SCHOOL_LEVEL_CHOICES
+    terms = [('1', 'Term 1'), ('2', 'Term 2'), ('3', 'Term 3')]
 
     context = {
         'page_title': 'Analysis Dashboard',
@@ -791,6 +866,24 @@ def analysis_dashboard(request):
         'total_balance': float(total_balance),
         'status_labels': status_labels,
         'status_counts': status_counts,
+        # New Stats
+        'avg_marks': round(float(avg_marks), 1),
+        'pass_rate': round(float(pass_rate), 1),
+        'materials_labels': materials_labels,
+        'materials_counts': materials_counts,
+        'partner_labels': partner_labels,
+        'partner_counts': partner_counts,
+        # Filters
+        'academic_years': academic_years,
+        'districts': districts,
+        'partners': partners,
+        'school_levels': school_levels,
+        'terms': terms,
+        'selected_year': int(year_id) if year_id else None,
+        'selected_term': term_val,
+        'selected_district': int(district_id) if district_id else None,
+        'selected_partner': int(partner_id) if partner_id else None,
+        'selected_level': level_val,
     }
     return render(request, 'reports/analysis.html', context)
 

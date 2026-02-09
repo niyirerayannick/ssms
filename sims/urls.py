@@ -3,9 +3,11 @@ URL configuration for sims project.
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
+
+handler404 = 'sims.views.custom_page_not_found'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -18,6 +20,7 @@ urlpatterns = [
     path('finance/', include('finance.urls')),
     path('insurance/', include('insurance.urls')),
     path('reports/', include('reports.urls')),
+    path('test-404/', TemplateView.as_view(template_name='404.html'), name='test_404'),
 ]
 
 if settings.DEBUG:

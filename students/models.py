@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
-from core.models import School, AcademicYear
+from core.models import School, AcademicYear, Partner
 from families.models import Family
 
 
@@ -36,6 +36,7 @@ class Student(models.Model):
         ('primary', 'Primary'),
         ('secondary', 'Secondary'),
         ('tvet', 'TVET'),
+        ('university', 'University'),
     ]
     
     DISABILITY_CHOICES = [
@@ -100,6 +101,17 @@ class Student(models.Model):
         blank=True,
         help_text="Reason Solidact is supporting this student"
     )
+
+    # Partner Information
+    partner = models.ForeignKey(
+        Partner,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+        help_text="Partner organization if student comes from one"
+    )
+
     is_active = models.BooleanField(default=True)
     
     # Disability Information
@@ -200,13 +212,37 @@ class Student(models.Model):
         return self.full_name
 
 
+
+def student_photo_path(instance, filename):
+    """
+    Generate file path for student photos.
+    Format: students/photos/{student_name}_{location}/{filename}
+    """
+    import os
+    from django.utils.text import slugify
+    
+    # Get student name
+    student_name = slugify(instance.student.full_name)
+    
+    # Get location (District)
+    location = "unknown_location"
+    if instance.student.family and instance.student.family.district:
+        location = slugify(instance.student.family.district.name)
+    elif instance.student.school:
+        location = slugify(instance.student.school.name)
+        
+    folder_name = f"{student_name}_{location}"
+    return os.path.join('students', 'photos', folder_name, filename)
+
+
 class StudentPhoto(models.Model):
     """Model for storing multiple photos per student."""
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='photos')
-    image = models.ImageField(upload_to='students/photos/')
+    image = models.ImageField(upload_to=student_photo_path)
     captured_via_camera = models.BooleanField(default=False, help_text="Was this photo captured using device camera?")
     caption = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
 
     class Meta:
         ordering = ['-created_at']
