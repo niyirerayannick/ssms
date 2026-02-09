@@ -72,6 +72,10 @@ def fee_create(request):
         if payment_type == 'insurance':
             # Handle Mutuelle de Santé (Family Insurance) payment
             form = FamilyInsuranceForm(request.POST)
+            # Allow any family to be selected (since they are loaded dynamically via JS)
+            # This ensures validation passes even if the initial queryset was empty
+            form.fields['family'].queryset = Family.objects.all()
+            
             if form.is_valid():
                 insurance = form.save()
                 messages.success(request, f'Mutuelle de Santé payment recorded for family {insurance.family.family_code}!')
@@ -79,6 +83,9 @@ def fee_create(request):
         else:
             # Handle School Fee payment
             form = FeeForm(request.POST)
+            # Allow any student to be selected (since they are loaded dynamically via JS)
+            form.fields['student'].queryset = Student.objects.all()
+            
             if form.is_valid():
                 fee = form.save()
                 messages.success(request, f'School fee recorded for {fee.student.full_name}!')
@@ -86,12 +93,17 @@ def fee_create(request):
     else:
         if payment_type == 'insurance':
             form = FamilyInsuranceForm()
+            # Initialize with empty queryset - families will be loaded via AJAX based on district
+            form.fields['family'].queryset = Family.objects.none()
         else:
             form = FeeForm()
+            # Initialize with empty queryset - students will be loaded via AJAX based on district
+            form.fields['student'].queryset = Student.objects.none()
     
     context = {
         'form': form,
         'payment_type': payment_type,
+        'districts': District.objects.order_by('name'),
         'title': 'Add Mutuelle Payment' if payment_type == 'insurance' else 'Add School Fee Payment'
     }
     return render(request, 'finance/fee_form.html', context)
@@ -285,6 +297,10 @@ def get_student_details(request, student_id):
     try:
         student = get_object_or_404(Student, pk=student_id)
         
+        # Get latest fee record for payment dates
+        latest_fee = SchoolFee.objects.filter(student=student).order_by('-created_at').first()
+        payment_dates = latest_fee.payment_dates if latest_fee else ''
+        
         data = {
             'success': True,
             'student_id': student.id,
@@ -293,6 +309,8 @@ def get_student_details(request, student_id):
             'school_id': student.school.id if student.school else None,
             'class_level': student.class_level,
             'enrollment_status': student.get_enrollment_status_display(),
+            'total_fees': str(student.school.fee_amount) if student.school else '0',
+            'payment_dates': payment_dates,
         }
         return JsonResponse(data)
     except Student.DoesNotExist:
@@ -332,17 +350,45 @@ def get_family_insurance_details(request, family_id):
             data['amount_paid'] = str(latest_insurance.amount_paid)
             data['balance'] = str(latest_insurance.balance)
             data['coverage_status'] = latest_insurance.get_coverage_status_display()
+            data['payment_dates'] = latest_insurance.payment_dates
             data['has_existing_record'] = True
         else:
             active_year = AcademicYear.objects.filter(is_active=True).order_by('-name').first()
             data['insurance_year_id'] = active_year.id if active_year else ''
             data['insurance_year'] = active_year.name if active_year else ''
-            data['required_amount'] = '0'
+            data['required_amount'] = str(family.total_contribution)
             data['amount_paid'] = '0'
-            data['balance'] = '0'
+            data['balance'] = str(family.total_contribution)
             data['coverage_status'] = 'Not Covered'
+            data['payment_dates'] = ''
             data['has_existing_record'] = False
         
         return JsonResponse(data)
     except Family.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Family not found'}, status=404)
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
+def get_families_by_district(request, district_id):
+    """API endpoint to fetch families in a district."""
+    families = Family.objects.filter(district_id=district_id).values('id', 'family_code', 'head_of_family')
+    data = [{'id': f['id'], 'text': f"{f['family_code']} - {f['head_of_family']}"} for f in families]
+    return JsonResponse({'success': True, 'results': data})
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
+def get_students_by_district(request, district_id):
+    """API endpoint to fetch students in a district."""
+    students = Student.objects.filter(
+        Q(family__district_id=district_id) | Q(school__district_id=district_id)
+    ).distinct().values('id', 'first_name', 'last_name', 'school_name')
+    
+    data = []
+    for s in students:
+        full_name = f"{s['first_name']} {s['last_name']}"
+        school = s['school_name'] or "No School"
+        data.append({'id': s['id'], 'text': f"{full_name} ({school})"})
+        
+    return JsonResponse({'success': True, 'results': data})

@@ -27,6 +27,7 @@ urlpatterns = [
     ), name='password_reset_complete'),
     
     # User Management
+    path('profile/', views.profile_view, name='profile'),
     path('users/', views.user_list, name='user_list'),
     path('users/add/', views.user_create, name='user_create'),
     path('users/<int:user_id>/edit/', views.user_edit, name='user_edit'),

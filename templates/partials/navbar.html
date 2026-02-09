@@ -123,8 +123,12 @@
                             </div>
                             <!-- User Avatar -->
                             <div class="relative">
-                                <div class="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white font-bold text-lg shadow-lg ring-2 ring-white">
-                                    {{ user.get_full_name|first|default:user.username|first|upper }}
+                                <div class="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white font-bold text-lg shadow-lg ring-2 ring-white overflow-hidden">
+                                    {% if user.profile.profile_picture %}
+                                        <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                        {{ user.get_full_name|first|default:user.username|first|upper }}
+                                    {% endif %}
                                 </div>
                                 <!-- Online Status Indicator -->
                                 <span class="absolute bottom-0 right-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-green-500 ring-2 ring-white">
@@ -175,6 +179,13 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
                                     <span class="font-medium">Reports</span>
+                                </a>
+
+                                <a href="{% url 'accounts:profile' %}" class="flex items-center gap-3 px-4 py-2.5 text-slate-700 hover:bg-emerald-50 transition-colors">
+                                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    <span class="font-medium">My Profile</span>
                                 </a>
                             </div>
 

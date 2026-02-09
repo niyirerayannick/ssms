@@ -124,6 +124,18 @@
                     <strong>Option 1:</strong> Select from database <strong>OR Option 2:</strong> Enter school name manually
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Partner Organization -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.partner.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.partner.label }}
+                        </label>
+                        {{ form.partner }}
+                        <p class="text-xs text-gray-500 mt-1">Select a partner if applicable. Students from partners do not require family information.</p>
+                        {% if form.partner.errors %}
+                            <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.partner.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
                     <!-- School Selection -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
@@ -216,19 +228,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- Partner Organization -->
-                    <div>
-                        <label for="{{ form.partner.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-                            {{ form.partner.label }}
-                        </label>
-                        {{ form.partner }}
-                        {% if form.partner.help_text %}
-                            <p class="text-xs text-gray-500 mt-1">{{ form.partner.help_text }}</p>
-                        {% endif %}
-                        {% if form.partner.errors %}
-                            <div class="text-red-600 text-sm mt-2 bg-red-50 p-2 rounded">{{ form.partner.errors.0 }}</div>
-                        {% endif %}
-                    </div>
 
                     <!-- Sponsorship Status -->
                     <div>
@@ -368,7 +367,7 @@
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Family -->
-                    <div>
+                    <div id="family-wrapper">
                         <div class="flex items-center justify-between mb-2">
                             <label for="{{ form.family.id_for_label }}" class="block text-sm font-medium text-gray-700">
                                 {{ form.family.label }}
@@ -563,6 +562,31 @@
             }
         }
 
+        const partnerSelect = document.getElementById('{{ form.partner.id_for_label }}');
+        const familyWrapper = document.getElementById('family-wrapper');
+
+        function toggleFamilyField() {
+            if (partnerSelect && familyWrapper) {
+                // Check if value is selected (partnerSelect.value is the ID string)
+                if (partnerSelect.value) {
+                    familyWrapper.classList.add('hidden');
+                    // Optional: Clear family selection if hidden?
+                    // Maybe not, in case they toggle back. 
+                    // But if it's "no need to add family information", clearing it might be safer to avoid validation errors if it was required (it's not).
+                } else {
+                    familyWrapper.classList.remove('hidden');
+                }
+            }
+        }
+        
+        if (partnerSelect) {
+            partnerSelect.addEventListener('change', toggleFamilyField);
+            // Also need to handle TomSelect change event if it doesn't propagate
+            // But let's rely on 'change' first. 
+            // If TomSelect is initialized, we can hook into it.
+            // The existing code initializes TomSelect before this.
+        }
+
         function clearValidationStyles(section) {
             const fields = section.querySelectorAll('input, select, textarea');
             fields.forEach((field) => {
@@ -700,6 +724,7 @@
         restoreDraft();
         renderSteps();
         toggleDisabilityFields();
+        toggleFamilyField();
     });
 </script>
 {% endblock %}

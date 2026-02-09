@@ -13,5 +13,7 @@ urlpatterns = [
     path('student/<int:student_id>/add/', views.add_student_payment, name='add_student_payment'),
     path('api/student/<int:student_id>/details/', views.get_student_details, name='api_student_details'),
     path('api/family/<int:family_id>/insurance/', views.get_family_insurance_details, name='api_family_insurance'),
+    path('api/district/<int:district_id>/families/', views.get_families_by_district, name='api_families_by_district'),
+    path('api/district/<int:district_id>/students/', views.get_students_by_district, name='api_students_by_district'),
 ]
 

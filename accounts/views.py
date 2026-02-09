@@ -9,6 +9,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
+from .forms import UserUpdateForm, ProfileUpdateForm
+from .models import Profile
 
 
 @require_http_methods(["GET", "POST"])
@@ -254,3 +256,31 @@ def user_delete(request, user_id):
     return render(request, 'accounts/user_confirm_delete.html', {
         'user_to_delete': user_to_delete
     })
+
+@login_required
+def profile_view(request):
+    """User profile view."""
+    # Ensure profile exists
+    if not hasattr(request.user, 'profile'):
+        Profile.objects.create(user=request.user)
+
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, 'Your account has been updated!')
+            return redirect('accounts:profile')
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form,
+        'title': 'Profile'
+    }
+
+    return render(request, 'accounts/profile.html', context)
