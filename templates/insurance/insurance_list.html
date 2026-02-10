@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Insurance - SIMS{% endblock %}
 
@@ -76,9 +77,9 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.insurance_year.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.required_amount }} FRW</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.amount_paid }} FRW</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.balance }} FRW</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.required_amount|compact_number }} FRW</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.amount_paid|compact_number }} FRW</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ insurance.balance|compact_number }} FRW</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full 
                                 {% if insurance.coverage_status == 'covered' %}bg-green-100 text-green-800

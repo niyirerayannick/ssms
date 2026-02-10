@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}{{ student.full_name }} - SIMS{% endblock %}
 
@@ -334,7 +335,7 @@
                     {% endif %}
                     <div>
                         <p class="text-sm text-gray-600 font-medium">Family Contribution</p>
-                        <p class="text-lg font-bold text-green-600">{{ family.total_contribution }} RWF</p>
+                        <p class="text-lg font-bold text-green-600">{{ family.total_contribution|compact_number }} RWF</p>
                     </div>
                 </div>
                 {% else %}
@@ -381,7 +382,7 @@
                     </div>
                     <div class="border-t pt-3">
                         <p class="text-sm text-gray-600 font-medium">Standard Fee</p>
-                        <p class="text-2xl font-bold text-green-600">{{ student.school.fee_amount|floatformat:0 }} RWF</p>
+                        <p class="text-2xl font-bold text-green-600">{{ student.school.fee_amount|compact_number }} RWF</p>
                     </div>
                 </div>
                 {% else %}

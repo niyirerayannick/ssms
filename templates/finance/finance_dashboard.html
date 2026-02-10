@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Finance Dashboard - SIMS{% endblock %}
 
@@ -34,35 +35,35 @@
             <!-- Total Fees -->
             <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
                 <p class="text-blue-100 text-sm font-medium">Total Records</p>
-                <p class="text-3xl font-bold mt-2">{{ total_school_fees }}</p>
+                <p class="text-3xl font-bold mt-2">{{ total_school_fees|compact_number }}</p>
                 <p class="text-blue-100 text-xs mt-1">School fee records</p>
             </div>
 
             <!-- Paid -->
             <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
                 <p class="text-green-100 text-sm font-medium">Paid</p>
-                <p class="text-3xl font-bold mt-2">{{ paid_school_fees }}</p>
+                <p class="text-3xl font-bold mt-2">{{ paid_school_fees|compact_number }}</p>
                 <p class="text-green-100 text-xs mt-1">Fully paid</p>
             </div>
 
             <!-- Partial -->
             <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-lg text-white">
                 <p class="text-yellow-100 text-sm font-medium">Partial</p>
-                <p class="text-3xl font-bold mt-2">{{ partial_school_fees }}</p>
+                <p class="text-3xl font-bold mt-2">{{ partial_school_fees|compact_number }}</p>
                 <p class="text-yellow-100 text-xs mt-1">Partially paid</p>
             </div>
 
             <!-- Pending -->
             <div class="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
                 <p class="text-orange-100 text-sm font-medium">Pending</p>
-                <p class="text-3xl font-bold mt-2">{{ pending_school_fees }}</p>
+                <p class="text-3xl font-bold mt-2">{{ pending_school_fees|compact_number }}</p>
                 <p class="text-orange-100 text-xs mt-1">Not yet paid</p>
             </div>
 
             <!-- Overdue -->
             <div class="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-xl shadow-lg text-white">
                 <p class="text-red-100 text-sm font-medium">Overdue</p>
-                <p class="text-3xl font-bold mt-2">{{ overdue_school_fees }}</p>
+                <p class="text-3xl font-bold mt-2">{{ overdue_school_fees|compact_number }}</p>
                 <p class="text-red-100 text-xs mt-1">Overdue payments</p>
             </div>
         </div>
@@ -72,21 +73,21 @@
             <!-- Required Amount -->
             <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
                 <h3 class="text-sm font-semibold text-gray-600 mb-2">Required Amount</h3>
-                <p class="text-3xl font-bold text-gray-900">FRW {{ total_fees_required|floatformat:2 }}</p>
+                <p class="text-3xl font-bold text-gray-900">FRW {{ total_fees_required|compact_number }}</p>
                 <p class="text-xs text-gray-500 mt-2">Total amount required from all students</p>
             </div>
 
             <!-- Collected Amount -->
             <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
                 <h3 class="text-sm font-semibold text-gray-600 mb-2">Collected Amount</h3>
-                <p class="text-3xl font-bold text-green-600">FRW {{ total_fees_collected|floatformat:2 }}</p>
+                <p class="text-3xl font-bold text-green-600">FRW {{ total_fees_collected|compact_number }}</p>
                 <p class="text-xs text-gray-500 mt-2">{{ fees_collection_percentage }}% collection rate</p>
             </div>
 
             <!-- Outstanding Amount -->
             <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500">
                 <h3 class="text-sm font-semibold text-gray-600 mb-2">Outstanding Balance</h3>
-                <p class="text-3xl font-bold text-red-600">FRW {{ total_fees_outstanding|floatformat:2 }}</p>
+                <p class="text-3xl font-bold text-red-600">FRW {{ total_fees_outstanding|compact_number }}</p>
                 <p class="text-xs text-gray-500 mt-2">Amount still to be collected</p>
             </div>
         </div>
@@ -109,9 +110,9 @@
                         {% for fee in students_top_outstanding %}
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ fee.student.full_name }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ fee.total_fees|floatformat:2 }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ fee.amount_paid|floatformat:2 }}</td>
-                            <td class="px-6 py-4 text-sm font-bold text-red-600">FRW {{ fee.balance|floatformat:2 }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ fee.total_fees|compact_number }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ fee.amount_paid|compact_number }}</td>
+                            <td class="px-6 py-4 text-sm font-bold text-red-600">FRW {{ fee.balance|compact_number }}</td>
                             <td class="px-6 py-4 text-sm">
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full
                                     {% if fee.payment_status == 'paid' %}bg-green-100 text-green-800
@@ -147,28 +148,28 @@
             <!-- Total Families -->
             <div class="bg-gradient-to-br from-teal-500 to-teal-600 p-6 rounded-xl shadow-lg text-white">
                 <p class="text-teal-100 text-sm font-medium">Total Families</p>
-                <p class="text-3xl font-bold mt-2">{{ total_families }}</p>
+                <p class="text-3xl font-bold mt-2">{{ total_families|compact_number }}</p>
                 <p class="text-teal-100 text-xs mt-1">Registered families</p>
             </div>
 
             <!-- Covered -->
             <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
                 <p class="text-green-100 text-sm font-medium">Fully Covered</p>
-                <p class="text-3xl font-bold mt-2">{{ families_with_insurance }}</p>
+                <p class="text-3xl font-bold mt-2">{{ families_with_insurance|compact_number }}</p>
                 <p class="text-green-100 text-xs mt-1">Active insurance</p>
             </div>
 
             <!-- Partially Covered -->
             <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-lg text-white">
                 <p class="text-yellow-100 text-sm font-medium">Partially Covered</p>
-                <p class="text-3xl font-bold mt-2">{{ families_partially_covered }}</p>
+                <p class="text-3xl font-bold mt-2">{{ families_partially_covered|compact_number }}</p>
                 <p class="text-yellow-100 text-xs mt-1">Partial payment</p>
             </div>
 
             <!-- Not Covered -->
             <div class="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-xl shadow-lg text-white">
                 <p class="text-red-100 text-sm font-medium">Not Covered</p>
-                <p class="text-3xl font-bold mt-2">{{ families_not_covered }}</p>
+                <p class="text-3xl font-bold mt-2">{{ families_not_covered|compact_number }}</p>
                 <p class="text-red-100 text-xs mt-1">No insurance</p>
             </div>
         </div>
@@ -178,21 +179,21 @@
             <!-- Required Amount -->
             <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-teal-500">
                 <h3 class="text-sm font-semibold text-gray-600 mb-2">Required Amount</h3>
-                <p class="text-3xl font-bold text-gray-900">FRW {{ total_insurance_required|floatformat:2 }}</p>
+                <p class="text-3xl font-bold text-gray-900">FRW {{ total_insurance_required|compact_number }}</p>
                 <p class="text-xs text-gray-500 mt-2">Total insurance contribution required</p>
             </div>
 
             <!-- Collected Amount -->
             <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
                 <h3 class="text-sm font-semibold text-gray-600 mb-2">Collected Amount</h3>
-                <p class="text-3xl font-bold text-green-600">FRW {{ total_insurance_collected|floatformat:2 }}</p>
+                <p class="text-3xl font-bold text-green-600">FRW {{ total_insurance_collected|compact_number }}</p>
                 <p class="text-xs text-gray-500 mt-2">{{ insurance_collection_percentage }}% collection rate</p>
             </div>
 
             <!-- Outstanding Amount -->
             <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500">
                 <h3 class="text-sm font-semibold text-gray-600 mb-2">Outstanding Balance</h3>
-                <p class="text-3xl font-bold text-red-600">FRW {{ total_insurance_outstanding|floatformat:2 }}</p>
+                <p class="text-3xl font-bold text-red-600">FRW {{ total_insurance_outstanding|compact_number }}</p>
                 <p class="text-xs text-gray-500 mt-2">Amount still to be collected</p>
             </div>
         </div>
@@ -217,9 +218,9 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ insurance.family.family_code }}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">{{ insurance.insurance_year.name|default:"N/A" }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ insurance.required_amount|floatformat:2 }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ insurance.amount_paid|floatformat:2 }}</td>
-                            <td class="px-6 py-4 text-sm font-bold text-red-600">FRW {{ insurance.balance|floatformat:2 }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ insurance.required_amount|compact_number }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ insurance.amount_paid|compact_number }}</td>
+                            <td class="px-6 py-4 text-sm font-bold text-red-600">FRW {{ insurance.balance|compact_number }}</td>
                             <td class="px-6 py-4 text-sm">
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full
                                     {% if insurance.coverage_status == 'covered' %}bg-green-100 text-green-800
@@ -253,11 +254,11 @@
             <div class="space-y-3">
                 <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                     <span class="text-sm text-gray-700">School Fee Updates</span>
-                    <span class="text-lg font-bold text-blue-600">{{ recent_school_fees }}</span>
+                    <span class="text-lg font-bold text-blue-600">{{ recent_school_fees|compact_number }}</span>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-teal-50 rounded-lg">
                     <span class="text-sm text-gray-700">Insurance Updates</span>
-                    <span class="text-lg font-bold text-teal-600">{{ recent_insurance }}</span>
+                    <span class="text-lg font-bold text-teal-600">{{ recent_insurance|compact_number }}</span>
                 </div>
             </div>
         </div>
@@ -273,11 +274,11 @@
             <div class="space-y-3">
                 <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                     <span class="text-sm text-gray-700">Covered by Mutuelle</span>
-                    <span class="text-lg font-bold text-green-600">{{ students_covered }}</span>
+                    <span class="text-lg font-bold text-green-600">{{ students_covered|compact_number }}</span>
                 </div>
                 <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                     <span class="text-sm text-gray-700">Total Students</span>
-                    <span class="text-lg font-bold text-gray-600">{{ total_school_fees }}</span>
+                    <span class="text-lg font-bold text-gray-600">{{ total_school_fees|compact_number }}</span>
                 </div>
             </div>
         </div>

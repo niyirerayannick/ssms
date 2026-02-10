@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Finance - SIMS{% endblock %}
 
@@ -80,10 +81,10 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ fee.student.full_name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.academic_year.name|default:"N/A" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.get_term_display }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.total_fees }} RWF</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.amount_paid }} RWF</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.total_fees|compact_number }} RWF</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.amount_paid|compact_number }} RWF</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium {% if fee.balance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                            {{ fee.balance }} RWF
+                            {{ fee.balance|compact_number }} RWF
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full 

@@ -537,12 +537,24 @@
                             }, 10);
                         }
                         
-                        // Format currency with thousands separator
+                        // Format currency with compact notation (k, M, B)
                         const formatCurrency = (value) => {
-                            return Number(value).toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            }) + ' FRW';
+                            let num = Number(value);
+                            if (isNaN(num)) return '0 FRW';
+                            let suffix = '';
+                            if (num >= 1000000000) {
+                                num = num / 1000000000;
+                                suffix = 'B';
+                            } else if (num >= 1000000) {
+                                num = num / 1000000;
+                                suffix = 'M';
+                            } else if (num >= 1000) {
+                                num = num / 1000;
+                                suffix = 'k';
+                            }
+                            // Format with up to 1 decimal place, remove .0
+                            let formatted = num.toFixed(1).replace(/\.0$/, '');
+                            return formatted + suffix + ' FRW';
                         };
                         
                         // Update display elements

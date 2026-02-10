@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Families - SSMS{% endblock %}
 
@@ -94,7 +95,7 @@
 
     <!-- Results Summary -->
     <div class="text-sm text-gray-600">
-        Showing <strong>{{ families.count }}</strong> famil{{ families.count|pluralize:"y,ies" }}
+        Showing <strong>{{ families.count|compact_number }}</strong> famil{{ families.count|pluralize:"y,ies" }}
         {% if search_query %}
             matching "<strong>{{ search_query }}</strong>"
         {% endif %}

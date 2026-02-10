@@ -246,6 +246,32 @@
                     .catch(error => console.error('Error loading sectors:', error));
             }
         });
+
+        // Compact number display for fee amount
+        const attachCompactDisplay = (inputId) => {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            // Create display element
+            const display = document.createElement('div');
+            display.className = 'text-sm text-gray-500 mt-1 font-medium';
+            input.parentNode.insertBefore(display, input.nextSibling);
+
+            const updateDisplay = () => {
+                const val = input.value;
+                if (val) {
+                    const formatted = typeof formatCompact === 'function' ? formatCompact(val) : val;
+                    display.textContent = `Formatted: ${formatted} FRW`;
+                } else {
+                    display.textContent = '';
+                }
+            };
+
+            input.addEventListener('input', updateDisplay);
+            updateDisplay(); // Initial call
+        };
+
+        attachCompactDisplay('id_fee_amount');
     });
 </script>
 {% endblock %}

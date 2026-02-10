@@ -151,4 +151,35 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const attachCompactDisplay = (inputId) => {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            // Create display element
+            const display = document.createElement('div');
+            display.className = 'text-sm text-gray-500 mt-1 font-medium';
+            input.parentNode.insertBefore(display, input.nextSibling);
+
+            const updateDisplay = () => {
+                const val = input.value;
+                if (val) {
+                    // Use global formatCompact if available, or local fallback
+                    const formatted = typeof formatCompact === 'function' ? formatCompact(val) : val;
+                    display.textContent = `Formatted: ${formatted} FRW`;
+                } else {
+                    display.textContent = '';
+                }
+            };
+
+            input.addEventListener('input', updateDisplay);
+            updateDisplay(); // Initial call
+        };
+
+        attachCompactDisplay('id_total_fees');
+        attachCompactDisplay('id_amount_paid');
+    });
+</script>
 {% endblock %}

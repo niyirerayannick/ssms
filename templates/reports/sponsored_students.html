@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Sponsored Students - SIMS{% endblock %}
 
@@ -101,23 +102,23 @@
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
                     <span class="text-sm text-slate-500">Total Sponsored</span>
-                    <span class="text-xl font-bold text-slate-900">{{ total }}</span>
+                    <span class="text-xl font-bold text-slate-900">{{ total|compact_number }}</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-sm text-slate-500">Boys</span>
-                    <span class="text-lg font-semibold text-indigo-600">{{ boys }}</span>
+                    <span class="text-lg font-semibold text-indigo-600">{{ boys|compact_number }}</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-sm text-slate-500">Girls</span>
-                    <span class="text-lg font-semibold text-pink-600">{{ girls }}</span>
+                    <span class="text-lg font-semibold text-pink-600">{{ girls|compact_number }}</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-sm text-slate-500">With Disability</span>
-                    <span class="text-lg font-semibold text-amber-600">{{ with_disability }}</span>
+                    <span class="text-lg font-semibold text-amber-600">{{ with_disability|compact_number }}</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-sm text-slate-500">Without Disability</span>
-                    <span class="text-lg font-semibold text-emerald-600">{{ without_disability }}</span>
+                    <span class="text-lg font-semibold text-emerald-600">{{ without_disability|compact_number }}</span>
                 </div>
             </div>
         </aside>

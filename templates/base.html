@@ -141,6 +141,28 @@
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
     <script>
+        // Global utility for compact number formatting
+        function formatCompact(value) {
+            let num = Number(value);
+            if (isNaN(num)) return '0';
+            let suffix = '';
+            if (num >= 1000000000) {
+                num = num / 1000000000;
+                suffix = 'B';
+            } else if (num >= 1000000) {
+                num = num / 1000000;
+                suffix = 'M';
+            } else if (num >= 1000) {
+                num = num / 1000;
+                suffix = 'k';
+            }
+            
+            if (suffix === '') return Math.round(num).toString(); // Return integer for < 1000
+
+            let formatted = num.toFixed(1).replace(/\.0$/, '');
+            return formatted + suffix;
+        }
+
         function createExportButton(label, classes, onClick) {
             const button = document.createElement('button');
             button.type = 'button';

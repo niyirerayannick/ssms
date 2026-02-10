@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}{{ student.full_name }} - Payment History - SIMS{% endblock %}
 
@@ -40,13 +41,13 @@
         <!-- Total Outstanding -->
         <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-red-500">
             <p class="text-xs text-gray-500 font-semibold uppercase">Total Outstanding</p>
-            <p class="text-lg font-bold text-red-600 mt-2">FRW {{ total_outstanding|floatformat:2 }}</p>
+            <p class="text-lg font-bold text-red-600 mt-2">FRW {{ total_outstanding|compact_number }}</p>
         </div>
 
         <!-- Total Paid -->
         <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-green-500">
             <p class="text-xs text-gray-500 font-semibold uppercase">Total Paid</p>
-            <p class="text-lg font-bold text-green-600 mt-2">FRW {{ total_paid|floatformat:2 }}</p>
+            <p class="text-lg font-bold text-green-600 mt-2">FRW {{ total_paid|compact_number }}</p>
         </div>
 
         <!-- Payment Rate -->
@@ -62,15 +63,15 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
                 <p class="text-sm text-gray-600 font-medium mb-1">Total Required</p>
-                <p class="text-2xl font-bold text-gray-900">FRW {{ total_required|floatformat:2 }}</p>
+                <p class="text-2xl font-bold text-gray-900">FRW {{ total_required|compact_number }}</p>
             </div>
             <div>
                 <p class="text-sm text-gray-600 font-medium mb-1">Amount Paid</p>
-                <p class="text-2xl font-bold text-green-600">FRW {{ total_paid|floatformat:2 }}</p>
+                <p class="text-2xl font-bold text-green-600">FRW {{ total_paid|compact_number }}</p>
             </div>
             <div>
                 <p class="text-sm text-gray-600 font-medium mb-1">Outstanding Balance</p>
-                <p class="text-2xl font-bold text-red-600">FRW {{ total_outstanding|floatformat:2 }}</p>
+                <p class="text-2xl font-bold text-red-600">FRW {{ total_outstanding|compact_number }}</p>
             </div>
         </div>
         
@@ -114,10 +115,10 @@
                         <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ fee.academic_year.name|default:"N/A" }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ fee.school_name }}</td>
                         <td class="px-6 py-4 text-sm text-gray-700">{{ fee.class_level }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">FRW {{ fee.total_fees|floatformat:2 }}</td>
-                        <td class="px-6 py-4 text-sm font-medium text-green-600">FRW {{ fee.amount_paid|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">FRW {{ fee.total_fees|compact_number }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-green-600">FRW {{ fee.amount_paid|compact_number }}</td>
                         <td class="px-6 py-4 text-sm font-bold {% if fee.balance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                            FRW {{ fee.balance|floatformat:2 }}
+                            FRW {{ fee.balance|compact_number }}
                         </td>
                         <td class="px-6 py-4 text-sm">
                             <span class="px-3 py-1 text-xs font-semibold rounded-full

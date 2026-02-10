@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}{{ school.name }} - School Profile - SIMS{% endblock %}
 
@@ -99,7 +100,7 @@
                 </h2>
                 <div class="text-center py-4">
                     <p class="text-sm text-gray-600 font-medium mb-2">Standard Fee per Student</p>
-                    <p class="text-5xl font-bold text-green-600">{{ school.fee_amount|default:"0"|floatformat:0 }}</p>
+                    <p class="text-5xl font-bold text-green-600">{{ school.fee_amount|compact_number }}</p>
                     <p class="text-lg text-gray-600 mt-2">RWF</p>
                 </div>
             </div>
@@ -144,11 +145,11 @@
                 <div class="space-y-4">
                     <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                         <span class="text-gray-700 font-medium">Total Students</span>
-                        <span class="text-2xl font-bold text-blue-600">{{ student_count }}</span>
+                        <span class="text-2xl font-bold text-blue-600">{{ student_count|compact_number }}</span>
                     </div>
                     <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                         <span class="text-gray-700 font-medium">Standard Fee</span>
-                        <span class="text-xl font-bold text-green-600">{{ school.fee_amount|default:"0"|floatformat:0 }} RWF</span>
+                        <span class="text-xl font-bold text-green-600">{{ school.fee_amount|compact_number }} RWF</span>
                     </div>
                     <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
                         <span class="text-gray-700 font-medium">Added</span>
@@ -167,7 +168,7 @@
                     <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 12H9m6 0H9m6 0H9m6 0H9M9 8h6"/>
                     </svg>
-                    Students ({{ student_count }})
+                    Students ({{ student_count|compact_number }})
                 </h3>
                 
                 {% if students %}

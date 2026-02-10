@@ -166,12 +166,27 @@ def finance_dashboard(request):
     families_not_covered = FamilyInsurance.objects.filter(coverage_status='not_covered').count()
     
     # Financial aggregates for insurance
-    total_insurance_required = FamilyInsurance.objects.aggregate(Sum('required_amount'))['required_amount__sum'] or 0
+    # Calculate total insurance required for ALL families (Total Members * 3000)
+    total_members_all = Family.objects.aggregate(Sum('total_family_members'))['total_family_members__sum'] or 0
+    total_insurance_required = total_members_all * 3000
+    
     total_insurance_collected = FamilyInsurance.objects.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
-    total_insurance_outstanding = FamilyInsurance.objects.aggregate(Sum('balance'))['balance__sum'] or 0
+    total_insurance_outstanding = total_insurance_required - total_insurance_collected
     
     # Calculate insurance collection percentage
     insurance_collection_percentage = round((total_insurance_collected / total_insurance_required * 100) if total_insurance_required > 0 else 0, 1)
+    
+    # Helper to format numbers with k/M
+    def format_compact(val):
+        if val >= 1_000_000:
+            val = val / 1_000_000
+            return f"{val:.1f}M".replace('.0M', 'M')
+        elif val >= 1_000:
+            val = val / 1_000
+            return f"{val:.1f}k".replace('.0k', 'k')
+        return f"{val}"
+
+    total_insurance_required_display = format_compact(total_insurance_required)
     
     # Students covered via family insurance
     families_covered_ids = FamilyInsurance.objects.filter(coverage_status='covered').values_list('family_id', flat=True)
@@ -209,6 +224,7 @@ def finance_dashboard(request):
         'families_partially_covered': families_partially_covered,
         'families_not_covered': families_not_covered,
         'total_insurance_required': total_insurance_required,
+        'total_insurance_required_display': total_insurance_required_display,
         'total_insurance_collected': total_insurance_collected,
         'total_insurance_outstanding': total_insurance_outstanding,
         'insurance_collection_percentage': insurance_collection_percentage,

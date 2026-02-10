@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Insurance Coverage Summary - SIMS{% endblock %}
 
@@ -17,7 +18,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-600 text-sm">Total Records</p>
-                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ total }}</p>
+                    <p class="text-3xl font-bold text-gray-800 mt-2">{{ total|compact_number }}</p>
                 </div>
                 <div class="text-4xl">📊</div>
             </div>
@@ -27,7 +28,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-600 text-sm">Covered</p>
-                    <p class="text-3xl font-bold text-green-600 mt-2">{{ covered }}</p>
+                    <p class="text-3xl font-bold text-green-600 mt-2">{{ covered|compact_number }}</p>
                 </div>
                 <div class="text-4xl">✅</div>
             </div>
@@ -37,7 +38,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-600 text-sm">Partially Covered</p>
-                    <p class="text-3xl font-bold text-yellow-600 mt-2">{{ partially_covered }}</p>
+                    <p class="text-3xl font-bold text-yellow-600 mt-2">{{ partially_covered|compact_number }}</p>
                 </div>
                 <div class="text-4xl">🟡</div>
             </div>
@@ -49,7 +50,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-600 text-sm">Not Covered</p>
-                    <p class="text-3xl font-bold text-red-600 mt-2">{{ not_covered }}</p>
+                    <p class="text-3xl font-bold text-red-600 mt-2">{{ not_covered|compact_number }}</p>
                 </div>
                 <div class="text-4xl">❌</div>
             </div>

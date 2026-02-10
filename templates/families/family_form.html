@@ -376,7 +376,7 @@
                 const members = parseInt(totalMembersInput.value) || 1;
                 const contribution = members * 3000;
                 document.getElementById('displayMembers').textContent = members.toString();
-                document.getElementById('totalContribution').textContent = contribution.toLocaleString('en-US');
+                document.getElementById('totalContribution').textContent = formatCompact(contribution);
             }
             
             // Update on initial load and on change

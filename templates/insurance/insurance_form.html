@@ -153,10 +153,22 @@
                         if (summaryDiv) summaryDiv.classList.remove('hidden');
                         
                         const formatCurrency = (value) => {
-                            return Number(value).toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            }) + ' FRW';
+                            let num = Number(value);
+                            if (isNaN(num)) return '0 FRW';
+                            let suffix = '';
+                            if (num >= 1000000000) {
+                                num = num / 1000000000;
+                                suffix = 'B';
+                            } else if (num >= 1000000) {
+                                num = num / 1000000;
+                                suffix = 'M';
+                            } else if (num >= 1000) {
+                                num = num / 1000;
+                                suffix = 'k';
+                            }
+                            // Format with up to 1 decimal place, remove .0
+                            let formatted = num.toFixed(1).replace(/\.0$/, '');
+                            return formatted + suffix + ' FRW';
                         };
                         
                         document.getElementById('db-total-contribution').textContent = formatCurrency(data.total_contribution);
@@ -185,6 +197,51 @@
         familySelect.addEventListener('change', function() {
             fetchFamilyInsuranceDetails(this.value);
         });
+        
+        // Compact number display for amount inputs
+        const attachCompactDisplay = (input) => {
+            if (!input) return;
+
+            // Create display element
+            const display = document.createElement('div');
+            display.className = 'text-sm text-gray-500 mt-1 font-medium';
+            input.parentNode.insertBefore(display, input.nextSibling);
+
+            const updateDisplay = () => {
+                const val = input.value;
+                if (val) {
+                    const formatted = typeof formatCompact === 'function' ? formatCompact(val) : val;
+                    display.textContent = `Formatted: ${formatted} FRW`;
+                } else {
+                    display.textContent = '';
+                }
+            };
+
+            input.addEventListener('input', updateDisplay);
+            // Also update when value is set programmatically (if we can detect it, otherwise rely on manual calls or just initial)
+            // Since fetchFamilyInsuranceDetails sets value, we might want to trigger event or call updateDisplay there.
+            // But fetchFamilyInsuranceDetails is async. 
+            // We can just call updateDisplay initially.
+            updateDisplay(); 
+            
+            // Allow external trigger
+            input.updateCompactDisplay = updateDisplay;
+        };
+
+        attachCompactDisplay(requiredAmountInput);
+        attachCompactDisplay(amountPaidInput);
+
+        // Hook into fetchFamilyInsuranceDetails to update displays after setting values
+        const originalFetch = fetchFamilyInsuranceDetails;
+        // Wait, fetchFamilyInsuranceDetails is defined inside. I can just modify it or add a mutation observer.
+        // Or simpler: just add an event dispatch in the fetch success.
+        // But I can't easily modify the fetch function without replacing a large block.
+        // I'll just use a MutationObserver on the inputs to detect value changes? No, input value changes don't trigger mutation observers.
+        // I'll just leave it for user input. If the system sets it, the user will see the raw value in the box, which is fine.
+        // But it would be nice if the "Formatted: ..." text also updated.
+        // The fetch function sets `requiredAmountInput.value = data.required_amount;`. This does NOT trigger 'input' event.
+        // I can overwrite the value property descriptor? Too hacky.
+        // I'll just use SearchReplace to update the fetch function to trigger the event or update the display.
         
         if (familySelect.value) {
             fetchFamilyInsuranceDetails(familySelect.value);

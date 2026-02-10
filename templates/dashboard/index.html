@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Dashboard - SIMS{% endblock %}
 
@@ -122,8 +123,8 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-blue-100 text-sm font-medium">Total Students</p>
-                    <p class="text-3xl font-bold text-white mt-2">{{ total_students }}</p>
-                    <p class="text-blue-100 text-xs mt-1">{{ active_students }} active</p>
+                    <p class="text-3xl font-bold text-white mt-2">{{ total_students|compact_number }}</p>
+                    <p class="text-blue-100 text-xs mt-1">{{ active_students|compact_number }} active</p>
                 </div>
                 <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,7 +139,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-indigo-100 text-sm font-medium">Boys</p>
-                    <p class="text-3xl font-bold text-white mt-2">{{ boys }}</p>
+                    <p class="text-3xl font-bold text-white mt-2">{{ boys|compact_number }}</p>
                     <p class="text-indigo-100 text-xs mt-1">Male students</p>
                 </div>
                 <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -154,7 +155,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-pink-100 text-sm font-medium">Girls</p>
-                    <p class="text-3xl font-bold text-white mt-2">{{ girls }}</p>
+                    <p class="text-3xl font-bold text-white mt-2">{{ girls|compact_number }}</p>
                     <p class="text-pink-100 text-xs mt-1">Female students</p>
                 </div>
                 <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -170,7 +171,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-amber-100 text-sm font-medium">With Disability</p>
-                    <p class="text-3xl font-bold text-white mt-2">{{ students_with_disability }}</p>
+                    <p class="text-3xl font-bold text-white mt-2">{{ students_with_disability|compact_number }}</p>
                     <p class="text-amber-100 text-xs mt-1">Special needs support</p>
                 </div>
                 <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -189,8 +190,8 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-purple-100 text-sm font-medium">Partner Orgs</p>
-                    <p class="text-3xl font-bold text-white mt-2">{{ total_partners }}</p>
-                    <p class="text-purple-100 text-xs mt-1">{{ students_with_partner }} students linked</p>
+                    <p class="text-3xl font-bold text-white mt-2">{{ total_partners|compact_number }}</p>
+                    <p class="text-purple-100 text-xs mt-1">{{ students_with_partner|compact_number }} students linked</p>
                 </div>
                 <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,7 +206,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-green-100 text-sm font-medium">School Fees Paid</p>
-                    <p class="text-3xl font-bold text-white mt-2">{{ paid_fees }}<span class="text-lg">/{{ total_fees }}</span></p>
+                    <p class="text-3xl font-bold text-white mt-2">{{ paid_fees|compact_number }}<span class="text-lg">/{{ total_fees|compact_number }}</span></p>
                     <p class="text-green-100 text-xs mt-1">{{ paid_percentage }}% paid</p>
                 </div>
                 <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -221,8 +222,8 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-orange-100 text-sm font-medium">Total Families</p>
-                    <p class="text-3xl font-bold text-white mt-2">{{ total_families }}</p>
-                    <p class="text-orange-100 text-xs mt-1">{{ total_family_members }} members</p>
+                    <p class="text-3xl font-bold text-white mt-2">{{ total_families|compact_number }}</p>
+                    <p class="text-orange-100 text-xs mt-1">{{ total_family_members|compact_number }} members</p>
                 </div>
                 <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,8 +238,8 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-red-100 text-sm font-medium">Total Schools</p>
-                    <p class="text-3xl font-bold text-white mt-2">{{ total_schools }}</p>
-                    <p class="text-red-100 text-xs mt-1">{{ schools_with_students }} with students</p>
+                    <p class="text-3xl font-bold text-white mt-2">{{ total_schools|compact_number }}</p>
+                    <p class="text-red-100 text-xs mt-1">{{ schools_with_students|compact_number }} with students</p>
                 </div>
                 <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
