@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.paginator import Paginator
 from .models import Family, FamilyStudent
 from core.models import District
 from .forms import FamilyForm
@@ -91,8 +92,14 @@ def family_list(request):
     if district_filter:
         families = families.filter(district_id=district_filter)
     
+    # Pagination
+    paginator = Paginator(families.order_by('-created_at'), 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     context = {
-        'families': families,
+        'families': page_obj,
+        'page_obj': page_obj,
         'search_query': search_query,
         'province_filter': province_filter,
         'district_filter': district_filter,

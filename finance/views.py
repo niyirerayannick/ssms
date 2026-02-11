@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q, Sum, Count
+from django.core.paginator import Paginator
 from core.models import District, AcademicYear
 from django.http import JsonResponse
 from .models import SchoolFee
@@ -49,8 +50,14 @@ def fees_list(request):
             Q(student__school__district_id=district_filter)
         )
     
+    # Pagination
+    paginator = Paginator(fees.order_by('-created_at'), 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     context = {
-        'fees': fees,
+        'fees': page_obj,
+        'page_obj': page_obj,
         'search_query': search_query,
         'status_filter': status_filter,
         'academic_year_filter': academic_year_filter,

@@ -3,6 +3,7 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User, Group
 from django.core.mail import send_mail
+from django.core.paginator import Paginator
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
@@ -70,11 +71,17 @@ def user_list(request):
     
     users = users.order_by('username')
     
+    # Pagination
+    paginator = Paginator(users, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     # Get all available roles
     roles = Group.objects.all().order_by('name')
     
     context = {
-        'users': users,
+        'users': page_obj,
+        'page_obj': page_obj,
         'roles': roles,
         'search_query': search_query,
         'role_filter': role_filter,

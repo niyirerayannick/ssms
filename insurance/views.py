@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q
+from django.core.paginator import Paginator
 from core.models import District, AcademicYear
 from .models import FamilyInsurance
 from .forms import InsuranceForm
@@ -36,8 +37,14 @@ def insurance_list(request):
     if district_filter:
         insurance_records = insurance_records.filter(family__district_id=district_filter)
     
+    # Pagination
+    paginator = Paginator(insurance_records.order_by('-created_at'), 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     context = {
-        'insurance_records': insurance_records,
+        'insurance_records': page_obj,
+        'page_obj': page_obj,
         'search_query': search_query,
         'status_filter': status_filter,
         'district_filter': district_filter,

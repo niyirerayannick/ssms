@@ -142,11 +142,12 @@
                 </tbody>
             </table>
         </div>
+        {% include 'partials/pagination.html' %}
     </div>
     
     <!-- Results Summary -->
     <div class="text-sm text-slate-600">
-        Showing <strong>{{ users.count|compact_number }}</strong> user{{ users.count|pluralize }}
+        Showing <strong>{{ page_obj.paginator.count|compact_number }}</strong> user{{ page_obj.paginator.count|pluralize }}
         {% if search_query %}matching "<strong>{{ search_query }}</strong>"{% endif %}
     </div>
     {% else %}
