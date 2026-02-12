@@ -35,15 +35,20 @@
         {% if photos %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for photo in photos %}
-            <a href="{{ photo.image.url }}" target="_blank" class="border border-slate-200 rounded-lg overflow-hidden shadow-sm block">
-                <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:student.full_name }}" class="w-full h-56 object-cover">
+            <div class="border border-slate-200 rounded-lg overflow-hidden shadow-sm block">
+                <img src="{{ photo.image.url }}" 
+                     alt="{{ photo.caption|default:student.full_name }}" 
+                     class="w-full h-56 object-cover gallery-image"
+                     data-title="{{ student.full_name }}"
+                     data-subtitle="{{ photo.created_at|date:'M d, Y' }}"
+                     data-caption="{{ photo.caption|default:'Student photo' }}">
                 <div class="p-3">
                     <p class="text-sm font-semibold text-gray-800">
                         {{ photo.caption|default:"Student photo" }}
                     </p>
                     <p class="text-xs text-gray-500">{{ photo.created_at|date:"M d, Y" }}</p>
                 </div>
-            </a>
+            </div>
             {% endfor %}
         </div>
         {% else %}
@@ -51,7 +56,17 @@
         {% endif %}
     </div>
 </div>
+
+{% include 'partials/lightbox.html' %}
+
+{% block extra_js %}
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.initLightbox) {
+            window.initLightbox();
+        }
+    });
+    
     document.getElementById('copyShareLink')?.addEventListener('click', () => {
         const input = document.getElementById('shareLink');
         if (!input) return;
@@ -60,4 +75,5 @@
         navigator.clipboard?.writeText(input.value);
     });
 </script>
+{% endblock %}
 {% endblock %}

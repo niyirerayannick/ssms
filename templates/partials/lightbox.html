@@ -1,0 +1,144 @@
+<!-- Reusable Lightbox Modal -->
+<div id="lightbox" class="fixed inset-0 z-[100] hidden bg-black/95 flex items-center justify-center opacity-0 transition-opacity duration-300" role="dialog" aria-modal="true">
+    <!-- Close Button -->
+    <button id="lightbox-close" class="absolute top-4 right-4 z-[110] text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors">
+        <span class="material-symbols-rounded text-4xl">close</span>
+    </button>
+    
+    <!-- Navigation Buttons -->
+    <button id="lightbox-prev" class="absolute left-4 top-1/2 -translate-y-1/2 z-[110] text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors hidden md:block">
+        <span class="material-symbols-rounded text-5xl">chevron_left</span>
+    </button>
+    
+    <button id="lightbox-next" class="absolute right-4 top-1/2 -translate-y-1/2 z-[110] text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors hidden md:block">
+        <span class="material-symbols-rounded text-5xl">chevron_right</span>
+    </button>
+    
+    <!-- Main Content -->
+    <div class="relative w-full h-full flex flex-col items-center justify-center p-4 md:p-8" onclick="event.stopPropagation()">
+        <img id="lightbox-img" src="" alt="" class="max-h-[85vh] max-w-full object-contain shadow-2xl rounded-sm">
+        
+        <!-- Caption/Info -->
+        <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent text-center">
+            <h3 id="lightbox-title" class="text-xl font-bold text-white tracking-wide"></h3>
+            <p id="lightbox-subtitle" class="text-emerald-400 text-sm font-medium mt-1 flex items-center justify-center gap-1">
+                <span class="material-symbols-rounded text-base">info</span>
+                <span id="lightbox-subtitle-text"></span>
+            </p>
+            <p id="lightbox-caption" class="text-gray-300 mt-2 text-sm italic"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+        const lightboxTitle = document.getElementById('lightbox-title');
+        const lightboxSubtitleText = document.getElementById('lightbox-subtitle-text');
+        const lightboxCaption = document.getElementById('lightbox-caption');
+        const closeBtn = document.getElementById('lightbox-close');
+        const prevBtn = document.getElementById('lightbox-prev');
+        const nextBtn = document.getElementById('lightbox-next');
+        
+        let currentIndex = 0;
+        let images = [];
+        
+        // Initialize images array from DOM
+        window.initLightbox = function() {
+            const imageElements = document.querySelectorAll('.gallery-image');
+            images = Array.from(imageElements).map((img, idx) => {
+                // Add click listener if not already added
+                if (!img.dataset.lightboxAttached) {
+                    img.addEventListener('click', () => openLightbox(idx));
+                    img.dataset.lightboxAttached = "true";
+                    img.classList.add('cursor-zoom-in');
+                }
+                return {
+                    src: img.src || img.dataset.src,
+                    title: img.dataset.title || img.dataset.student || '',
+                    subtitle: img.dataset.subtitle || img.dataset.location || '',
+                    caption: img.dataset.caption || '',
+                };
+            });
+        };
+        
+        // Open Lightbox
+        function openLightbox(index) {
+            if (index < 0 || index >= images.length) return;
+            
+            currentIndex = index;
+            updateLightboxContent();
+            
+            lightbox.classList.remove('hidden');
+            setTimeout(() => {
+                lightbox.classList.remove('opacity-0');
+            }, 10);
+            
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Close Lightbox
+        function closeLightbox() {
+            lightbox.classList.add('opacity-0');
+            setTimeout(() => {
+                lightbox.classList.add('hidden');
+                lightboxImg.src = '';
+            }, 300);
+            document.body.style.overflow = '';
+        }
+        
+        // Update Content
+        function updateLightboxContent() {
+            const data = images[currentIndex];
+            lightboxImg.src = data.src;
+            lightboxTitle.textContent = data.title;
+            lightboxSubtitleText.textContent = data.subtitle;
+            lightboxCaption.textContent = data.caption || '';
+            
+            // Handle navigation buttons visibility
+            if (images.length <= 1) {
+                prevBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                prevBtn.style.opacity = currentIndex === 0 ? '0.3' : '1';
+                nextBtn.style.opacity = currentIndex === images.length - 1 ? '0.3' : '1';
+            }
+        }
+        
+        function showNext() {
+            if (currentIndex < images.length - 1) {
+                currentIndex++;
+                updateLightboxContent();
+            }
+        }
+        
+        function showPrev() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateLightboxContent();
+            }
+        }
+        
+        // Event Listeners
+        closeBtn.addEventListener('click', closeLightbox);
+        prevBtn.addEventListener('click', (e) => { e.stopPropagation(); showPrev(); });
+        nextBtn.addEventListener('click', (e) => { e.stopPropagation(); showNext(); });
+        
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) closeLightbox();
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (lightbox.classList.contains('hidden')) return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') showPrev();
+            if (e.key === 'ArrowRight') showNext();
+        });
+
+        // Initial load
+        window.initLightbox();
+    });
+</script>

@@ -10,7 +10,12 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
             <div class="flex items-center space-x-4 mb-4 md:mb-0">
                 {% if student.profile_picture %}
-                    <img src="{{ student.profile_picture.url }}" alt="{{ student.full_name }}" class="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover">
+                    <img src="{{ student.profile_picture.url }}" 
+                         alt="{{ student.full_name }}" 
+                         class="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover gallery-image"
+                         data-title="{{ student.full_name }}"
+                         data-subtitle="Profile Picture"
+                         data-caption="Student Profile Picture">
                 {% else %}
                     <div class="w-20 h-20 rounded-full border-4 border-white shadow-lg bg-white bg-opacity-20 flex items-center justify-center">
                         <span class="text-3xl font-bold">{{ student.full_name|first|upper }}</span>
@@ -208,12 +213,17 @@
                 {% if student.photos.all %}
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {% for photo in student.photos.all %}
-                    <a href="{{ photo.image.url }}" target="_blank" class="relative group block">
-                        <img src="{{ photo.image.url }}" alt="{{ photo.caption|default:student.full_name }}" class="w-full h-32 object-cover rounded-lg shadow-md hover:shadow-xl transition duration-200">
+                    <div class="relative group block">
+                        <img src="{{ photo.image.url }}" 
+                             alt="{{ photo.caption|default:student.full_name }}" 
+                             class="w-full h-32 object-cover rounded-lg shadow-md hover:shadow-xl transition duration-200 gallery-image"
+                             data-title="{{ student.full_name }}"
+                             data-subtitle="{{ photo.created_at|date:'M d, Y' }}"
+                             data-caption="{{ photo.caption|default:'' }}">
                         {% if photo.caption %}
                         <p class="text-xs text-gray-600 mt-1">{{ photo.caption }}</p>
                         {% endif %}
-                    </a>
+                    </div>
                     {% endfor %}
                 </div>
                 {% else %}
@@ -253,7 +263,13 @@
                                 <td class="px-4 py-3 text-sm text-gray-500">{{ record.academic_year.name|default:"N/A" }}</td>
                                 <td class="px-4 py-3 text-sm">
                                     {% if record.report_card_image %}
-                                    <a href="{{ record.report_card_image.url }}" target="_blank" class="text-blue-600 hover:text-blue-800">View Report</a>
+                                    <button class="text-blue-600 hover:text-blue-800 gallery-image"
+                                            data-title="{{ student.full_name }} - Report Card"
+                                            data-subtitle="{{ record.subject }} • {{ record.term }}"
+                                            data-caption="Year {{ record.academic_year.name|default:'N/A' }} • Marks {{ record.marks }}"
+                                            data-src="{{ record.report_card_image.url }}">
+                                        View Report
+                                    </button>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -392,4 +408,16 @@
         </div>
     </div>
 </div>
+    
+    {% include 'partials/lightbox.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.initLightbox) {
+            window.initLightbox();
+        }
+    });
+</script>
 {% endblock %}

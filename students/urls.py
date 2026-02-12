@@ -4,6 +4,7 @@ from . import views
 app_name = 'students'
 
 urlpatterns = [
+    path('photos/', views.photo_gallery, name='photo_gallery'),
     path('', views.student_list, name='student_list'),
     path('add/', views.student_create, name='student_create'),
     path('performance/', views.student_performance, name='student_performance'),
@@ -16,7 +17,6 @@ urlpatterns = [
     path('<hashid:pk>/add-photo/', views.add_photo, name='add_photo'),
     path('<hashid:pk>/photos/', views.student_photos, name='student_photos'),
     path('photos/shared/<str:token>/', views.student_photos_public, name='student_photos_public'),
-    path('photos/', views.photo_gallery, name='photo_gallery'),
     path('<hashid:pk>/add-academic-record/', views.add_academic_record, name='add_academic_record'),
     path('<hashid:pk>/report-cards/', views.student_report_cards, name='student_report_cards'),
 ]

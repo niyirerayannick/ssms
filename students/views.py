@@ -347,11 +347,31 @@ def student_approve(request, pk):
 @permission_required('students.view_student', raise_exception=True)
 def photo_gallery(request):
     """View all student photos in a gallery."""
-    photos = (
-        StudentPhoto.objects.select_related('student')
-        .order_by('-created_at')
-    )
-    return render(request, 'students/photo_gallery.html', {'photos': photos})
+    district_filter = request.GET.get('district')
+    school_filter = request.GET.get('school')
+    level_filter = request.GET.get('level')
+
+    photos = StudentPhoto.objects.select_related('student', 'student__family__district', 'student__school').all()
+
+    if district_filter:
+        photos = photos.filter(student__family__district_id=district_filter)
+    if school_filter:
+        photos = photos.filter(student__school_id=school_filter)
+    if level_filter:
+        photos = photos.filter(student__school_level=level_filter)
+
+    photos = photos.order_by('-created_at')
+
+    context = {
+        'photos': photos,
+        'districts': District.objects.order_by('name'),
+        'schools': School.objects.order_by('name'),
+        'levels': Student.SCHOOL_LEVELS,
+        'selected_district': int(district_filter) if district_filter else None,
+        'selected_school': int(school_filter) if school_filter else None,
+        'selected_level': level_filter,
+    }
+    return render(request, 'students/photo_gallery.html', context)
 
 
 @login_required
