@@ -188,20 +188,22 @@
         const districtSelect = document.getElementById('id_district');
         const sectorSelect = document.getElementById('id_sector');
         
-        // Load all provinces on initial page load
+        // Load all provinces on initial page load if not already loaded by Django
         function loadProvinces() {
-            fetch('/core/api/locations/provinces/')
-                .then(response => response.json())
-                .then(data => {
-                    provinceSelect.innerHTML = '<option value="">Select Province...</option>';
-                    data.data.forEach(province => {
-                        const option = document.createElement('option');
-                        option.value = province.id;
-                        option.textContent = province.name;
-                        provinceSelect.appendChild(option);
-                    });
-                })
-                .catch(error => console.error('Error loading provinces:', error));
+            if (provinceSelect && provinceSelect.options.length <= 1) {
+                fetch('/core/api/locations/provinces/')
+                    .then(response => response.json())
+                    .then(data => {
+                        provinceSelect.innerHTML = '<option value="">Select Province...</option>';
+                        data.data.forEach(province => {
+                            const option = document.createElement('option');
+                            option.value = province.id;
+                            option.textContent = province.name;
+                            provinceSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error loading provinces:', error));
+            }
         }
         
         loadProvinces();

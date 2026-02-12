@@ -1,10 +1,17 @@
 from django import forms
 from .models import Family
 from core.models import Province, District, Sector, Cell, Village
-
+from core.forms import HashidModelChoiceField
+from core.utils import decode_id
 
 class FamilyForm(forms.ModelForm):
     """Form for creating and editing family information with Rwanda location."""
+    
+    province = HashidModelChoiceField(queryset=Province.objects.all(), required=False)
+    district = HashidModelChoiceField(queryset=District.objects.none(), required=False)
+    sector = HashidModelChoiceField(queryset=Sector.objects.none(), required=False)
+    cell = HashidModelChoiceField(queryset=Cell.objects.none(), required=False)
+    village = HashidModelChoiceField(queryset=Village.objects.none(), required=False)
     
     class Meta:
         model = Family
@@ -89,52 +96,34 @@ class FamilyForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Allow all location fields to be optional
-        self.fields['province'].required = False
-        self.fields['district'].required = False
-        self.fields['sector'].required = False
-        self.fields['cell'].required = False
-        self.fields['village'].required = False
-        
         # Get initial/current values from POST data or instance
-        province_id = None
-        district_id = None
-        sector_id = None
-        cell_id = None
+        province_id = self.data.get('province') or (self.instance.province_id if self.instance.pk else None)
+        district_id = self.data.get('district') or (self.instance.district_id if self.instance.pk else None)
+        sector_id = self.data.get('sector') or (self.instance.sector_id if self.instance.pk else None)
+        cell_id = self.data.get('cell') or (self.instance.cell_id if self.instance.pk else None)
         
-        # If this is a bound form (form submission with data)
-        if self.is_bound:
-            province_id = self.data.get('province')
-            district_id = self.data.get('district')
-            sector_id = self.data.get('sector')
-            cell_id = self.data.get('cell')
-        # If this is an existing instance being edited
-        elif self.instance and self.instance.pk:
-            province_id = self.instance.province_id
-            district_id = self.instance.district_id
-            sector_id = self.instance.sector_id
-            cell_id = self.instance.cell_id
+        # Decode IDs if they are HashIDs
+        if isinstance(province_id, str) and ':' in province_id:
+            province_id = decode_id(province_id)
+        if isinstance(district_id, str) and ':' in district_id:
+            district_id = decode_id(district_id)
+        if isinstance(sector_id, str) and ':' in sector_id:
+            sector_id = decode_id(sector_id)
+        if isinstance(cell_id, str) and ':' in cell_id:
+            cell_id = decode_id(cell_id)
         
         # Set querysets based on selected values
         if province_id:
             self.fields['district'].queryset = District.objects.filter(province_id=province_id)
-        else:
-            self.fields['district'].queryset = District.objects.none()
         
         if district_id:
             self.fields['sector'].queryset = Sector.objects.filter(district_id=district_id)
-        else:
-            self.fields['sector'].queryset = Sector.objects.none()
         
         if sector_id:
             self.fields['cell'].queryset = Cell.objects.filter(sector_id=sector_id)
-        else:
-            self.fields['cell'].queryset = Cell.objects.none()
         
         if cell_id:
             self.fields['village'].queryset = Village.objects.filter(cell_id=cell_id)
-        else:
-            self.fields['village'].queryset = Village.objects.none()
 
     def clean(self):
         cleaned_data = super().clean()

@@ -1,8 +1,24 @@
 from django import forms
 from .models import School, Province, District, Sector, Cell, Village, Partner
+from .utils import decode_id
+
+class HashidModelChoiceField(forms.ModelChoiceField):
+    """Custom ModelChoiceField that can handle both integer IDs and HashID strings."""
+    def to_python(self, value):
+        if value and isinstance(value, str) and ':' in value:
+            decoded = decode_id(value)
+            if decoded is not None:
+                value = decoded
+        return super().to_python(value)
 
 class PartnerForm(forms.ModelForm):
     """Form for creating and editing partner information with Rwanda location."""
+    
+    province = HashidModelChoiceField(queryset=Province.objects.all(), required=False)
+    district = HashidModelChoiceField(queryset=District.objects.none(), required=False)
+    sector = HashidModelChoiceField(queryset=Sector.objects.none(), required=False)
+    cell = HashidModelChoiceField(queryset=Cell.objects.none(), required=False)
+    village = HashidModelChoiceField(queryset=Village.objects.none(), required=False)
     
     class Meta:
         model = Partner
@@ -57,15 +73,21 @@ class PartnerForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Allow all location fields to be optional
-        for field in ['province', 'district', 'sector', 'cell', 'village']:
-            self.fields[field].required = False
-        
         # Initial querysets for cascading
         province_id = self.data.get('province') or (self.instance.province_id if self.instance.pk else None)
         district_id = self.data.get('district') or (self.instance.district_id if self.instance.pk else None)
         sector_id = self.data.get('sector') or (self.instance.sector_id if self.instance.pk else None)
         cell_id = self.data.get('cell') or (self.instance.cell_id if self.instance.pk else None)
+
+        # Decode IDs if they are HashIDs
+        if isinstance(province_id, str) and ':' in province_id:
+            province_id = decode_id(province_id)
+        if isinstance(district_id, str) and ':' in district_id:
+            district_id = decode_id(district_id)
+        if isinstance(sector_id, str) and ':' in sector_id:
+            sector_id = decode_id(sector_id)
+        if isinstance(cell_id, str) and ':' in cell_id:
+            cell_id = decode_id(cell_id)
 
         if province_id:
             self.fields['district'].queryset = District.objects.filter(province_id=province_id)
@@ -78,6 +100,10 @@ class PartnerForm(forms.ModelForm):
 
 class SchoolForm(forms.ModelForm):
     """Form for creating and editing school information."""
+    
+    province = HashidModelChoiceField(queryset=Province.objects.all(), required=False)
+    district = HashidModelChoiceField(queryset=District.objects.none(), required=False)
+    sector = HashidModelChoiceField(queryset=Sector.objects.none(), required=False)
     
     class Meta:
         model = School
@@ -164,31 +190,19 @@ class SchoolForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Allow all location fields to be optional
-        self.fields['province'].required = False
-        self.fields['district'].required = False
-        self.fields['sector'].required = False
-        
         # Get initial/current values from POST data or instance
-        province_id = None
-        district_id = None
+        province_id = self.data.get('province') or (self.instance.province_id if self.instance.pk else None)
+        district_id = self.data.get('district') or (self.instance.district_id if self.instance.pk else None)
         
-        # If this is a bound form (form submission with data)
-        if self.is_bound:
-            province_id = self.data.get('province')
-            district_id = self.data.get('district')
-        # If this is an existing instance being edited
-        elif self.instance and self.instance.pk:
-            province_id = self.instance.province_id
-            district_id = self.instance.district_id
-        
+        # Decode IDs if they are HashIDs
+        if isinstance(province_id, str) and ':' in province_id:
+            province_id = decode_id(province_id)
+        if isinstance(district_id, str) and ':' in district_id:
+            district_id = decode_id(district_id)
+
         # Set querysets based on selected values
         if province_id:
             self.fields['district'].queryset = District.objects.filter(province_id=province_id)
-        else:
-            self.fields['district'].queryset = District.objects.all()
         
         if district_id:
             self.fields['sector'].queryset = Sector.objects.filter(district_id=district_id)
-        else:
-            self.fields['sector'].queryset = Sector.objects.all()

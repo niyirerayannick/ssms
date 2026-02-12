@@ -5,63 +5,80 @@ Returns JSON data for hierarchical location selection.
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .models import Province, District, Sector, Cell, Village
-
+from .utils import encode_id
 
 @require_http_methods(["GET"])
 def get_provinces(request):
     """Get all provinces as JSON."""
-    provinces = Province.objects.all().values('id', 'name', 'code')
+    provinces = Province.objects.all()
+    data = [{
+        'id': encode_id(p.id),
+        'name': p.name,
+        'code': p.code
+    } for p in provinces]
     return JsonResponse({
         'status': 'success',
-        'data': list(provinces)
+        'data': data
     })
 
 
 @require_http_methods(["GET"])
 def get_districts(request, province_id):
     """Get districts for a specific province."""
-    districts = District.objects.filter(
-        province_id=province_id
-    ).values('id', 'name', 'code')
+    districts = District.objects.filter(province_id=province_id)
+    data = [{
+        'id': encode_id(d.id),
+        'name': d.name,
+        'code': d.code
+    } for d in districts]
     return JsonResponse({
         'status': 'success',
-        'data': list(districts)
+        'data': data
     })
 
 
 @require_http_methods(["GET"])
 def get_sectors(request, district_id):
     """Get sectors for a specific district."""
-    sectors = Sector.objects.filter(
-        district_id=district_id
-    ).values('id', 'name', 'code')
+    sectors = Sector.objects.filter(district_id=district_id)
+    data = [{
+        'id': encode_id(s.id),
+        'name': s.name,
+        'code': s.code
+    } for s in sectors]
     return JsonResponse({
         'status': 'success',
-        'data': list(sectors)
+        'data': data
     })
 
 
 @require_http_methods(["GET"])
 def get_cells(request, sector_id):
     """Get cells for a specific sector."""
-    cells = Cell.objects.filter(
-        sector_id=sector_id
-    ).values('id', 'name', 'code')
+    cells = Cell.objects.filter(sector_id=sector_id)
+    data = [{
+        'id': encode_id(c.id),
+        'name': c.name,
+        'code': c.code
+    } for c in cells]
     return JsonResponse({
         'status': 'success',
-        'data': list(cells)
+        'data': data
     })
 
 
 @require_http_methods(["GET"])
 def get_villages(request, cell_id):
     """Get villages for a specific cell."""
-    villages = Village.objects.filter(
-        cell_id=cell_id
-    ).values('id', 'name', 'code')
+    villages = Village.objects.filter(cell_id=cell_id)
+    data = [{
+        'id': encode_id(v.id),
+        'name': v.name,
+        'code': v.code
+    } for v in villages]
     return JsonResponse({
         'status': 'success',
-        'data': list(villages)
+        'data': data
     })
 
 
@@ -73,24 +90,20 @@ def get_full_location_tree(request):
     """
     provinces = Province.objects.prefetch_related(
         'districts__sectors__cells__villages'
-    ).values('id', 'name', 'code')
+    )
     
     result = []
     for province in provinces:
         province_data = {
-            'id': province['id'],
-            'name': province['name'],
-            'code': province['code'],
+            'id': encode_id(province.id),
+            'name': province.name,
+            'code': province.code,
             'districts': []
         }
         
-        districts = District.objects.filter(
-            province_id=province['id']
-        ).prefetch_related('sectors__cells__villages')
-        
-        for district in districts:
+        for district in province.districts.all():
             district_data = {
-                'id': district.id,
+                'id': encode_id(district.id),
                 'name': district.name,
                 'code': district.code,
                 'sectors': []
@@ -98,7 +111,7 @@ def get_full_location_tree(request):
             
             for sector in district.sectors.all():
                 sector_data = {
-                    'id': sector.id,
+                    'id': encode_id(sector.id),
                     'name': sector.name,
                     'code': sector.code,
                     'cells': []
@@ -106,7 +119,7 @@ def get_full_location_tree(request):
                 
                 for cell in sector.cells.all():
                     cell_data = {
-                        'id': cell.id,
+                        'id': encode_id(cell.id),
                         'name': cell.name,
                         'code': cell.code,
                         'villages': []
@@ -114,7 +127,7 @@ def get_full_location_tree(request):
                     
                     for village in cell.villages.all():
                         village_data = {
-                            'id': village.id,
+                            'id': encode_id(village.id),
                             'name': village.name,
                             'code': village.code
                         }
@@ -160,37 +173,46 @@ def search_locations(request):
     }
     
     if not level or level == 'province':
-        results['provinces'] = list(
-            Province.objects.filter(name__icontains=query).values('id', 'name', 'code')
-        )
+        results['provinces'] = [{
+            'id': encode_id(p.id),
+            'name': p.name,
+            'code': p.code
+        } for p in Province.objects.filter(name__icontains=query)]
     
     if not level or level == 'district':
-        results['districts'] = list(
-            District.objects.filter(name__icontains=query).select_related('province').values(
-                'id', 'name', 'code', 'province__name'
-            )
-        )
+        results['districts'] = [{
+            'id': encode_id(d.id),
+            'name': d.name,
+            'code': d.code,
+            'province__name': d.province.name if d.province else None
+        } for d in District.objects.filter(name__icontains=query).select_related('province')]
     
     if not level or level == 'sector':
-        results['sectors'] = list(
-            Sector.objects.filter(name__icontains=query).select_related(
-                'district', 'district__province'
-            ).values('id', 'name', 'code', 'district__name', 'district__province__name')
-        )
+        results['sectors'] = [{
+            'id': encode_id(s.id),
+            'name': s.name,
+            'code': s.code,
+            'district__name': s.district.name,
+            'district__province__name': s.district.province.name if s.district.province else None
+        } for s in Sector.objects.filter(name__icontains=query).select_related('district', 'district__province')]
     
     if not level or level == 'cell':
-        results['cells'] = list(
-            Cell.objects.filter(name__icontains=query).select_related(
-                'sector', 'sector__district', 'sector__district__province'
-            ).values('id', 'name', 'code', 'sector__name', 'sector__district__name')
-        )
+        results['cells'] = [{
+            'id': encode_id(c.id),
+            'name': c.name,
+            'code': c.code,
+            'sector__name': c.sector.name,
+            'sector__district__name': c.sector.district.name
+        } for c in Cell.objects.filter(name__icontains=query).select_related('sector', 'sector__district')]
     
     if not level or level == 'village':
-        results['villages'] = list(
-            Village.objects.filter(name__icontains=query).select_related(
-                'cell', 'cell__sector', 'cell__sector__district'
-            ).values('id', 'name', 'code', 'cell__name', 'cell__sector__name')
-        )
+        results['villages'] = [{
+            'id': encode_id(v.id),
+            'name': v.name,
+            'code': v.code,
+            'cell__name': v.cell.name,
+            'cell__sector__name': v.cell.sector.name
+        } for v in Village.objects.filter(name__icontains=query).select_related('cell', 'cell__sector')]
     
     return JsonResponse({
         'status': 'success',
