@@ -2,10 +2,13 @@
 URL configuration for sims project.
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, register_converter
+from core.converters import HashidConverter
 from django.views.generic import RedirectView, TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
+
+register_converter(HashidConverter, 'hashid')
 
 handler404 = 'sims.views.custom_page_not_found'
 

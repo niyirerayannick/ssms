@@ -1,6 +1,80 @@
 from django import forms
-from .models import School, Province, District, Sector
+from .models import School, Province, District, Sector, Cell, Village, Partner
 
+class PartnerForm(forms.ModelForm):
+    """Form for creating and editing partner information with Rwanda location."""
+    
+    class Meta:
+        model = Partner
+        fields = [
+            'name', 'description', 'contact_person', 'email', 'phone',
+            'province', 'district', 'sector', 'cell', 'village'
+        ]
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'placeholder': 'Partner Name'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'rows': 3,
+                'placeholder': 'Brief description...'
+            }),
+            'contact_person': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'placeholder': 'Full name of contact person'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'placeholder': 'contact@partner.org'
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'placeholder': 'e.g., +250788000000'
+            }),
+            'province': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'id': 'id_province'
+            }),
+            'district': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'id': 'id_district'
+            }),
+            'sector': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'id': 'id_sector'
+            }),
+            'cell': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'id': 'id_cell'
+            }),
+            'village': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'id': 'id_village'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Allow all location fields to be optional
+        for field in ['province', 'district', 'sector', 'cell', 'village']:
+            self.fields[field].required = False
+        
+        # Initial querysets for cascading
+        province_id = self.data.get('province') or (self.instance.province_id if self.instance.pk else None)
+        district_id = self.data.get('district') or (self.instance.district_id if self.instance.pk else None)
+        sector_id = self.data.get('sector') or (self.instance.sector_id if self.instance.pk else None)
+        cell_id = self.data.get('cell') or (self.instance.cell_id if self.instance.pk else None)
+
+        if province_id:
+            self.fields['district'].queryset = District.objects.filter(province_id=province_id)
+        if district_id:
+            self.fields['sector'].queryset = Sector.objects.filter(district_id=district_id)
+        if sector_id:
+            self.fields['cell'].queryset = Cell.objects.filter(sector_id=sector_id)
+        if cell_id:
+            self.fields['village'].queryset = Village.objects.filter(cell_id=cell_id)
 
 class SchoolForm(forms.ModelForm):
     """Form for creating and editing school information."""

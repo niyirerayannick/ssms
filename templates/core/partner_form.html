@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - SIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto animate-fade-in">
+    <div class="bg-white rounded-xl shadow-md p-6 md:p-8">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">{{ title }}</h1>
+            <a href="{% url 'core:partner_list' %}" class="text-gray-500 hover:text-gray-700 flex items-center">
+                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to List
+            </a>
+        </div>
+        
+        {% if partner %}
+        <p class="text-gray-600 mb-6">Partner: <span class="font-semibold text-purple-600">{{ partner.name }}</span></p>
+        {% endif %}
+        
+        <form method="post" class="space-y-8" id="partnerForm">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="border-b border-gray-200 pb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5.581m0 0H9.42m5.999 0C17.338 16.999 16.5 15.173 16.5 13s.75-3.999 2.419-5"/>
+                    </svg>
+                    Partner Information
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Partner Name *
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Description
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.description.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.contact_person.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Contact Person
+                        </label>
+                        {{ form.contact_person }}
+                        {% if form.contact_person.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.contact_person.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Phone Number
+                        </label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.phone.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.email.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Information -->
+            <div class="border-b border-gray-200 pb-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    Office Location (Rwanda)
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label for="{{ form.province.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Province
+                        </label>
+                        {{ form.province }}
+                        {% if form.province.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.province.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.district.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            District
+                        </label>
+                        {{ form.district }}
+                        {% if form.district.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.district.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.sector.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Sector
+                        </label>
+                        {{ form.sector }}
+                        {% if form.sector.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.sector.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.cell.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Cell
+                        </label>
+                        {{ form.cell }}
+                        {% if form.cell.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.cell.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.village.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Village
+                        </label>
+                        {{ form.village }}
+                        {% if form.village.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.village.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-4 pt-6">
+                <a href="{% url 'core:partner_list' %}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition duration-200 shadow-md hover:shadow-lg">
+                    {% if partner %}Update Partner{% else %}Create Partner{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Cascading dropdowns for Rwanda location
+    document.addEventListener('DOMContentLoaded', function() {
+        const provinceSelect = document.getElementById('id_province');
+        const districtSelect = document.getElementById('id_district');
+        const sectorSelect = document.getElementById('id_sector');
+        const cellSelect = document.getElementById('id_cell');
+        const villageSelect = document.getElementById('id_village');
+        
+        // Helper to clear options
+        const clearOptions = (select, placeholder) => {
+            select.innerHTML = `<option value="">${placeholder}</option>`;
+        };
+
+        // Load districts when province changes
+        provinceSelect?.addEventListener('change', function() {
+            const provinceId = this.value;
+            clearOptions(districtSelect, 'Select District...');
+            clearOptions(sectorSelect, 'Select Sector...');
+            clearOptions(cellSelect, 'Select Cell...');
+            clearOptions(villageSelect, 'Select Village...');
+            
+            if (provinceId) {
+                fetch(`/core/api/locations/districts/${provinceId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.data.forEach(district => {
+                            const option = document.createElement('option');
+                            option.value = district.id;
+                            option.textContent = district.name;
+                            districtSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+        
+        // Load sectors when district changes
+        districtSelect?.addEventListener('change', function() {
+            const districtId = this.value;
+            clearOptions(sectorSelect, 'Select Sector...');
+            clearOptions(cellSelect, 'Select Cell...');
+            clearOptions(villageSelect, 'Select Village...');
+            
+            if (districtId) {
+                fetch(`/core/api/locations/sectors/${districtId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.data.forEach(sector => {
+                            const option = document.createElement('option');
+                            option.value = sector.id;
+                            option.textContent = sector.name;
+                            sectorSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+
+        // Load cells when sector changes
+        sectorSelect?.addEventListener('change', function() {
+            const sectorId = this.value;
+            clearOptions(cellSelect, 'Select Cell...');
+            clearOptions(villageSelect, 'Select Village...');
+            
+            if (sectorId) {
+                fetch(`/core/api/locations/cells/${sectorId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.data.forEach(cell => {
+                            const option = document.createElement('option');
+                            option.value = cell.id;
+                            option.textContent = cell.name;
+                            cellSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+
+        // Load villages when cell changes
+        cellSelect?.addEventListener('change', function() {
+            const cellId = this.value;
+            clearOptions(villageSelect, 'Select Village...');
+            
+            if (cellId) {
+                fetch(`/core/api/locations/villages/${cellId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.data.forEach(village => {
+                            const option = document.createElement('option');
+                            option.value = village.id;
+                            option.textContent = village.name;
+                            villageSelect.appendChild(option);
+                        });
+                    });
+            }
+        });
+    });
+</script>
+{% endblock %}

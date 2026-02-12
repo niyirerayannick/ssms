@@ -5,9 +5,9 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q, Count
 from django.db import models
-from .models import District, Sector, Cell, Village, Province, School, Notification
+from .models import District, Sector, Cell, Village, Province, School, Notification, Partner
 from students.models import Student
-from .forms import SchoolForm
+from .forms import SchoolForm, PartnerForm
 
 
 @require_http_methods(["GET"])
@@ -160,3 +160,72 @@ def notification_go(request, pk):
     if notification.link:
         return redirect(notification.link)
     return redirect('dashboard:index')
+
+
+# Partner Management Views
+
+@login_required
+def partner_list(request):
+    """List all partners with search."""
+    partners = Partner.objects.annotate(student_count=Count('students')).all()
+    
+    search_query = request.GET.get('search', '')
+    if search_query:
+        partners = partners.filter(
+            Q(name__icontains=search_query) |
+            Q(contact_person__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+    
+    context = {
+        'partners': partners,
+        'search_query': search_query,
+        'total_partners': partners.count(),
+    }
+    return render(request, 'core/partner_list.html', context)
+
+
+@login_required
+def partner_detail(request, pk):
+    """View partner details and linked students."""
+    partner = get_object_or_404(Partner, pk=pk)
+    students = partner.students.select_related('family', 'school').all()
+    
+    context = {
+        'partner': partner,
+        'students': students,
+        'student_count': students.count(),
+    }
+    return render(request, 'core/partner_detail.html', context)
+
+
+@login_required
+def partner_create(request):
+    """Create a new partner."""
+    if request.method == 'POST':
+        form = PartnerForm(request.POST)
+        if form.is_valid():
+            partner = form.save()
+            messages.success(request, f'Partner {partner.name} created successfully!')
+            return redirect('core:partner_detail', pk=partner.pk)
+    else:
+        form = PartnerForm()
+    
+    return render(request, 'core/partner_form.html', {'form': form, 'title': 'Add New Partner'})
+
+
+@login_required
+def partner_edit(request, pk):
+    """Edit partner information."""
+    partner = get_object_or_404(Partner, pk=pk)
+    
+    if request.method == 'POST':
+        form = PartnerForm(request.POST, instance=partner)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Partner {partner.name} updated successfully!')
+            return redirect('core:partner_detail', pk=partner.pk)
+    else:
+        form = PartnerForm(instance=partner)
+    
+    return render(request, 'core/partner_form.html', {'form': form, 'partner': partner, 'title': 'Edit Partner'})

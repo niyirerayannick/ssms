@@ -1,7 +1,14 @@
 from django import template
 import decimal
 
+from core.utils import encode_id
+
 register = template.Library()
+
+@register.filter
+def hashid(value):
+    """Encodes an integer ID into a hashid."""
+    return encode_id(value)
 
 @register.filter
 def compact_number(value):

@@ -165,9 +165,11 @@ class Student(models.Model):
     
     @property
     def location_display(self):
-        """Display location from family."""
+        """Display location from family or partner."""
         if self.family:
             return self.family.location_display
+        if self.partner:
+            return self.partner.location_display
         return "Not specified"
 
     @property

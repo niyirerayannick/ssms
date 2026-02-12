@@ -130,6 +130,14 @@ class Partner(models.Model):
     contact_person = models.CharField(max_length=100, blank=True)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=20, blank=True)
+    
+    # Rwanda Location Structure
+    province = models.ForeignKey('core.Province', on_delete=models.SET_NULL, null=True, blank=True, related_name='partners')
+    district = models.ForeignKey('core.District', on_delete=models.SET_NULL, null=True, blank=True, related_name='partners')
+    sector = models.ForeignKey('core.Sector', on_delete=models.SET_NULL, null=True, blank=True, related_name='partners')
+    cell = models.ForeignKey('core.Cell', on_delete=models.SET_NULL, null=True, blank=True, related_name='partners')
+    village = models.ForeignKey('core.Village', on_delete=models.SET_NULL, null=True, blank=True, related_name='partners')
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -138,6 +146,22 @@ class Partner(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def location_display(self):
+        """Display full location path."""
+        parts = []
+        if self.province:
+            parts.append(self.province.name)
+        if self.district:
+            parts.append(self.district.name)
+        if self.sector:
+            parts.append(self.sector.name)
+        if self.cell:
+            parts.append(self.cell.name)
+        if self.village:
+            parts.append(self.village.name)
+        return " → ".join(parts) if parts else "Not specified"
 
 
 class Notification(models.Model):
