@@ -21,14 +21,14 @@ urlpatterns = [
     
     # School Management
     path('schools/', views.school_list, name='school_list'),
-    path('schools/<hashid:pk>/', views.school_detail, name='school_detail'),
     path('schools/add/', views.school_create, name='school_create'),
+    path('schools/<hashid:pk>/', views.school_detail, name='school_detail'),
     path('schools/<hashid:pk>/edit/', views.school_edit, name='school_edit'),
     
     # Partner Management
     path('partners/', views.partner_list, name='partner_list'),
-    path('partners/<hashid:pk>/', views.partner_detail, name='partner_detail'),
     path('partners/add/', views.partner_create, name='partner_create'),
+    path('partners/<hashid:pk>/', views.partner_detail, name='partner_detail'),
     path('partners/<hashid:pk>/edit/', views.partner_edit, name='partner_edit'),
     
     # Excel Import/Export
