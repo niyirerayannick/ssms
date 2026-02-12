@@ -10,48 +10,54 @@ from students.models import Student
 from .forms import SchoolForm, PartnerForm
 
 
+from .utils import encode_id, decode_id
+
 @require_http_methods(["GET"])
 def get_districts(request):
     """Get districts for a given province."""
-    province_id = request.GET.get('province_id')
+    province_id = decode_id(request.GET.get('province_id'))
     if not province_id:
         return JsonResponse({'error': 'province_id required'}, status=400)
     
-    districts = District.objects.filter(province_id=province_id).values('id', 'name')
-    return JsonResponse({'districts': list(districts)})
+    districts = District.objects.filter(province_id=province_id)
+    data = [{'id': encode_id(d.id), 'name': d.name} for d in districts]
+    return JsonResponse({'districts': data})
 
 
 @require_http_methods(["GET"])
 def get_sectors(request):
     """Get sectors for a given district."""
-    district_id = request.GET.get('district_id')
+    district_id = decode_id(request.GET.get('district_id'))
     if not district_id:
         return JsonResponse({'error': 'district_id required'}, status=400)
     
-    sectors = Sector.objects.filter(district_id=district_id).values('id', 'name')
-    return JsonResponse({'sectors': list(sectors)})
+    sectors = Sector.objects.filter(district_id=district_id)
+    data = [{'id': encode_id(s.id), 'name': s.name} for s in sectors]
+    return JsonResponse({'sectors': data})
 
 
 @require_http_methods(["GET"])
 def get_cells(request):
     """Get cells for a given sector."""
-    sector_id = request.GET.get('sector_id')
+    sector_id = decode_id(request.GET.get('sector_id'))
     if not sector_id:
         return JsonResponse({'error': 'sector_id required'}, status=400)
     
-    cells = Cell.objects.filter(sector_id=sector_id).values('id', 'name')
-    return JsonResponse({'cells': list(cells)})
+    cells = Cell.objects.filter(sector_id=sector_id)
+    data = [{'id': encode_id(c.id), 'name': c.name} for c in cells]
+    return JsonResponse({'cells': data})
 
 
 @require_http_methods(["GET"])
 def get_villages(request):
     """Get villages for a given cell."""
-    cell_id = request.GET.get('cell_id')
+    cell_id = decode_id(request.GET.get('cell_id'))
     if not cell_id:
         return JsonResponse({'error': 'cell_id required'}, status=400)
     
-    villages = Village.objects.filter(cell_id=cell_id).values('id', 'name')
-    return JsonResponse({'villages': list(villages)})
+    villages = Village.objects.filter(cell_id=cell_id)
+    data = [{'id': encode_id(v.id), 'name': v.name} for v in villages]
+    return JsonResponse({'villages': data})
 
 
 # School Management Views

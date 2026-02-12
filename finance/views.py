@@ -313,11 +313,16 @@ def add_student_payment(request, student_id):
     return render(request, 'finance/student_fee_form.html', context)
 
 
+from core.utils import encode_id, decode_id
+
+
 @login_required
 @permission_required('finance.manage_fees', raise_exception=True)
 def get_student_details(request, student_id):
     """API endpoint to fetch student details including school and class information."""
     try:
+        # Support both raw integer ID and HashID
+        student_id = decode_id(student_id)
         student = get_object_or_404(Student, pk=student_id)
         
         # Get latest fee record for payment dates
@@ -326,10 +331,10 @@ def get_student_details(request, student_id):
         
         data = {
             'success': True,
-            'student_id': student.id,
+            'student_id': encode_id(student.id),
             'student_name': student.full_name,
             'school_name': student.school_name or (student.school.name if student.school else ''),
-            'school_id': student.school.id if student.school else None,
+            'school_id': encode_id(student.school.id) if student.school else None,
             'class_level': student.class_level,
             'enrollment_status': student.get_enrollment_status_display(),
             'total_fees': str(student.school.fee_amount) if student.school else '0',
@@ -345,6 +350,8 @@ def get_student_details(request, student_id):
 def get_family_insurance_details(request, family_id):
     """API endpoint to fetch family insurance details including amounts."""
     try:
+        # Support both raw integer ID and HashID
+        family_id = decode_id(family_id)
         family = get_object_or_404(Family, pk=family_id)
         
         # Get the latest insurance record for this family
@@ -358,7 +365,7 @@ def get_family_insurance_details(request, family_id):
         
         data = {
             'success': True,
-            'family_id': family.id,
+            'family_id': encode_id(family.id),
             'family_code': family.family_code,
             'family_name': (family.head_of_family or '').strip(),
             'total_members': family.total_family_members or 0,
@@ -367,7 +374,7 @@ def get_family_insurance_details(request, family_id):
         }
         
         if latest_insurance:
-            data['insurance_year_id'] = latest_insurance.insurance_year_id
+            data['insurance_year_id'] = encode_id(latest_insurance.insurance_year_id) if latest_insurance.insurance_year_id else None
             data['insurance_year'] = latest_insurance.insurance_year.name if latest_insurance.insurance_year else ''
             data['required_amount'] = str(latest_insurance.required_amount)
             data['amount_paid'] = str(latest_insurance.amount_paid)
@@ -377,7 +384,7 @@ def get_family_insurance_details(request, family_id):
             data['has_existing_record'] = True
         else:
             active_year = AcademicYear.objects.filter(is_active=True).order_by('-name').first()
-            data['insurance_year_id'] = active_year.id if active_year else ''
+            data['insurance_year_id'] = encode_id(active_year.id) if active_year else None
             data['insurance_year'] = active_year.name if active_year else ''
             data['required_amount'] = str(family.total_contribution)
             data['amount_paid'] = '0'

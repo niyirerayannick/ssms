@@ -5,7 +5,7 @@ from .utils import decode_id
 class HashidModelChoiceField(forms.ModelChoiceField):
     """Custom ModelChoiceField that can handle both integer IDs and HashID strings."""
     def to_python(self, value):
-        if value and isinstance(value, str) and ':' in value:
+        if value:
             decoded = decode_id(value)
             if decoded is not None:
                 value = decoded
@@ -74,20 +74,10 @@ class PartnerForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         # Initial querysets for cascading
-        province_id = self.data.get('province') or (self.instance.province_id if self.instance.pk else None)
-        district_id = self.data.get('district') or (self.instance.district_id if self.instance.pk else None)
-        sector_id = self.data.get('sector') or (self.instance.sector_id if self.instance.pk else None)
-        cell_id = self.data.get('cell') or (self.instance.cell_id if self.instance.pk else None)
-
-        # Decode IDs if they are HashIDs
-        if isinstance(province_id, str) and ':' in province_id:
-            province_id = decode_id(province_id)
-        if isinstance(district_id, str) and ':' in district_id:
-            district_id = decode_id(district_id)
-        if isinstance(sector_id, str) and ':' in sector_id:
-            sector_id = decode_id(sector_id)
-        if isinstance(cell_id, str) and ':' in cell_id:
-            cell_id = decode_id(cell_id)
+        province_id = decode_id(self.data.get('province')) or (self.instance.province_id if self.instance.pk else None)
+        district_id = decode_id(self.data.get('district')) or (self.instance.district_id if self.instance.pk else None)
+        sector_id = decode_id(self.data.get('sector')) or (self.instance.sector_id if self.instance.pk else None)
+        cell_id = decode_id(self.data.get('cell')) or (self.instance.cell_id if self.instance.pk else None)
 
         if province_id:
             self.fields['district'].queryset = District.objects.filter(province_id=province_id)
@@ -191,15 +181,9 @@ class SchoolForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         # Get initial/current values from POST data or instance
-        province_id = self.data.get('province') or (self.instance.province_id if self.instance.pk else None)
-        district_id = self.data.get('district') or (self.instance.district_id if self.instance.pk else None)
+        province_id = decode_id(self.data.get('province')) or (self.instance.province_id if self.instance.pk else None)
+        district_id = decode_id(self.data.get('district')) or (self.instance.district_id if self.instance.pk else None)
         
-        # Decode IDs if they are HashIDs
-        if isinstance(province_id, str) and ':' in province_id:
-            province_id = decode_id(province_id)
-        if isinstance(district_id, str) and ':' in district_id:
-            district_id = decode_id(district_id)
-
         # Set querysets based on selected values
         if province_id:
             self.fields['district'].queryset = District.objects.filter(province_id=province_id)

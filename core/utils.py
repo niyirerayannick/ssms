@@ -10,10 +10,18 @@ def encode_id(n):
     return signer.sign(str(n))
 
 def decode_id(e):
-    """Decodes an 'encrypted' string back into an integer ID."""
-    try:
-        if not e:
-            return None
-        return int(signer.unsign(e))
-    except (BadSignature, ValueError, TypeError):
+    """Decodes an 'encrypted' string back into an integer ID.
+    Falls back to parsing as integer if not a signed string.
+    """
+    if not e:
         return None
+    
+    try:
+        # Try to unsign it first
+        return int(signer.unsign(str(e)))
+    except (BadSignature, ValueError, TypeError):
+        # Fallback to plain integer if it's already an ID or numeric string
+        try:
+            return int(e)
+        except (ValueError, TypeError):
+            return None
