@@ -4,124 +4,202 @@
 {% block title %}Sponsored Students - SIMS{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800">Sponsored Students</h1>
-            <p class="text-gray-600 mt-1">Full detailed information for actively sponsored students.</p>
+<div class="space-y-6 sm:space-y-8">
+    <!-- Page Header -->
+    <div class="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-8 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-4xl font-bold text-slate-900 tracking-tight">Sponsored Students</h1>
+                <p class="text-sm sm:text-base text-slate-600 mt-1 sm:mt-2">Full detailed information for actively sponsored students.</p>
+            </div>
+            <a href="{% url 'reports:index' %}" class="inline-flex items-center px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl border border-slate-200 shadow-sm transition-all active:scale-95 text-sm">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Reports
+            </a>
         </div>
-        <a href="{% url 'reports:index' %}" class="mt-4 md:mt-0 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition duration-200">
-            Back to Reports
-        </a>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Family</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Province</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sector</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cell</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Village</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">School</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Enrollment</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mutuelle</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disability</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program Officer</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for student in students %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                <div class="flex flex-col">
-                                    <span>{{ student.full_name }}</span>
-                                    <span class="text-xs text-gray-500">{{ student.sponsorship_status|capfirst }}</span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.get_gender_display }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.age }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {% if student.family %}
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
+        <!-- Main Table Section -->
+        <div class="lg:col-span-3 space-y-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50/50">
+                            <tr>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Gender</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Age</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Mutuelle</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Disability</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Family Details</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Location</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Education</th>
+                                <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Officer</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-100">
+                            {% for student in students %}
+                            <tr class="hover:bg-slate-50/50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex flex-col">
-                                        <span>{{ student.family.head_of_family }}</span>
-                                        <span class="text-xs text-gray-400">{{ student.family.family_code }}</span>
+                                        <span class="text-sm font-bold text-slate-900">{{ student.full_name }}</span>
+                                        <span class="text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mt-1">{{ student.sponsorship_status|capfirst }}</span>
                                     </div>
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.province.name|default:"N/A" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.district.name|default:"N/A" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.sector.name|default:"N/A" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.cell.name|default:"N/A" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.family.village.name|default:"N/A" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ student.school.name|default:student.school_name|default:"N/A" }}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.class_level }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.get_enrollment_status_display }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {% if student.mutuelle_status %}
-                                    {{ student.mutuelle_status|capfirst }}
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {% if student.has_disability %}
-                                    {{ student.disability_display }}
-                                {% else %}
-                                    No disability
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ student.program_officer.get_full_name|default:student.program_officer.username|default:"Unassigned" }}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="15" class="px-6 py-4 text-center text-gray-500">No sponsored students found.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm text-slate-600">{{ student.get_gender_display }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm text-slate-600 font-medium">{{ student.age }} yrs</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    {% if student.mutuelle_status == 'paid' %}
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                            {{ student.mutuelle_status|capfirst }}
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700">
+                                            {{ student.mutuelle_status|default:"N/A"|capfirst }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if student.has_disability %}
+                                        <span class="text-sm text-amber-600 font-medium">{{ student.disability_display }}</span>
+                                    {% else %}
+                                        <span class="text-sm text-slate-400">None</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if student.family %}
+                                        <div class="flex flex-col">
+                                            <span class="text-sm text-slate-900 font-medium">{{ student.family.head_of_family }}</span>
+                                            <span class="text-[11px] text-slate-500 font-mono">{{ student.family.family_code }}</span>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-sm text-slate-400">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm text-slate-700">{{ student.family.district.name|default:"N/A" }}</span>
+                                        <span class="text-[11px] text-slate-400">{{ student.family.sector.name|default:"N/A" }}, {{ student.family.cell.name|default:"N/A" }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm text-slate-900 font-medium">{{ student.school.name|default:student.school_name|default:"N/A" }}</span>
+                                        <span class="text-[11px] text-slate-500">{{ student.class_level }} • {{ student.get_enrollment_status_display }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm text-slate-600">{{ student.program_officer.get_full_name|default:student.program_officer.username|default:"Unassigned" }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                                            <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                            </svg>
+                                        </div>
+                                        <p class="text-slate-500 font-medium">No sponsored students found.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <aside class="bg-white rounded-lg shadow-md p-5 border border-slate-100 h-fit">
-            <h2 class="text-lg font-semibold text-slate-800 mb-4">Summary</h2>
-            <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-500">Total Sponsored</span>
-                    <span class="text-xl font-bold text-slate-900">{{ total|compact_number }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-500">Boys</span>
-                    <span class="text-lg font-semibold text-indigo-600">{{ boys|compact_number }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-500">Girls</span>
-                    <span class="text-lg font-semibold text-pink-600">{{ girls|compact_number }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-500">With Disability</span>
-                    <span class="text-lg font-semibold text-amber-600">{{ with_disability|compact_number }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-500">Without Disability</span>
-                    <span class="text-lg font-semibold text-emerald-600">{{ without_disability|compact_number }}</span>
+        <!-- Sidebar Summary -->
+        <div class="space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center">
+                    <span class="w-2 h-6 bg-amber-500 rounded-full mr-3"></span>
+                    Report Summary
+                </h2>
+                <div class="space-y-5">
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Sponsored</p>
+                        <p class="text-3xl font-black text-slate-900">{{ total|compact_number }}</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-3 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                            <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-1">Boys</p>
+                            <p class="text-xl font-bold text-indigo-700">{{ boys|compact_number }}</p>
+                        </div>
+                        <div class="p-3 bg-pink-50/50 rounded-xl border border-pink-100">
+                            <p class="text-[10px] font-bold text-pink-600 uppercase tracking-wider mb-1">Girls</p>
+                            <p class="text-xl font-bold text-pink-700">{{ girls|compact_number }}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg transition-colors group">
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-amber-500 mr-3"></div>
+                                <span class="text-sm text-slate-600 font-medium">With Disability</span>
+                            </div>
+                            <span class="text-sm font-bold text-slate-900 group-hover:text-amber-600">{{ with_disability|compact_number }}</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg transition-colors group">
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500 mr-3"></div>
+                                <span class="text-sm text-slate-600 font-medium">No Disability</span>
+                            </div>
+                            <span class="text-sm font-bold text-slate-900 group-hover:text-emerald-600">{{ without_disability|compact_number }}</span>
+                        </div>
+                    </div>
+
+                    <button onclick="window.print()" class="w-full mt-4 flex items-center justify-center px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        Print Summary
+                    </button>
                 </div>
             </div>
-        </aside>
+
+            <!-- Helpful Info Card -->
+            <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden group">
+                <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
+                <h3 class="text-lg font-bold mb-2 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                    </svg>
+                    Did you know?
+                </h3>
+                <p class="text-sm text-slate-300 leading-relaxed">
+                    This report shows all actively sponsored students. You can use the search feature on the main reports page to filter by academic year.
+                </p>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
+    }
+</style>
 {% endblock %}

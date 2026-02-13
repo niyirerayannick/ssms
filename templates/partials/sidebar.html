@@ -3,15 +3,15 @@
 <!-- Mobile Overlay -->
 <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
 
-<aside id="sidebar" class="fixed md:sticky top-0 left-0 z-50 md:z-auto w-64 h-screen bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 text-white shadow-2xl ring-1 ring-white/10 overflow-y-auto transition-transform duration-300 -translate-x-full md:translate-x-0" style="font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;">
-    <nav class="p-4">
+<aside id="sidebar" class="fixed md:sticky top-0 left-0 z-50 md:z-auto w-64 h-screen bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 text-white shadow-2xl ring-1 ring-white/10 overflow-y-auto transition-all duration-300 -translate-x-full md:translate-x-0" style="font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;">
+    <nav class="p-4 flex flex-col h-full">
         <!-- Close button for mobile (Better UI) -->
-        <div class="md:hidden flex justify-end mb-4">
+        <div class="md:hidden flex justify-end mb-4 flex-shrink-0">
             <button id="close-sidebar" class="p-2.5 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all duration-200 active:scale-95 shadow-lg">
                 <span class="material-symbols-rounded text-2xl">close</span>
             </button>
         </div>
-        <div class="mb-6 flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-3 ring-1 ring-white/5 shadow-inner">
+        <div class="mb-6 flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-3 ring-1 ring-white/5 shadow-inner flex-shrink-0">
             <div class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 ring-1 ring-white/20">
                 <img src="{% static 'image/logo.jpg' %}" alt="Solidact FDN Logo" class="h-10 w-10 rounded-xl object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <span class="material-symbols-rounded text-xl text-emerald-100 hidden">school</span>
@@ -21,18 +21,21 @@
                 <p class="text-[11px] text-emerald-200 uppercase tracking-wide">SIMS</p>
             </div>
         </div>
-        <!-- Main Navigation -->
-        <div class="mb-6">
-            <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Main Menu</h3>
-            <ul class="space-y-2">
-                <li>
-                    <a href="{% url 'dashboard:index' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'dashboard' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
-                        <span class="material-symbols-rounded text-[20px]">dashboard</span>
-                        <span class="font-medium">Dashboard</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+        
+        <!-- Scrollable Navigation Area -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar pr-1 -mr-1">
+            <!-- Main Navigation -->
+            <div class="mb-6">
+                <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Main Menu</h3>
+                <ul class="space-y-2">
+                    <li>
+                        <a href="{% url 'dashboard:index' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'dashboard' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
+                            <span class="material-symbols-rounded text-[20px]">dashboard</span>
+                            <span class="font-medium">Dashboard</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
         <!-- Students Section -->
         {% if perms.students.view_student %}
@@ -249,7 +252,8 @@
             </ul>
         </div>
         {% endif %}
-    </nav>
+    </div>
+</nav>
 </aside>
 
 <script>
@@ -265,15 +269,17 @@
                 // Open
                 sidebar.classList.remove('-translate-x-full');
                 overlay.classList.remove('hidden');
-                setTimeout(() => overlay.classList.add('opacity-100'), 10);
-                document.body.style.overflow = 'hidden';
+                setTimeout(() => {
+                    overlay.classList.add('opacity-100');
+                }, 10);
+                document.body.classList.add('overflow-hidden');
             } else {
                 // Close
                 sidebar.classList.add('-translate-x-full');
                 overlay.classList.remove('opacity-100');
                 setTimeout(() => {
                     overlay.classList.add('hidden');
-                    document.body.style.overflow = '';
+                    document.body.classList.remove('overflow-hidden');
                 }, 300);
             }
         }

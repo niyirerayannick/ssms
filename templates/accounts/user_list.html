@@ -1,176 +1,245 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
-{% block title %}User Management - SIMS{% endblock %}
+{% block title %}Users - SSMS{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-center">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">User Management</h1>
-            <p class="text-gray-600 mt-1">Manage system users and their roles</p>
-        </div>
-        <a href="{% url 'accounts:user_create' %}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold rounded-lg transition-all duration-200 shadow-md">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Add User
-        </a>
-    </div>
-
-    <!-- Search and Filter -->
-    <div class="bg-white/70 border border-slate-200 rounded-xl shadow-sm p-6">
-        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <label for="search" class="block text-sm font-semibold text-slate-700 mb-2">Search</label>
-                <input 
-                    type="text" 
-                    name="search" 
-                    id="search"
-                    placeholder="Username, name, or email..."
-                    value="{{ search_query }}"
-                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                />
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Users</h1>
+                <p class="text-sm text-slate-600 mt-1">Manage and track all system users and their roles.</p>
             </div>
-            <div>
-                <label for="role" class="block text-sm font-semibold text-slate-700 mb-2">Role</label>
-                <select name="role" id="role" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                    <option value="">All Roles</option>
-                    {% for role in roles %}
-                    <option value="{{ role.name }}" {% if role.name == role_filter %}selected{% endif %}>{{ role.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="flex items-end gap-2">
-                <button type="submit" class="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors font-medium">
-                    Search
-                </button>
-                {% if search_query or role_filter %}
-                <a href="{% url 'accounts:user_list' %}" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-colors font-medium">
-                    Clear
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <!-- Import/Export Buttons -->
+                {% if perms.auth.add_user %}
+                <a href="#" class="flex-1 sm:flex-none inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-bold rounded-xl border border-slate-200 transition-all shadow-sm active:scale-95">
+                    <svg class="w-4 h-4 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Template
+                </a>
+                <a href="#" class="flex-1 sm:flex-none inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95">
+                    <svg class="w-4 h-4 mr-1.5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    Import
+                </a>
+                <a href="{% url 'accounts:user_create' %}" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95">
+                    + Add User
                 </a>
                 {% endif %}
             </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Search Input -->
+                <div class="lg:col-span-1">
+                    <label for="search" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Search</label>
+                    <input 
+                        type="text" 
+                        name="search" 
+                        id="search"
+                        placeholder="Username, name, or email..."
+                        value="{{ search_query }}"
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-sm"
+                    />
+                </div>
+
+                <!-- Role Filter -->
+                <div>
+                    <label for="role" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Role</label>
+                    <select name="role" id="role" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none text-sm">
+                        <option value="">All Roles</option>
+                        {% for role in roles %}
+                        <option value="{{ role.name }}" {% if role.name == role_filter %}selected{% endif %}>{{ role.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex items-end">
+                    <button type="submit" class="w-full px-4 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all font-bold text-sm shadow-sm active:scale-95">
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- Clear Filters Link -->
+            {% if search_query or role_filter %}
+            <div class="text-right">
+                <a href="{% url 'accounts:user_list' %}" class="text-blue-600 hover:text-blue-700 text-[10px] font-bold uppercase tracking-wider">Clear all filters</a>
+            </div>
+            {% endif %}
         </form>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+        Found <span class="text-slate-900">{{ users.count|compact_number }}</span> user{{ users.count|pluralize }}
+        {% if search_query %}
+            matching "<span class="text-blue-600">{{ search_query }}</span>"
+        {% endif %}
     </div>
 
     <!-- Users Table -->
     {% if users %}
-    <div class="bg-white/70 border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-slate-200">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50/50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Username</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Role</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">User Info</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Full Name</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Email</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-200">
+                <tbody class="divide-y divide-slate-100">
                     {% for user in users %}
-                    <tr class="hover:bg-emerald-50/50 transition-colors">
-                        <td class="px-6 py-4 text-sm">
+                    <tr class="hover:bg-slate-50/80 transition-colors group">
+                        <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-bold">
+                                <div class="flex-shrink-0 h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold shadow-sm group-hover:scale-110 transition-transform">
                                     {{ user.username|slice:":1"|upper }}
                                 </div>
                                 <div class="ml-3">
-                                    <div class="font-medium text-slate-900">{{ user.username }}</div>
+                                    <div class="text-sm font-bold text-slate-900">{{ user.username }}</div>
                                     {% if user.is_superuser %}
-                                    <div class="text-xs text-red-600 font-semibold">SUPERUSER</div>
+                                    <div class="text-[10px] text-rose-600 font-black uppercase tracking-tighter">Superuser</div>
                                     {% endif %}
+                                    <div class="text-[10px] text-slate-400 sm:hidden">{{ user.email|default:"" }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-900">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden sm:table-cell font-medium">
                             {{ user.get_full_name|default:"-" }}
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-600">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500 hidden lg:table-cell">
                             {{ user.email|default:"-" }}
                         </td>
-                        <td class="px-6 py-4 text-sm">
+                        <td class="px-6 py-4 whitespace-nowrap">
                             {% with role=user.groups.first %}
                             {% if role %}
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                                    {% if role.name == 'Admin' %}bg-purple-100 text-purple-800
-                                    {% elif role.name == 'Accountant' %}bg-blue-100 text-blue-800
-                                    {% elif role.name == 'Executive Secretary' %}bg-emerald-100 text-emerald-800
-                                    {% elif role.name == 'Program Officer' %}bg-teal-100 text-teal-800
-                                    {% else %}bg-slate-100 text-slate-800{% endif %}">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider
+                                    {% if role.name == 'Admin' %}bg-purple-50 text-purple-700 border border-purple-100
+                                    {% elif role.name == 'Accountant' %}bg-blue-50 text-blue-700 border border-blue-100
+                                    {% elif role.name == 'Executive Secretary' %}bg-emerald-50 text-emerald-700 border border-emerald-100
+                                    {% elif role.name == 'Program Officer' %}bg-teal-50 text-teal-700 border border-teal-100
+                                    {% else %}bg-slate-50 text-slate-700 border border-slate-100{% endif %}">
                                     {{ role.name }}
                                 </span>
                             {% else %}
-                                <span class="text-slate-400">No role</span>
+                                <span class="text-slate-400 text-xs italic">No role</span>
                             {% endif %}
                             {% endwith %}
                         </td>
-                        <td class="px-6 py-4 text-sm">
+                        <td class="px-6 py-4 whitespace-nowrap">
                             {% if user.is_active %}
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5 animate-pulse"></span>
                                 Active
                             </span>
                             {% else %}
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                                <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-100">
+                                <span class="w-1.5 h-1.5 bg-rose-500 rounded-full mr-1.5"></span>
                                 Inactive
                             </span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-sm space-x-2">
-                            <a href="{% url 'accounts:user_edit' user.id %}" class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors text-xs font-medium">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                                Edit
-                            </a>
-                            {% if not user.is_superuser and user.id != request.user.id %}
-                            <a href="{% url 'accounts:user_delete' user.id %}" class="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors text-xs font-medium">
-                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                </svg>
-                                Delete
-                            </a>
-                            {% endif %}
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex justify-end gap-2">
+                                <a href="{% url 'accounts:user_edit' user.id %}" class="p-2 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all group/btn" title="Edit User">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </a>
+                                {% if not user.is_superuser and user.id != request.user.id %}
+                                <a href="{% url 'accounts:user_delete' user.id %}" class="p-2 bg-slate-50 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all" title="Delete User">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </a>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        {% include 'partials/pagination.html' %}
+        <div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100">
+            {% include 'partials/pagination.html' %}
+        </div>
     </div>
     
     <!-- Results Summary -->
-    <div class="text-sm text-slate-600">
-        Showing <strong>{{ page_obj.paginator.count|compact_number }}</strong> user{{ page_obj.paginator.count|pluralize }}
-        {% if search_query %}matching "<strong>{{ search_query }}</strong>"{% endif %}
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100">
+        <div>
+            Showing <span class="font-bold text-slate-900">{{ page_obj.paginator.count }}</span> user{{ page_obj.paginator.count|pluralize }}
+            {% if search_query %}matching "<span class="font-bold text-emerald-600">{{ search_query }}</span>"{% endif %}
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                Active Accounts
+            </span>
+            <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 bg-rose-500 rounded-full"></span>
+                Inactive
+            </span>
+        </div>
     </div>
     {% else %}
     <!-- Empty State -->
-    <div class="bg-white/70 border border-slate-200 rounded-xl shadow-sm p-12 text-center">
-        <svg class="w-16 h-16 text-slate-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-        </svg>
-        <h3 class="text-lg font-medium text-slate-900 mb-2">No users found</h3>
-        <p class="text-slate-600 mb-6">
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-12 sm:p-20 text-center">
+        <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+        </div>
+        <h3 class="text-xl font-bold text-slate-900 mb-2">No users found</h3>
+        <p class="text-slate-500 max-w-sm mx-auto mb-8">
             {% if search_query or role_filter %}
-                No users match your search criteria.
+                We couldn't find any users matching your current filters. Try adjusting your search or clearing filters.
             {% else %}
-                Get started by adding your first user.
+                The system currently has no users. Get started by creating the first administrative or staff account.
             {% endif %}
         </p>
-        <a href="{% url 'accounts:user_create' %}" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Add First User
-        </a>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href="{% url 'accounts:user_create' %}" class="w-full sm:w-auto px-8 py-3 bg-slate-900 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95">
+                Add User
+            </a>
+            {% if search_query or role_filter %}
+            <a href="{% url 'accounts:user_list' %}" class="w-full sm:w-auto px-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all active:scale-95">
+                Clear Filters
+            </a>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 </div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar {
+        height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #cbd5e1;
+    }
+</style>
 {% endblock %}
