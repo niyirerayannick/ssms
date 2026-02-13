@@ -6,37 +6,37 @@
 {% block content %}
 <div class="space-y-6 animate-fade-in">
     <!-- Header -->
-    <div class="bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 rounded-xl shadow-lg p-6 text-white">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div class="flex items-center space-x-4 mb-4 md:mb-0">
+    <div class="bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 rounded-xl shadow-lg p-4 sm:p-6 text-white">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-center space-x-3 sm:space-x-4">
                 {% if student.profile_picture %}
                     <img src="{{ student.profile_picture.url }}" 
                          alt="{{ student.full_name }}" 
-                         class="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover gallery-image"
+                         class="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-lg object-cover gallery-image"
                          data-title="{{ student.full_name }}"
                          data-subtitle="Profile Picture"
                          data-caption="Student Profile Picture">
                 {% else %}
-                    <div class="w-20 h-20 rounded-full border-4 border-white shadow-lg bg-white bg-opacity-20 flex items-center justify-center">
-                        <span class="text-3xl font-bold">{{ student.full_name|first|upper }}</span>
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-lg bg-white bg-opacity-20 flex items-center justify-center">
+                        <span class="text-2xl sm:text-3xl font-bold">{{ student.full_name|first|upper }}</span>
                     </div>
                 {% endif %}
                 <div>
-                    <h1 class="text-3xl font-bold">{{ student.full_name }}</h1>
-                    <p class="text-emerald-100">{{ student.get_gender_display }} • Age {{ student.age }}</p>
+                    <h1 class="text-xl sm:text-3xl font-bold leading-tight">{{ student.full_name }}</h1>
+                    <p class="text-xs sm:text-emerald-100">{{ student.get_gender_display }} • Age {{ student.age }}</p>
                 </div>
             </div>
             {% if perms.students.change_student %}
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 {% if student.sponsorship_status == 'pending' and can_approve_student %}
-                <form method="post" action="{% url 'students:student_approve' student.pk %}">
+                <form method="post" action="{% url 'students:student_approve' student.pk %}" class="w-full sm:w-auto">
                     {% csrf_token %}
-                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-semibold transition duration-200 shadow-md">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg font-semibold transition duration-200 shadow-md text-sm sm:text-base">
                         Approve Student
                     </button>
                 </form>
                 {% endif %}
-                <a href="{% url 'students:student_edit' student.pk %}" class="bg-white text-emerald-700 px-6 py-2 rounded-lg font-semibold hover:bg-emerald-50 transition duration-200 shadow-md">
+                <a href="{% url 'students:student_edit' student.pk %}" class="w-full sm:w-auto text-center bg-white text-emerald-700 px-6 py-2 rounded-lg font-semibold hover:bg-emerald-50 transition duration-200 shadow-md text-sm sm:text-base">
                     Edit Student
                 </a>
             </div>
@@ -45,48 +45,50 @@
     </div>
     
     <!-- Quick Actions -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {% if perms.finance.manage_fees %}
-        <a href="{% url 'finance:student_payments' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-4 rounded-lg shadow-md flex items-center space-x-3 border-l-4 border-blue-500">
-            <svg class="w-8 h-8 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="{% url 'finance:student_payments' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-3 sm:p-4 rounded-lg shadow-md flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-3 border-l-4 border-blue-500 text-center sm:text-left">
+            <svg class="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             <div>
-                <p class="font-semibold text-gray-900">Payment History</p>
-                <p class="text-xs text-gray-500">View all school fees</p>
+                <p class="text-xs sm:text-sm font-semibold text-gray-900 leading-tight">Payment History</p>
+                <p class="hidden sm:block text-[10px] text-gray-500">View all school fees</p>
             </div>
         </a>
         
-        <a href="{% url 'finance:add_student_payment' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-4 rounded-lg shadow-md flex items-center space-x-3 border-l-4 border-green-500">
-            <svg class="w-8 h-8 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="{% url 'finance:add_student_payment' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-3 sm:p-4 rounded-lg shadow-md flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-3 border-l-4 border-green-500 text-center sm:text-left">
+            <svg class="w-6 h-6 sm:w-8 sm:h-8 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
             <div>
-                <p class="font-semibold text-gray-900">Record Payment</p>
-                <p class="text-xs text-gray-500">Add school fee payment</p>
+                <p class="text-xs sm:text-sm font-semibold text-gray-900 leading-tight">Record Payment</p>
+                <p class="hidden sm:block text-[10px] text-gray-500">Add school fee payment</p>
             </div>
         </a>
         {% endif %}
-        <a href="{% url 'students:student_photos' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-4 rounded-lg shadow-md flex items-center space-x-3 border-l-4 border-purple-500">
-            <svg class="w-8 h-8 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="{% url 'students:student_photos' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-3 sm:p-4 rounded-lg shadow-md flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-3 border-l-4 border-purple-500 text-center sm:text-left">
+            <svg class="w-6 h-6 sm:w-8 sm:h-8 text-purple-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
             <div>
-                <p class="font-semibold text-gray-900">Photo Gallery</p>
-                <p class="text-xs text-gray-500">View student photos</p>
+                <p class="text-xs sm:text-sm font-semibold text-gray-900 leading-tight">Photo Gallery</p>
+                <p class="hidden sm:block text-[10px] text-gray-500">View student photos</p>
             </div>
         </a>
-        <a href="{% url 'students:student_report_cards' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-4 rounded-lg shadow-md flex items-center space-x-3 border-l-4 border-green-500">
-            <svg class="w-8 h-8 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <a href="{% url 'students:student_report_cards' student.pk %}" class="bg-white hover:shadow-lg transition duration-200 p-3 sm:p-4 rounded-lg shadow-md flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-3 border-l-4 border-emerald-500 text-center sm:text-left">
+            <svg class="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
             </svg>
             <div>
-                <p class="font-semibold text-gray-900">Academic Records</p>
-                <p class="text-xs text-gray-500">View marks history</p>
+                <p class="text-xs sm:text-sm font-semibold text-gray-900 leading-tight">Academic Records</p>
+                <p class="hidden sm:block text-[10px] text-gray-500">View marks history</p>
             </div>
         </a>
     </div>
     
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-6">
             <!-- Personal Information -->
@@ -97,7 +99,7 @@
                     </svg>
                     Personal Information
                 </h2>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <p class="text-sm text-gray-600">Full Name</p>
                         <p class="font-medium text-gray-900">{{ student.full_name }}</p>
@@ -232,44 +234,53 @@
             </div>
             
             <!-- Academic Records -->
-            <div id="academic-records" class="bg-white p-6 rounded-xl shadow-md">
-                <div class="flex justify-between items-center mb-4">
+            <div id="academic-records" class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
                     <h2 class="text-xl font-semibold text-gray-800 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                         </svg>
                         Academic Records
                     </h2>
-                    <a href="{% url 'students:add_academic_record' student.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">+ Add Record</a>
+                    <a href="{% url 'students:add_academic_record' student.pk %}" class="w-full sm:w-auto text-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-bold hover:bg-blue-100 transition-colors">+ Add Record</a>
                 </div>
                 {% if student.academic_records.all %}
-                <div class="overflow-x-auto">
+                <div class="-mx-4 sm:mx-0 overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                        <thead class="bg-gray-50/50">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Marks</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Term</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Subject</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider">Marks</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Term</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Year</th>
+                                <th class="px-4 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-gray-100">
                             {% for record in student.academic_records.all %}
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ record.subject }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-500">{{ record.marks }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-500">{{ record.term }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-500">{{ record.academic_year.name|default:"N/A" }}</td>
-                                <td class="px-4 py-3 text-sm">
+                            <tr class="hover:bg-gray-50/50 transition-colors">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-bold text-gray-900">{{ record.subject }}</div>
+                                    <div class="text-[10px] text-gray-500 sm:hidden mt-0.5">{{ record.term }} • {{ record.academic_year.name|default:"N/A" }}</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <span class="text-sm font-bold {% if record.marks >= 50 %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                                        {{ record.marks }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600 hidden sm:table-cell">{{ record.term }}</td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600 hidden md:table-cell">{{ record.academic_year.name|default:"N/A" }}</td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right">
                                     {% if record.report_card_image %}
-                                    <button class="text-blue-600 hover:text-blue-800 gallery-image"
+                                    <button class="text-blue-600 hover:text-blue-800 font-bold text-xs gallery-image"
                                             data-title="{{ student.full_name }} - Report Card"
                                             data-subtitle="{{ record.subject }} • {{ record.term }}"
                                             data-caption="Year {{ record.academic_year.name|default:'N/A' }} • Marks {{ record.marks }}"
                                             data-src="{{ record.report_card_image.url }}">
-                                        View Report
+                                        View
                                     </button>
+                                    {% else %}
+                                    <span class="text-gray-300 text-xs">-</span>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -278,13 +289,18 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-gray-500 text-center py-8">No academic records yet.</p>
+                <div class="text-center py-10">
+                    <svg class="w-12 h-12 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    <p class="text-gray-500 text-sm">No academic records yet.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
         
         <!-- Sidebar -->
-        <div class="space-y-6">
+        <div class="lg:col-span-1 space-y-6">
             <!-- Family Information -->
             <div class="bg-white p-6 rounded-xl shadow-md">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">

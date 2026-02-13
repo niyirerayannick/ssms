@@ -45,3 +45,8 @@ def compact_number(value):
         return str(value)
     except (ValueError, TypeError):
         return value
+
+@register.filter
+def split(value, arg):
+    """Splits a string by the given separator."""
+    return value.split(arg)

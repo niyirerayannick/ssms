@@ -6,22 +6,22 @@
 {% block content %}
 <div class="space-y-6">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
             <div class="flex items-center gap-3">
-                <a href="{% url 'students:student_detail' student.id %}" class="text-blue-600 hover:text-blue-800">
+                <a href="{% url 'students:student_detail' student.id %}" class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm active:scale-95">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </a>
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">{{ student.full_name }}</h1>
-                    <p class="text-gray-600 mt-1">School Fee Payment History</p>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">{{ student.full_name }}</h1>
+                    <p class="text-sm text-slate-600 mt-1">School Fee Payment History</p>
                 </div>
             </div>
         </div>
-        <div class="mt-4 md:mt-0">
-            <a href="{% url 'finance:add_student_payment' student.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200 inline-flex items-center">
+        <div class="flex items-center gap-3">
+            <a href="{% url 'finance:add_student_payment' student.id %}" class="flex-1 sm:flex-none inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm hover:shadow-md active:scale-95 uppercase tracking-wider">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
@@ -31,113 +31,124 @@
     </div>
 
     <!-- Student Info Card -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <!-- Student Status -->
-        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-500">
-            <p class="text-xs text-gray-500 font-semibold uppercase">Enrollment Status</p>
-            <p class="text-lg font-bold text-gray-900 mt-2">{{ student.get_enrollment_status_display }}</p>
+        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-indigo-500 transition-all hover:shadow-md">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Enrollment Status</p>
+            <p class="text-base sm:text-lg font-bold text-slate-900 mt-2">{{ student.get_enrollment_status_display }}</p>
         </div>
 
         <!-- Total Outstanding -->
-        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-red-500">
-            <p class="text-xs text-gray-500 font-semibold uppercase">Total Outstanding</p>
-            <p class="text-lg font-bold text-red-600 mt-2">FRW {{ total_outstanding|compact_number }}</p>
+        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-rose-500 transition-all hover:shadow-md">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Outstanding</p>
+            <p class="text-base sm:text-lg font-bold text-rose-600 mt-2">FRW {{ total_outstanding|compact_number }}</p>
         </div>
 
         <!-- Total Paid -->
-        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-green-500">
-            <p class="text-xs text-gray-500 font-semibold uppercase">Total Paid</p>
-            <p class="text-lg font-bold text-green-600 mt-2">FRW {{ total_paid|compact_number }}</p>
+        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-emerald-500 transition-all hover:shadow-md">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Paid</p>
+            <p class="text-base sm:text-lg font-bold text-emerald-600 mt-2">FRW {{ total_paid|compact_number }}</p>
         </div>
 
         <!-- Payment Rate -->
-        <div class="bg-white p-4 rounded-lg shadow-md border-l-4 border-purple-500">
-            <p class="text-xs text-gray-500 font-semibold uppercase">Payment Rate</p>
-            <p class="text-lg font-bold text-purple-600 mt-2">{{ payment_percentage }}%</p>
+        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-amber-500 transition-all hover:shadow-md">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Payment Rate</p>
+            <p class="text-base sm:text-lg font-bold text-amber-600 mt-2">{{ payment_percentage }}%</p>
         </div>
     </div>
 
     <!-- Financial Summary -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Financial Summary</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
+        <h2 class="text-lg font-bold text-slate-800 mb-6">Financial Summary</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-                <p class="text-sm text-gray-600 font-medium mb-1">Total Required</p>
-                <p class="text-2xl font-bold text-gray-900">FRW {{ total_required|compact_number }}</p>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Total Required</p>
+                <p class="text-2xl font-bold text-slate-900">FRW {{ total_required|compact_number }}</p>
             </div>
             <div>
-                <p class="text-sm text-gray-600 font-medium mb-1">Amount Paid</p>
-                <p class="text-2xl font-bold text-green-600">FRW {{ total_paid|compact_number }}</p>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Amount Paid</p>
+                <p class="text-2xl font-bold text-emerald-600">FRW {{ total_paid|compact_number }}</p>
             </div>
             <div>
-                <p class="text-sm text-gray-600 font-medium mb-1">Outstanding Balance</p>
-                <p class="text-2xl font-bold text-red-600">FRW {{ total_outstanding|compact_number }}</p>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Outstanding Balance</p>
+                <p class="text-2xl font-bold text-rose-600">FRW {{ total_outstanding|compact_number }}</p>
             </div>
         </div>
         
         <!-- Progress Bar -->
-        <div class="mt-6">
-            <div class="flex justify-between mb-2">
-                <span class="text-sm font-medium text-gray-700">Payment Progress</span>
-                <span class="text-sm font-medium text-gray-700">{{ payment_percentage }}%</span>
+        <div class="mt-8 pt-6 border-t border-slate-100">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Payment Progress</span>
+                <span class="text-sm font-bold text-indigo-600">{{ payment_percentage }}%</span>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-4">
-                <div class="bg-green-500 h-4 rounded-full transition-all duration-300" style="width: {{ payment_percentage }}%"></div>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner">
+                <div class="bg-indigo-600 h-full rounded-full transition-all duration-700 ease-out shadow-sm" style="width: {{ payment_percentage }}%"></div>
             </div>
         </div>
     </div>
 
     <!-- Payment Records Table -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="p-6 border-b">
-            <h2 class="text-xl font-bold text-gray-800">Payment Records</h2>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="text-lg font-bold text-slate-800">Payment Records</h2>
+            <span class="text-[10px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg uppercase tracking-wider">Details</span>
         </div>
         
         {% if fees %}
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50/50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Academic Year</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Class</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Required</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paid</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dates Paid</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Year</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">School</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Class</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Required</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Paid</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Balance</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Dates Paid</th>
+                        <th class="px-6 py-4 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody class="divide-y divide-slate-100 bg-white">
                     {% for fee in fees %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ fee.academic_year.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">{{ fee.school_name }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">{{ fee.class_level }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">FRW {{ fee.total_fees|compact_number }}</td>
-                        <td class="px-6 py-4 text-sm font-medium text-green-600">FRW {{ fee.amount_paid|compact_number }}</td>
-                        <td class="px-6 py-4 text-sm font-bold {% if fee.balance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-bold text-slate-900">{{ fee.academic_year.name|default:"N/A" }}</div>
+                            <div class="text-[10px] text-slate-500 md:hidden font-medium mt-1">{{ fee.school_name }}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">{{ fee.school_name }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell font-medium">{{ fee.class_level }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">FRW {{ fee.total_fees|compact_number }}</td>
+                        <td class="px-6 py-4 text-sm font-bold text-emerald-600">FRW {{ fee.amount_paid|compact_number }}</td>
+                        <td class="px-6 py-4 text-sm font-bold {% if fee.balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
                             FRW {{ fee.balance|compact_number }}
                         </td>
-                        <td class="px-6 py-4 text-sm">
-                            <span class="px-3 py-1 text-xs font-semibold rounded-full
-                                {% if fee.payment_status == 'paid' %}bg-green-100 text-green-800
-                                {% elif fee.payment_status == 'overdue' %}bg-red-100 text-red-800
-                                {% elif fee.payment_status == 'partial' %}bg-yellow-100 text-yellow-800
-                                {% else %}bg-orange-100 text-orange-800{% endif %}">
+                        <td class="px-6 py-4">
+                            <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ring-1
+                                {% if fee.payment_status == 'paid' %}bg-emerald-50 text-emerald-700 ring-emerald-100
+                                {% elif fee.payment_status == 'overdue' %}bg-rose-50 text-rose-700 ring-rose-100
+                                {% elif fee.payment_status == 'partial' %}bg-amber-50 text-amber-700 ring-amber-100
+                                {% else %}bg-slate-50 text-slate-700 ring-slate-100{% endif %}">
                                 {{ fee.get_payment_status_display }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-sm text-gray-700">
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell font-medium">
                             {% if fee.payment_dates %}
-                                {{ fee.payment_dates|linebreaks }}
+                                <div class="max-w-[150px] truncate" title="{{ fee.payment_dates }}">
+                                    {{ fee.payment_dates }}
+                                </div>
                             {% else %}
-                                <span class="text-gray-400">—</span>
+                                <span class="text-slate-300">—</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-sm font-medium">
-                            <a href="{% url 'finance:fee_edit' fee.id %}" class="text-blue-600 hover:text-blue-800 mr-3">Edit</a>
+                        <td class="px-6 py-4 text-sm font-medium text-right">
+                            <a href="{% url 'finance:fee_edit' fee.id %}" class="inline-flex items-center gap-1.5 bg-slate-50 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 px-3 py-1.5 rounded-lg transition-all active:scale-95 border border-slate-200 hover:border-indigo-100 font-bold text-[10px] uppercase tracking-wider">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                <span class="hidden sm:inline">Edit</span>
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -145,27 +156,36 @@
             </table>
         </div>
         {% else %}
-        <div class="p-6 text-center text-gray-500">
-            <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            </svg>
-            <p class="text-gray-600">No payment records found for this student</p>
+        <div class="px-6 py-12 text-center">
+            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+            </div>
+            <p class="text-slate-500 font-medium">No payment records found for this student</p>
         </div>
         {% endif %}
     </div>
 
     <!-- Comments Section -->
     {% if fees %}
-    <div class="bg-blue-50 border border-blue-200 p-6 rounded-lg">
-        <h3 class="font-semibold text-blue-900 mb-3">Payment Notes</h3>
-        {% for fee in fees %}
-            {% if fee.comments %}
-            <div class="mb-3 pb-3 border-b border-blue-200 last:border-b-0">
-                <p class="text-sm font-medium text-blue-900">{{ fee.academic_year.name|default:"N/A" }} - {{ fee.school_name }}</p>
-                <p class="text-sm text-blue-800 mt-1">{{ fee.comments }}</p>
-            </div>
-            {% endif %}
-        {% endfor %}
+    <div class="bg-indigo-50/50 border border-indigo-100 p-6 rounded-2xl mb-8">
+        <h3 class="text-sm font-bold text-indigo-900 mb-4 uppercase tracking-wider flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+            </svg>
+            Payment Notes
+        </h3>
+        <div class="space-y-4">
+            {% for fee in fees %}
+                {% if fee.comments %}
+                <div class="p-4 bg-white/60 rounded-xl border border-indigo-100/50 last:mb-0">
+                    <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider mb-1">{{ fee.academic_year.name|default:"N/A" }} - {{ fee.school_name }}</p>
+                    <p class="text-sm text-slate-700 leading-relaxed">{{ fee.comments }}</p>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
     </div>
     {% endif %}
 </div>

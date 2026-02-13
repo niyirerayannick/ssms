@@ -4,43 +4,68 @@
 
 {% block content %}
 <div class="space-y-6 animate-fade-in">
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800">Report Card Photos</h1>
-            <p class="text-gray-600 mt-1">{{ student.full_name }}</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <a href="{% url 'students:student_detail' student.pk %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                Back to Student
-            </a>
-            {% if perms.students.change_student %}
-            <a href="{% url 'students:add_academic_record' student.pk %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition duration-200">
-                + Add Record
-            </a>
-            {% endif %}
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Report Card Photos</h1>
+                <p class="text-sm text-slate-600 mt-1">{{ student.full_name }} • Academic Evidence</p>
+            </div>
+            <div class="flex items-center gap-2 sm:gap-3">
+                <a href="{% url 'students:student_detail' student.pk %}" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl border border-slate-200 transition-all shadow-sm active:scale-95 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    <span class="hidden sm:inline">Back to Student</span>
+                    <span class="sm:hidden">Back</span>
+                </a>
+                {% if perms.students.change_student %}
+                <a href="{% url 'students:add_academic_record' student.pk %}" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-95 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Record
+                </a>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    <div class="bg-white rounded-lg shadow-md p-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
         {% if records %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for record in records %}
-            <div class="border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-                <img src="{{ record.report_card_image.url }}" 
-                     alt="{{ student.full_name }} report card" 
-                     class="w-full h-56 object-cover gallery-image"
-                     data-title="{{ student.full_name }} - Report Card"
-                     data-subtitle="{{ record.subject }} • {{ record.term }}"
-                     data-caption="Year {{ record.academic_year.name|default:'N/A' }} • Marks {{ record.marks }}">
-                <div class="p-3">
-                    <p class="text-sm font-semibold text-gray-800">{{ record.subject }} • {{ record.term }}</p>
-                    <p class="text-xs text-gray-500">Year {{ record.academic_year.name|default:"N/A" }} • Marks {{ record.marks }}</p>
+            <div class="group relative bg-slate-50 rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300">
+                <div class="aspect-[4/3] overflow-hidden">
+                    <img src="{{ record.report_card_image.url }}" 
+                         alt="{{ student.full_name }} report card" 
+                         class="w-full h-full object-cover gallery-image cursor-zoom-in group-hover:scale-105 transition-transform duration-500"
+                         data-title="{{ student.full_name }} - Report Card"
+                         data-subtitle="{{ record.subject }} • {{ record.term }}"
+                         data-caption="Year {{ record.academic_year.name|default:'N/A' }} • Marks {{ record.marks }}">
+                </div>
+                <div class="p-4 bg-white border-t border-slate-100">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-sm font-bold text-slate-900">{{ record.subject }}</p>
+                            <p class="text-xs text-slate-500 mt-1">{{ record.term }} • Year {{ record.academic_year.name|default:"N/A" }}</p>
+                        </div>
+                        <div class="px-2 py-1 bg-emerald-50 rounded-lg">
+                            <span class="text-xs font-bold text-emerald-600">{{ record.marks }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-gray-500 text-center py-8">No report card photos uploaded yet.</p>
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                <span class="material-symbols-rounded text-3xl text-slate-300">image_not_supported</span>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">No report cards yet</h3>
+            <p class="text-sm text-slate-500 max-w-xs mx-auto mt-2">Upload report card photos when adding or editing academic records for this student.</p>
+        </div>
         {% endif %}
     </div>
 </div>

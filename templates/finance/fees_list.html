@@ -5,105 +5,175 @@
 
 {% block content %}
 <div class="space-y-6">
-    <div class="flex justify-between items-center">
-        <h1 class="text-3xl font-bold text-gray-800">School Fees</h1>
-        <div class="flex space-x-4">
-            <a href="{% url 'finance:overdue_fees' %}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200">
-                Overdue Fees
-            </a>
-            {% if perms.finance.manage_fees %}
-            <a href="{% url 'finance:fee_create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
-                + Add Payment
-            </a>
-            {% endif %}
+    <div class="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 border border-blue-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">School Fees</h1>
+                <p class="text-sm text-slate-600 mt-1">Manage student tuition payments and overdue accounts.</p>
+            </div>
+            <div class="flex flex-wrap gap-3 w-full sm:w-auto">
+                <a href="{% url 'finance:overdue_fees' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold px-4 py-2.5 rounded-xl border border-rose-200 transition-all shadow-sm active:scale-95 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    Overdue
+                </a>
+                {% if perms.finance.manage_fees %}
+                <a href="{% url 'finance:fee_create' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    Add Payment
+                </a>
+                {% endif %}
+            </div>
         </div>
     </div>
     
     <!-- Search and Filters -->
-    <div class="bg-white p-4 rounded-lg shadow-md">
-        <form method="get" class="flex flex-wrap gap-4">
-            <input type="text" name="search" value="{{ search_query }}" placeholder="Search by student name or term..."
-                   class="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <select name="district" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="">All Districts</option>
-                {% for district in districts %}
-                    <option value="{{ district.id }}" {% if district_filter|add:""|stringformat:"s" == district.id|stringformat:"s" %}selected{% endif %}>
-                        {{ district.name }}
-                    </option>
-                {% endfor %}
-            </select>
-            <select name="academic_year" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="">All Academic Years</option>
-                {% for year in academic_years %}
-                    <option value="{{ year.id }}" {% if academic_year_filter|add:""|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>
-                        {{ year.name }}
-                    </option>
-                {% endfor %}
-            </select>
-            <select name="status" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="">All Status</option>
-                <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
-                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
-                <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
-            </select>
-            <select name="term" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <option value="">All Terms</option>
-                <option value="Term 1" {% if term_filter == 'Term 1' %}selected{% endif %}>Term 1</option>
-                <option value="Term 2" {% if term_filter == 'Term 2' %}selected{% endif %}>Term 2</option>
-                <option value="Term 3" {% if term_filter == 'Term 3' %}selected{% endif %}>Term 3</option>
-            </select>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200">
-                Filter
-            </button>
+    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200/60">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="sm:col-span-2 lg:col-span-1">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Search Student</label>
+                    <div class="relative group">
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="Name, code, or term..."
+                               class="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm transition-all group-hover:bg-white">
+                        <div class="absolute left-3.5 top-2.5 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">District</label>
+                    <select name="district" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm appearance-none transition-all hover:bg-white">
+                        <option value="">All Districts</option>
+                        {% for district in districts %}
+                            <option value="{{ district.id }}" {% if district_filter|add:""|stringformat:"s" == district.id|stringformat:"s" %}selected{% endif %}>
+                                {{ district.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Academic Year</label>
+                    <select name="academic_year" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm appearance-none transition-all hover:bg-white">
+                        <option value="">All Years</option>
+                        {% for year in academic_years %}
+                            <option value="{{ year.id }}" {% if academic_year_filter|add:""|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>
+                                {{ year.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Status</label>
+                    <select name="status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm appearance-none transition-all hover:bg-white">
+                        <option value="">All Status</option>
+                        <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Term</label>
+                    <select name="term" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm appearance-none transition-all hover:bg-white">
+                        <option value="">All Terms</option>
+                        <option value="Term 1" {% if term_filter == 'Term 1' %}selected{% endif %}>Term 1</option>
+                        <option value="Term 2" {% if term_filter == 'Term 2' %}selected{% endif %}>Term 2</option>
+                        <option value="Term 3" {% if term_filter == 'Term 3' %}selected{% endif %}>Term 3</option>
+                    </select>
+                </div>
+                <div class="flex items-end gap-3 lg:col-span-1">
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md active:scale-95 text-sm">
+                        Filter
+                    </button>
+                    <a href="{% url 'finance:fees_list' %}" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 group" title="Reset">
+                        <svg class="w-5 h-5 transition-transform group-hover:rotate-180 duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
         </form>
     </div>
     
     <!-- Fees Table -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-slate-100">
+                <thead class="bg-slate-50/50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Required</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Year/Term</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Required</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Paid</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Balance</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-slate-50">
                     {% for fee in fees %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ fee.student.full_name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.academic_year.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.get_term_display }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.total_fees|compact_number }} RWF</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.amount_paid|compact_number }} RWF</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium {% if fee.balance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                            {{ fee.balance|compact_number }} RWF
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-slate-900">{{ fee.student.full_name }}</span>
+                                <span class="text-[10px] text-slate-500 sm:hidden mt-1">{{ fee.academic_year.name }} • {{ fee.get_term_display }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-medium text-slate-900">{{ fee.academic_year.name|default:"N/A" }}</span>
+                                <span class="text-[10px] text-slate-500">{{ fee.get_term_display }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden md:table-cell">{{ fee.total_fees|compact_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden md:table-cell">{{ fee.amount_paid|compact_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="text-sm font-bold {% if fee.balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                                {{ fee.balance|compact_number }}
+                            </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                {% if fee.payment_status == 'paid' %}bg-green-100 text-green-800
-                                {% elif fee.payment_status == 'overdue' %}bg-red-100 text-red-800
-                                {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide
+                                {% if fee.payment_status == 'paid' %}bg-emerald-100 text-emerald-700
+                                {% elif fee.payment_status == 'overdue' %}bg-rose-100 text-rose-700
+                                {% else %}bg-amber-100 text-amber-700{% endif %}">
                                 {{ fee.get_payment_status_display }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.payment_dates|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            {% if perms.finance.manage_fees %}
-                            <a href="{% url 'finance:fee_edit' fee.pk %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                            {% endif %}
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex justify-end gap-2">
+                                <a href="{% url 'finance:student_payments' fee.student.id %}" class="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="History">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </a>
+                                {% if perms.finance.manage_fees %}
+                                <a href="{% url 'finance:fee_edit' fee.pk %}" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </a>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" class="px-6 py-4 text-center text-gray-500">No fee records found.</td>
+                        <td colspan="7" class="px-6 py-10 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="p-3 bg-slate-50 rounded-full mb-3">
+                                    <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-sm text-slate-500 font-medium">No fee records found.</p>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

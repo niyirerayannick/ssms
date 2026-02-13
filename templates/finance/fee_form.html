@@ -3,51 +3,59 @@
 {% block title %}{{ title }} - SIMS{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-8 px-4">
-    <div class="text-center mb-10">
-        <h1 class="text-3xl font-bold text-gray-900 tracking-tight">{{ title }}</h1>
-        <p class="text-gray-500 mt-2 text-lg">
-            {% if payment_type == 'insurance' %}
-            Record Mutuelle de Santé (Health Insurance) payment for a family
-            {% else %}
-            Record school fee payment for a student
-            {% endif %}
-        </p>
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header Card -->
+    <div class="bg-gradient-to-r from-slate-50 via-indigo-50/30 to-slate-50 border border-slate-200/60 rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+        <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-100/30 rounded-full blur-2xl"></div>
+        <div class="relative flex flex-col items-center text-center">
+            <div class="p-3 bg-white rounded-2xl shadow-sm mb-4 border border-slate-100">
+                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{{ title }}</h1>
+            <p class="text-sm text-slate-600 mt-2 max-w-lg">
+                {% if payment_type == 'insurance' %}
+                Record Mutuelle de Santé (Health Insurance) payment for a family.
+                {% else %}
+                Record school fee payment for a student.
+                {% endif %}
+            </p>
+        </div>
     </div>
     
     <!-- Toggle buttons -->
-    <div class="flex justify-center mb-10">
-        <div class="bg-gray-100 p-1.5 rounded-xl inline-flex shadow-inner">
+    <div class="flex justify-center">
+        <div class="bg-slate-100/80 p-1 rounded-2xl inline-flex shadow-inner border border-slate-200/50 backdrop-blur-sm">
             <a href="{% url 'finance:fee_create' %}?type=school_fee" 
-               class="px-8 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center
-               {% if payment_type != 'insurance' %}bg-white text-emerald-700 shadow-sm ring-1 ring-black/5{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-200/50{% endif %}">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+               class="px-6 sm:px-10 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center gap-2
+               {% if payment_type != 'insurance' %}bg-white text-indigo-600 shadow-md ring-1 ring-slate-200/50 scale-100{% else %}text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 scale-95 opacity-70{% endif %}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                 </svg>
                 School Fees
             </a>
             <a href="{% url 'finance:fee_create' %}?type=insurance" 
-               class="px-8 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center
-               {% if payment_type == 'insurance' %}bg-white text-teal-700 shadow-sm ring-1 ring-black/5{% else %}text-gray-500 hover:text-gray-700 hover:bg-gray-200/50{% endif %}">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+               class="px-6 sm:px-10 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 flex items-center gap-2
+               {% if payment_type == 'insurance' %}bg-white text-indigo-600 shadow-md ring-1 ring-slate-200/50 scale-100{% else %}text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 scale-95 opacity-70{% endif %}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
-                Mutuelle de Santé
+                Insurance
             </a>
         </div>
     </div>
     
-    <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 relative">
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r {% if payment_type == 'insurance' %}from-teal-400 to-emerald-400{% else %}from-emerald-400 to-teal-400{% endif %}"></div>
-        <form method="post" class="p-8 md:p-10 space-y-8">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+        <form method="post" class="p-6 sm:p-10 space-y-8">
             {% csrf_token %}
             
             {% if payment_type == 'insurance' %}
             <!-- MUTUELLE DE SANTÉ FORM -->
             <div class="space-y-6">
-                <div class="border-b border-gray-100 pb-2 mb-4">
-                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <div class="border-b border-slate-100 pb-3 mb-6">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                         Family Information
                     </h2>
                 </div>
@@ -55,109 +63,108 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- District Selection -->
                     <div>
-                        <label for="district_select" class="block text-sm font-medium text-gray-700 mb-1">District</label>
-                        <select id="district_select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition duration-200">
+                        <label for="district_select" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">District</label>
+                        <select id="district_select" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200 text-sm appearance-none">
                             <option value="">Select District...</option>
                             {% for district in districts %}
                             <option value="{{ district.id }}">{{ district.name }}</option>
                             {% endfor %}
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">Filter families by district</p>
+                        <p class="text-[10px] text-slate-400 mt-1.5 ml-1">Filter families by district</p>
                     </div>
 
                     <!-- Family Selection -->
                     <div>
-                        <label for="{{ form.family.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Family <span class="text-red-500">*</span></label>
+                        <label for="{{ form.family.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Family <span class="text-rose-500">*</span></label>
                         {{ form.family }}
                         {% if form.family.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.family.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.family.errors.0 }}</p>
                         {% endif %}
-                        <p class="text-xs text-gray-500 mt-1">Select the family</p>
                     </div>
                 </div>
 
                 <!-- Family Insurance Summary -->
                 <div id="family-insurance-summary" class="hidden transition-all duration-500 ease-in-out mt-4 opacity-0 translate-y-4">
-                    <div class="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 rounded-xl p-5 shadow-sm">
+                    <div class="bg-gradient-to-br from-slate-50 to-indigo-50/30 border border-slate-200/60 rounded-2xl p-5 shadow-sm">
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="font-bold text-teal-900 flex items-center">
-                                <svg class="w-5 h-5 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                 Insurance Status
                             </h3>
-                            <span id="db-coverage-status" class="px-3 py-1 bg-white rounded-full text-xs font-bold text-gray-600 border border-gray-200 shadow-sm">Not Covered</span>
+                            <span id="db-coverage-status" class="px-3 py-1 bg-white rounded-full text-[10px] font-bold text-slate-600 border border-slate-200 shadow-sm uppercase tracking-wide">Not Covered</span>
                         </div>
                         
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <!-- Cards for stats -->
-                            <div class="bg-white rounded-lg p-3 border border-teal-100 shadow-sm">
-                                <p class="text-xs text-gray-500 uppercase tracking-wider font-semibold">Total Due</p>
-                                <p id="db-total-contribution" class="text-lg font-bold text-gray-800 mt-1">0 FRW</p>
+                            <div class="bg-white rounded-xl p-3 border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                                <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Total Due</p>
+                                <p id="db-total-contribution" class="text-sm font-bold text-slate-900 mt-1">0 FRW</p>
                             </div>
-                            <div class="bg-white rounded-lg p-3 border border-teal-100 shadow-sm">
-                                <p class="text-xs text-teal-600 uppercase tracking-wider font-semibold">Required</p>
-                                <p id="db-required-amount" class="text-lg font-bold text-teal-600 mt-1">0 FRW</p>
+                            <div class="bg-white rounded-xl p-3 border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                                <p class="text-[10px] text-indigo-500 uppercase tracking-wider font-bold">Required</p>
+                                <p id="db-required-amount" class="text-sm font-bold text-indigo-600 mt-1">0 FRW</p>
                             </div>
-                            <div class="bg-white rounded-lg p-3 border border-teal-100 shadow-sm">
-                                <p class="text-xs text-green-600 uppercase tracking-wider font-semibold">Paid</p>
-                                <p id="db-amount-paid" class="text-lg font-bold text-green-600 mt-1">0 FRW</p>
+                            <div class="bg-white rounded-xl p-3 border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                                <p class="text-[10px] text-emerald-500 uppercase tracking-wider font-bold">Paid</p>
+                                <p id="db-amount-paid" class="text-sm font-bold text-emerald-600 mt-1">0 FRW</p>
                             </div>
-                            <div class="bg-white rounded-lg p-3 border border-teal-100 shadow-sm">
-                                <p class="text-xs text-red-500 uppercase tracking-wider font-semibold">Balance</p>
-                                <p id="db-balance" class="text-lg font-bold text-red-500 mt-1">0 FRW</p>
+                            <div class="bg-white rounded-xl p-3 border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                                <p class="text-[10px] text-rose-500 uppercase tracking-wider font-bold">Balance</p>
+                                <p id="db-balance" class="text-sm font-bold text-rose-600 mt-1">0 FRW</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="border-b border-gray-100 pb-2 pt-4 mb-4">
-                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                <div class="border-b border-slate-100 pb-3 pt-4 mb-6">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                         Payment Details
                     </h2>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label for="{{ form.insurance_year.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Year <span class="text-red-500">*</span></label>
+                        <label for="{{ form.insurance_year.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Year <span class="text-rose-500">*</span></label>
                         {{ form.insurance_year }}
                         {% if form.insurance_year.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.insurance_year.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.insurance_year.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.required_amount.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Required Amount (FRW) <span class="text-red-500">*</span></label>
+                        <label for="{{ form.required_amount.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Required Amount (FRW) <span class="text-rose-500">*</span></label>
                         {{ form.required_amount }}
                         {% if form.required_amount.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.required_amount.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.required_amount.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.amount_paid.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Amount Paid (FRW) <span class="text-red-500">*</span></label>
+                        <label for="{{ form.amount_paid.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Amount Paid (FRW) <span class="text-rose-500">*</span></label>
                         {{ form.amount_paid }}
                         {% if form.amount_paid.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.amount_paid.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.amount_paid.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.coverage_status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Coverage Status <span class="text-red-500">*</span></label>
+                        <label for="{{ form.coverage_status.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Coverage Status <span class="text-rose-500">*</span></label>
                         {{ form.coverage_status }}
                         {% if form.coverage_status.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.coverage_status.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.coverage_status.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div class="md:col-span-2">
-                        <label for="{{ form.payment_dates.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Payment Dates</label>
+                        <label for="{{ form.payment_dates.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Payment Dates</label>
                         {{ form.payment_dates }}
                         {% if form.payment_dates.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.payment_dates.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.payment_dates.errors.0 }}</p>
                         {% endif %}
-                        <p class="text-xs text-gray-500 mt-1">Comma-separated dates, e.g., 2024-01-15, 2024-02-20</p>
+                        <p class="text-[10px] text-slate-400 mt-1.5 ml-1">Comma-separated dates, e.g., 2024-01-15, 2024-02-20</p>
                     </div>
                     <div class="md:col-span-2">
-                        <label for="{{ form.remarks.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+                        <label for="{{ form.remarks.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Remarks</label>
                         {{ form.remarks }}
                         {% if form.remarks.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.remarks.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.remarks.errors.0 }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -166,9 +173,9 @@
             {% else %}
             <!-- SCHOOL FEES FORM -->
             <div class="space-y-6">
-                <div class="border-b border-gray-100 pb-2 mb-4">
-                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                <div class="border-b border-slate-100 pb-3 mb-6">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                         Student Information
                     </h2>
                 </div>
@@ -176,101 +183,100 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- District Selection -->
                     <div>
-                        <label for="district_select" class="block text-sm font-medium text-gray-700 mb-1">District</label>
-                        <select id="district_select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition duration-200">
+                        <label for="district_select" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">District</label>
+                        <select id="district_select" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200 text-sm appearance-none">
                             <option value="">Select District...</option>
                             {% for district in districts %}
                             <option value="{{ district.id }}">{{ district.name }}</option>
                             {% endfor %}
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">Filter students by district</p>
+                        <p class="text-[10px] text-slate-400 mt-1.5 ml-1">Filter students by district</p>
                     </div>
 
                     <!-- Student Selection -->
                     <div>
-                        <label for="{{ form.student.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Student <span class="text-red-500">*</span></label>
+                        <label for="{{ form.student.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Student <span class="text-rose-500">*</span></label>
                         {{ form.student }}
                         {% if form.student.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.student.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.student.errors.0 }}</p>
                         {% endif %}
-                        <p class="text-xs text-gray-500 mt-1">Select the student</p>
                     </div>
 
                     <!-- School Name -->
                     <div>
-                        <label for="{{ form.school_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">School Name</label>
+                        <label for="{{ form.school_name.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">School Name</label>
                         {{ form.school_name }}
                         {% if form.school_name.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.school_name.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.school_name.errors.0 }}</p>
                         {% endif %}
                     </div>
 
                     <!-- Class Level -->
                     <div>
-                        <label for="{{ form.class_level.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Class Level</label>
+                        <label for="{{ form.class_level.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Class Level</label>
                         {{ form.class_level }}
                         {% if form.class_level.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.class_level.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.class_level.errors.0 }}</p>
                         {% endif %}
                     </div>
                 </div>
 
-                <div class="border-b border-gray-100 pb-2 pt-4 mb-4">
-                    <h2 class="text-lg font-semibold text-gray-800 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="border-b border-slate-100 pb-3 pt-4 mb-6">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Fee Details
                     </h2>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label for="{{ form.academic_year.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Academic Year <span class="text-red-500">*</span></label>
+                        <label for="{{ form.academic_year.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Academic Year <span class="text-rose-500">*</span></label>
                         {{ form.academic_year }}
                         {% if form.academic_year.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.academic_year.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.academic_year.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.term.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Term <span class="text-red-500">*</span></label>
+                        <label for="{{ form.term.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Term <span class="text-rose-500">*</span></label>
                         {{ form.term }}
                         {% if form.term.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.term.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.term.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.total_fees.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Total Fees (FRW) <span class="text-red-500">*</span></label>
+                        <label for="{{ form.total_fees.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Total Fees (FRW) <span class="text-rose-500">*</span></label>
                         {{ form.total_fees }}
                         {% if form.total_fees.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.total_fees.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.total_fees.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.amount_paid.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Amount Paid (FRW) <span class="text-red-500">*</span></label>
+                        <label for="{{ form.amount_paid.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Amount Paid (FRW) <span class="text-rose-500">*</span></label>
                         {{ form.amount_paid }}
                         {% if form.amount_paid.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.amount_paid.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.amount_paid.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.payment_status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Payment Status <span class="text-red-500">*</span></label>
+                        <label for="{{ form.payment_status.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Payment Status <span class="text-rose-500">*</span></label>
                         {{ form.payment_status }}
                         {% if form.payment_status.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.payment_status.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.payment_status.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.payment_dates.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Payment Dates</label>
+                        <label for="{{ form.payment_dates.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Payment Dates</label>
                         {{ form.payment_dates }}
                         {% if form.payment_dates.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.payment_dates.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.payment_dates.errors.0 }}</p>
                         {% endif %}
-                        <p class="text-xs text-gray-500 mt-1">e.g., 2024-01-15, 2024-02-20</p>
+                        <p class="text-[10px] text-slate-400 mt-1.5 ml-1">e.g., 2024-01-15, 2024-02-20</p>
                     </div>
                     <div class="md:col-span-2">
-                        <label for="{{ form.comments.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Comments</label>
+                        <label for="{{ form.comments.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Comments</label>
                         {{ form.comments }}
                         {% if form.comments.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ form.comments.errors.0 }}</p>
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.comments.errors.0 }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -278,11 +284,11 @@
             {% endif %}
             
             <!-- Form Actions -->
-            <div class="pt-8 border-t border-gray-100 flex items-center justify-end space-x-4">
-                <a href="{% url 'finance:dashboard' %}" class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition duration-200 font-medium text-sm">
+            <div class="pt-8 border-t border-slate-100 flex items-center justify-end space-x-4">
+                <a href="{% url 'finance:dashboard' %}" class="px-6 py-2.5 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition duration-200 font-bold text-xs uppercase tracking-wider">
                     Cancel
                 </a>
-                <button type="submit" class="px-8 py-2.5 {% if payment_type == 'insurance' %}bg-teal-600 hover:bg-teal-700 shadow-teal-500/30{% else %}bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30{% endif %} text-white rounded-lg transition duration-200 font-medium text-sm shadow-lg transform hover:-translate-y-0.5">
+                <button type="submit" class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-300 font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg active:scale-95">
                     Save Payment
                 </button>
             </div>

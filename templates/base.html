@@ -7,6 +7,17 @@
     <title>{% block title %}SIMS - Sponsorship Information Management System{% endblock %}</title>
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    screens: {
+                        'xs': '475px',
+                    }
+                }
+            }
+        }
+    </script>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -104,10 +115,6 @@
         .animate-fade-in {
             animation: fadeIn 0.3s ease-out;
         }
-        /* Smooth transitions */
-        * {
-            transition: background-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -163,11 +170,11 @@
             return formatted + suffix;
         }
 
-        function createExportButton(label, classes, onClick) {
+        function createExportButton(label, icon, classes, onClick) {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = classes;
-            button.textContent = label;
+            button.className = classes + ' flex items-center gap-2';
+            button.innerHTML = `<span class="material-symbols-rounded text-[18px]">${icon}</span><span class="hidden sm:inline">${label}</span><span class="sm:hidden">${label.split(' ')[1] || label}</span>`;
             button.addEventListener('click', onClick);
             return button;
         }
@@ -177,6 +184,8 @@
             const body = [];
             const headRow = table.querySelector('thead tr');
             if (headRow) {
+                // Filter out hidden columns (sm:hidden, etc) for PDF export if possible, 
+                // but for now just get all visible text
                 head.push(Array.from(headRow.querySelectorAll('th')).map((cell) => cell.textContent.trim()));
             }
             Array.from(table.querySelectorAll('tbody tr')).forEach((row) => {
@@ -203,11 +212,12 @@
                     ? table.parentElement
                     : table;
                 const controls = document.createElement('div');
-                controls.className = 'flex flex-wrap items-center justify-end gap-2 mb-3';
+                controls.className = 'flex flex-wrap items-center justify-end gap-2 mb-4 mt-2';
 
                 const excelButton = createExportButton(
                     'Export Excel',
-                    'px-3 py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition',
+                    'table_chart',
+                    'px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-xl bg-emerald-600/10 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all duration-200 border border-emerald-200',
                     () => {
                         const book = XLSX.utils.table_to_book(table, { sheet: 'Sheet1' });
                         XLSX.writeFile(book, `${getFileBaseName(index)}.xlsx`);
@@ -216,15 +226,18 @@
 
                 const pdfButton = createExportButton(
                     'Export PDF',
-                    'px-3 py-2 text-sm font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 transition',
+                    'picture_as_pdf',
+                    'px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-xl bg-teal-600/10 text-teal-700 hover:bg-teal-600 hover:text-white transition-all duration-200 border border-teal-200',
                     () => {
                         const { head, body } = getTableMatrix(table);
                         const doc = new window.jspdf.jsPDF('l', 'pt', 'a4');
                         doc.autoTable({
                             head,
                             body,
-                            styles: { fontSize: 9 },
-                            headStyles: { fillColor: [16, 185, 129] }
+                            styles: { fontSize: 8, font: 'helvetica' },
+                            headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold' },
+                            alternateRowStyles: { fillColor: [245, 247, 250] },
+                            margin: { top: 40 },
                         });
                         doc.save(`${getFileBaseName(index)}.pdf`);
                     }
@@ -232,7 +245,11 @@
 
                 controls.appendChild(excelButton);
                 controls.appendChild(pdfButton);
-                wrapper.parentElement?.insertBefore(controls, wrapper);
+                
+                // Insert before the table wrapper
+                if (wrapper.parentNode) {
+                    wrapper.parentNode.insertBefore(controls, wrapper);
+                }
             });
         });
     </script>

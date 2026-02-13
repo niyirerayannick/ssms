@@ -3,149 +3,176 @@
 {% block title %}{{ title }} - SIMS{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
-    <div class="mb-6">
+<div class="max-w-3xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col gap-1">
         <div class="flex items-center gap-3">
-            <a href="{% url 'finance:student_payments' student.id %}" class="text-blue-600 hover:text-blue-800">
+            <a href="{% url 'finance:student_payments' student.id %}" class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-100 transition-all shadow-sm active:scale-95">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
             </a>
             <div>
-                <h1 class="text-3xl font-bold text-gray-800">{{ title }}</h1>
-                <p class="text-gray-600 mt-1">Student: <span class="font-semibold">{{ student.full_name }}</span></p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">{{ title }}</h1>
+                <p class="text-sm text-slate-600 mt-1">Student: <span class="font-bold text-indigo-600">{{ student.full_name }}</span></p>
             </div>
         </div>
     </div>
     
-    <div class="bg-white p-8 rounded-lg shadow-md">
-        <form method="post" class="space-y-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+        <form method="post" class="divide-y divide-slate-100">
             {% csrf_token %}
             
-            <!-- Student Info (Display Only) -->
-            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                <h3 class="font-semibold text-blue-900 mb-2">Student Information</h3>
-                <div class="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <p class="text-blue-700 font-medium">Full Name</p>
-                        <p class="text-blue-900">{{ student.full_name }}</p>
+            <!-- Student Info Section -->
+            <div class="p-6 sm:p-8 bg-slate-50/50">
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
                     </div>
-                    <div>
-                        <p class="text-blue-700 font-medium">Status</p>
-                        <p class="text-blue-900">{{ student.get_enrollment_status_display }}</p>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Student Information</h3>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Full Name</p>
+                        <p class="text-sm font-bold text-slate-900">{{ student.full_name }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</p>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-indigo-100 text-indigo-700">
+                            {{ student.get_enrollment_status_display }}
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Academic Year -->
-                <div>
-                    <label for="{{ form.academic_year.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Academic Year *
-                    </label>
-                    {{ form.academic_year }}
-                    {% if form.academic_year.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.academic_year.errors.0 }}</p>
-                    {% endif %}
+            <!-- Fee Details Section -->
+            <div class="p-6 sm:p-8 space-y-8">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Fee Details</h3>
                 </div>
 
-                <!-- Term -->
-                <div>
-                    <label for="{{ form.term.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Term *
-                    </label>
-                    {{ form.term }}
-                    {% if form.term.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.term.errors.0 }}</p>
-                    {% endif %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Academic Year -->
+                    <div class="space-y-1.5">
+                        <label for="{{ form.academic_year.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                            Academic Year <span class="text-rose-500">*</span>
+                        </label>
+                        {{ form.academic_year }}
+                        {% if form.academic_year.errors %}
+                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.academic_year.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Term -->
+                    <div class="space-y-1.5">
+                        <label for="{{ form.term.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                            Term <span class="text-rose-500">*</span>
+                        </label>
+                        {{ form.term }}
+                        {% if form.term.errors %}
+                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.term.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- School Name -->
+                    <div class="space-y-1.5">
+                        <label for="{{ form.school_name.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                            School Name
+                        </label>
+                        {{ form.school_name }}
+                        {% if form.school_name.errors %}
+                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.school_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Class Level -->
+                    <div class="space-y-1.5">
+                        <label for="{{ form.class_level.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                            Class Level
+                        </label>
+                        {{ form.class_level }}
+                        {% if form.class_level.errors %}
+                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.class_level.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Total Fees -->
+                    <div class="space-y-1.5">
+                        <label for="{{ form.total_fees.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                            Total Fees (FRW) <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            {{ form.total_fees }}
+                        </div>
+                        {% if form.total_fees.errors %}
+                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.total_fees.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Amount Paid -->
+                    <div class="space-y-1.5">
+                        <label for="{{ form.amount_paid.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                            Amount Paid (FRW) <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            {{ form.amount_paid }}
+                        </div>
+                        {% if form.amount_paid.errors %}
+                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.amount_paid.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Payment Status -->
+                    <div class="space-y-1.5">
+                        <label for="{{ form.payment_status.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                            Payment Status <span class="text-rose-500">*</span>
+                        </label>
+                        {{ form.payment_status }}
+                        {% if form.payment_status.errors %}
+                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.payment_status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
                 </div>
 
-                <!-- School Name -->
-                <div>
-                    <label for="{{ form.school_name.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        School Name
+                <!-- Payment Dates -->
+                <div class="space-y-1.5">
+                    <label for="{{ form.payment_dates.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                        Payment Dates
                     </label>
-                    {{ form.school_name }}
-                    {% if form.school_name.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.school_name.errors.0 }}</p>
+                    {{ form.payment_dates }}
+                    {% if form.payment_dates.errors %}
+                        <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.payment_dates.errors.0 }}</p>
                     {% endif %}
+                    <p class="text-[10px] text-slate-400 mt-1.5 ml-1">Comma-separated dates, e.g., 2024-01-15, 2024-02-20</p>
                 </div>
 
-                <!-- Class Level -->
-                <div>
-                    <label for="{{ form.class_level.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Class Level
+                <!-- Comments -->
+                <div class="space-y-1.5">
+                    <label for="{{ form.comments.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                        Comments
                     </label>
-                    {{ form.class_level }}
-                    {% if form.class_level.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.class_level.errors.0 }}</p>
+                    {{ form.comments }}
+                    {% if form.comments.errors %}
+                        <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.comments.errors.0 }}</p>
                     {% endif %}
                 </div>
-
-                <!-- Total Fees -->
-                <div>
-                    <label for="{{ form.total_fees.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Total Fees (FRW) *
-                    </label>
-                    {{ form.total_fees }}
-                    {% if form.total_fees.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.total_fees.errors.0 }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Amount Paid -->
-                <div>
-                    <label for="{{ form.amount_paid.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Amount Paid (FRW) *
-                    </label>
-                    {{ form.amount_paid }}
-                    {% if form.amount_paid.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.amount_paid.errors.0 }}</p>
-                    {% endif %}
-                </div>
-
-                <!-- Payment Status -->
-                <div>
-                    <label for="{{ form.payment_status.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Payment Status *
-                    </label>
-                    {{ form.payment_status }}
-                    {% if form.payment_status.errors %}
-                        <p class="text-red-600 text-sm mt-1">{{ form.payment_status.errors.0 }}</p>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Payment Dates -->
-            <div>
-                <label for="{{ form.payment_dates.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                    Payment Dates
-                </label>
-                {{ form.payment_dates }}
-                {% if form.payment_dates.errors %}
-                    <p class="text-red-600 text-sm mt-1">{{ form.payment_dates.errors.0 }}</p>
-                {% endif %}
-                <p class="text-xs text-gray-500 mt-1">Comma-separated dates, e.g., 2024-01-15, 2024-02-20</p>
-            </div>
-
-            <!-- Comments -->
-            <div>
-                <label for="{{ form.comments.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                    Comments
-                </label>
-                {{ form.comments }}
-                {% if form.comments.errors %}
-                    <p class="text-red-600 text-sm mt-1">{{ form.comments.errors.0 }}</p>
-                {% endif %}
             </div>
             
             <!-- Form Actions -->
-            <div class="flex justify-end space-x-4 pt-6 border-t">
-                <a href="{% url 'finance:student_payments' student.id %}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200 font-medium">
+            <div class="p-6 sm:p-8 bg-slate-50/50 flex flex-col sm:flex-row justify-end gap-3">
+                <a href="{% url 'finance:student_payments' student.id %}" class="inline-flex items-center justify-center px-6 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all font-bold text-[10px] uppercase tracking-wider active:scale-95">
                     Cancel
                 </a>
-                <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200 font-medium">
-                    Save Payment
+                <button type="submit" class="inline-flex items-center justify-center px-8 py-2.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-all shadow-sm hover:shadow-md font-bold text-[10px] uppercase tracking-wider active:scale-95">
+                    Save Payment Record
                 </button>
             </div>
         </form>
@@ -160,17 +187,21 @@
 
             // Create display element
             const display = document.createElement('div');
-            display.className = 'text-sm text-gray-500 mt-1 font-medium';
+            display.className = 'text-[10px] font-bold text-slate-400 mt-1.5 ml-1 flex items-center gap-1.5';
             input.parentNode.insertBefore(display, input.nextSibling);
 
             const updateDisplay = () => {
                 const val = input.value;
-                if (val) {
-                    // Use global formatCompact if available, or local fallback
-                    const formatted = typeof formatCompact === 'function' ? formatCompact(val) : val;
-                    display.textContent = `Formatted: ${formatted} FRW`;
+                if (val && !isNaN(val)) {
+                    const formatted = Number(val).toLocaleString();
+                    display.innerHTML = `
+                        <svg class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Formatted: <span class="text-emerald-600">${formatted} FRW</span></span>
+                    `;
                 } else {
-                    display.textContent = '';
+                    display.innerHTML = '';
                 }
             };
 

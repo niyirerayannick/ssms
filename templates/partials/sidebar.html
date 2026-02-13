@@ -1,9 +1,18 @@
 {% if user.is_authenticated %}
 {% load static %}
-<aside id="sidebar" class="hidden md:block w-64 bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 text-white min-h-screen shadow-2xl ring-1 ring-white/10 overflow-y-auto" style="font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;">
+<!-- Mobile Overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
+
+<aside id="sidebar" class="fixed md:sticky top-0 left-0 z-50 md:z-auto w-64 h-screen bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 text-white shadow-2xl ring-1 ring-white/10 overflow-y-auto transition-transform duration-300 -translate-x-full md:translate-x-0" style="font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;">
     <nav class="p-4">
-        <div class="mb-6 flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-3">
-            <div class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
+        <!-- Close button for mobile (Better UI) -->
+        <div class="md:hidden flex justify-end mb-4">
+            <button id="close-sidebar" class="p-2.5 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all duration-200 active:scale-95 shadow-lg">
+                <span class="material-symbols-rounded text-2xl">close</span>
+            </button>
+        </div>
+        <div class="mb-6 flex items-center gap-3 rounded-2xl bg-white/10 px-3 py-3 ring-1 ring-white/5 shadow-inner">
+            <div class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 ring-1 ring-white/20">
                 <img src="{% static 'image/logo.jpg' %}" alt="Solidact FDN Logo" class="h-10 w-10 rounded-xl object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <span class="material-symbols-rounded text-xl text-emerald-100 hidden">school</span>
             </div>
@@ -243,197 +252,35 @@
     </nav>
 </aside>
 
-<!-- Mobile sidebar overlay -->
-<div id="mobile-sidebar" class="md:hidden fixed inset-0 z-40 hidden">
-    <div class="fixed inset-0 bg-black bg-opacity-50" onclick="document.getElementById('mobile-sidebar').classList.add('hidden')"></div>
-    <aside class="fixed left-0 top-0 h-full w-72 bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 text-white shadow-2xl ring-1 ring-white/10 overflow-y-auto" style="font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;">
-        <div class="p-4">
-            <div class="flex items-center justify-between mb-5">
-                <div class="flex items-center gap-3">
-                    <div class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
-                        <img src="{% static 'image/logo.jpg' %}" alt="Solidact FDN Logo" class="h-10 w-10 rounded-xl object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <span class="material-symbols-rounded text-xl text-emerald-100 hidden">school</span>
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold text-white">Solidact FDN</p>
-                        <p class="text-[11px] text-emerald-200 uppercase tracking-wide">SIMS</p>
-                    </div>
-                </div>
-                <button aria-label="Close menu" onclick="document.getElementById('mobile-sidebar').classList.add('hidden')" class="p-2 hover:bg-white/10 rounded-lg">
-                    <span class="material-symbols-rounded text-[24px]">close</span>
-                </button>
-            </div>
-            
-            <!-- Main Menu -->
-            <div class="mb-4">
-                <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Main</h3>
-                <ul class="space-y-1">
-                    <li>
-                        <a href="{% url 'dashboard:index' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
-                            <span class="material-symbols-rounded text-[18px]">dashboard</span>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Students -->
-            <div class="mb-4">
-                <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Students</h3>
-                <ul class="space-y-1">
-                    <li>
-                        <a href="{% url 'students:student_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
-                            <span class="material-symbols-rounded text-[18px]">groups</span>
-                            <span>View Students</span>
-                        </a>
-                    </li>
-                    {% if perms.students.view_studentmark %}
-                    <li>
-                        <a href="{% url 'students:student_performance' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
-                            <span class="material-symbols-rounded text-[18px]">insights</span>
-                            <span>Student Performance</span>
-                        </a>
-                    </li>
-                    {% endif %}
-                    {% if perms.students.view_studentmaterial %}
-                    <li>
-                        <a href="{% url 'students:student_materials' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
-                            <span class="material-symbols-rounded text-[18px]">menu_book</span>
-                            <span>School Materials</span>
-                        </a>
-                    </li>
-                    {% endif %}
-                    <li>
-                        <a href="{% url 'students:student_create' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
-                            <span class="material-symbols-rounded text-[18px]">person_add</span>
-                            <span>Add Student</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Families -->
-            <div class="mb-4">
-                <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Families</h3>
-                <ul class="space-y-1">
-                    <li>
-                        <a href="{% url 'families:family_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
-                            <span class="material-symbols-rounded text-[18px]">family_restroom</span>
-                            <span>View Families</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'families:family_create' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
-                            <span class="material-symbols-rounded text-[18px]">person_add</span>
-                            <span>Add Family</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Schools -->
-            <div class="mb-4">
-                <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Schools</h3>
-                <ul class="space-y-1">
-                    <li>
-                        <a href="{% url 'core:school_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
-                            <span class="material-symbols-rounded text-[18px]">school</span>
-                            <span>View Schools</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'core:school_create' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
-                            <span class="material-symbols-rounded text-[18px]">add_home_work</span>
-                            <span>Add School</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Finance -->
-            <div class="mb-4">
-                <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Finance & Payments</h3>
-                <ul class="space-y-1">
-                    <li>
-                        <a href="{% url 'finance:dashboard' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
-                            <span class="material-symbols-rounded text-[18px]">analytics</span>
-                            <span>Finance Dashboard</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'finance:fees_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
-                            <span class="material-symbols-rounded text-[18px]">payments</span>
-                            <span>School Fees</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'finance:fee_create' %}?type=school_fee" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
-                            <span class="material-symbols-rounded text-[18px]">add_circle</span>
-                            <span>Record Fee</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'finance:overdue_fees' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
-                            <span class="material-symbols-rounded text-[18px]">report</span>
-                            <span>Overdue Fees</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'insurance:insurance_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
-                            <span class="material-symbols-rounded text-[18px]">health_and_safety</span>
-                            <span>Mutuelle Records</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'finance:fee_create' %}?type=insurance" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm text-emerald-100">
-                            <span class="material-symbols-rounded text-[18px]">add_circle</span>
-                            <span>Record Mutuelle</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Reports -->
-            <div class="mb-4">
-                <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Reports</h3>
-                <ul class="space-y-1">
-                    <li>
-                        <a href="{% url 'reports:index' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
-                            <span class="material-symbols-rounded text-[18px]">description</span>
-                            <span>Reports</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Admin -->
-            {% if user.is_staff %}
-            <div class="mb-4 pt-4 border-t border-white/10">
-                <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-2">Admin</h3>
-                <ul class="space-y-1">
-                    <li>
-                        <a href="{% url 'accounts:user_list' %}" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
-                            <span class="material-symbols-rounded text-[18px]">manage_accounts</span>
-                            <span>User Management</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'admin:index' %}" target="_blank" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10 text-sm">
-                            <span class="material-symbols-rounded text-[18px]">admin_panel_settings</span>
-                            <span>Django Admin</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            {% endif %}
-        </div>
-    </aside>
-</div>
-
 <script>
-    // Mobile menu toggle
-    document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
-        document.getElementById('mobile-sidebar').classList.toggle('hidden');
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const closeBtn = document.getElementById('close-sidebar');
+
+        function toggleSidebar() {
+            const isHidden = sidebar.classList.contains('-translate-x-full');
+            if (isHidden) {
+                // Open
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.add('opacity-100'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                // Close
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('opacity-100');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }, 300);
+            }
+        }
+
+        mobileBtn?.addEventListener('click', toggleSidebar);
+        closeBtn?.addEventListener('click', toggleSidebar);
+        overlay?.addEventListener('click', toggleSidebar);
     });
 </script>
 {% endif %}

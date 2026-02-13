@@ -14,11 +14,46 @@ class HashidModelChoiceField(forms.ModelChoiceField):
 class PartnerForm(forms.ModelForm):
     """Form for creating and editing partner information with Rwanda location."""
     
-    province = HashidModelChoiceField(queryset=Province.objects.all(), required=False)
-    district = HashidModelChoiceField(queryset=District.objects.none(), required=False)
-    sector = HashidModelChoiceField(queryset=Sector.objects.none(), required=False)
-    cell = HashidModelChoiceField(queryset=Cell.objects.none(), required=False)
-    village = HashidModelChoiceField(queryset=Village.objects.none(), required=False)
+    province = HashidModelChoiceField(
+        queryset=Province.objects.all(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_province'
+        })
+    )
+    district = HashidModelChoiceField(
+        queryset=District.objects.none(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_district'
+        })
+    )
+    sector = HashidModelChoiceField(
+        queryset=Sector.objects.none(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_sector'
+        })
+    )
+    cell = HashidModelChoiceField(
+        queryset=Cell.objects.none(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_cell'
+        })
+    )
+    village = HashidModelChoiceField(
+        queryset=Village.objects.none(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_village'
+        })
+    )
     
     class Meta:
         model = Partner
@@ -48,26 +83,6 @@ class PartnerForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
                 'placeholder': 'e.g., +250788000000'
             }),
-            'province': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_province'
-            }),
-            'district': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_district'
-            }),
-            'sector': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_sector'
-            }),
-            'cell': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_cell'
-            }),
-            'village': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_village'
-            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -91,9 +106,30 @@ class PartnerForm(forms.ModelForm):
 class SchoolForm(forms.ModelForm):
     """Form for creating and editing school information."""
     
-    province = HashidModelChoiceField(queryset=Province.objects.all(), required=False)
-    district = HashidModelChoiceField(queryset=District.objects.none(), required=False)
-    sector = HashidModelChoiceField(queryset=Sector.objects.none(), required=False)
+    province = HashidModelChoiceField(
+        queryset=Province.objects.all(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_province'
+        })
+    )
+    district = HashidModelChoiceField(
+        queryset=District.objects.none(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_district'
+        })
+    )
+    sector = HashidModelChoiceField(
+        queryset=Sector.objects.none(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_sector'
+        })
+    )
     
     class Meta:
         model = School
@@ -129,18 +165,6 @@ class SchoolForm(forms.ModelForm):
             'name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
                 'placeholder': 'Enter school name'
-            }),
-            'province': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_province'
-            }),
-            'district': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_district'
-            }),
-            'sector': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_sector'
             }),
             'headteacher_name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',

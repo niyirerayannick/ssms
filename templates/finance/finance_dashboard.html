@@ -6,126 +6,149 @@
 {% block content %}
 <div class="space-y-6">
     <!-- Page Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Finance Dashboard</h1>
-            <p class="text-gray-600 mt-1">School Fees & Mutuelle de Santé Payment Summary</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Finance Dashboard</h1>
+            <p class="text-sm sm:text-base text-slate-600 mt-1">School Fees & Mutuelle de Santé Summary</p>
         </div>
-        <div class="mt-4 md:mt-0 flex gap-3">
-            <a href="{% url 'finance:fees_list' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-                View School Fees
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <a href="{% url 'finance:fees_list' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-95">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                View Fees
             </a>
-            <a href="{% url 'finance:fee_create' %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition">
-                + Add Payment
+            <a href="{% url 'finance:fee_create' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-95">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Payment
             </a>
         </div>
     </div>
 
     <!-- SCHOOL FEES SECTION -->
     <div class="space-y-4">
-        <h2 class="text-2xl font-bold text-gray-800 flex items-center">
-            <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <h2 class="text-2xl font-bold text-slate-800 flex items-center">
+            <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
             School Fees Management
         </h2>
 
         <!-- School Fees Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             <!-- Total Fees -->
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl shadow-lg text-white">
-                <p class="text-blue-100 text-sm font-medium">Total Records</p>
-                <p class="text-3xl font-bold mt-2">{{ total_school_fees|compact_number }}</p>
-                <p class="text-blue-100 text-xs mt-1">School fee records</p>
+            <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-white">
+                <p class="text-indigo-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Total Records</p>
+                <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ total_school_fees|compact_number }}</p>
+                <p class="text-indigo-100 text-[10px] sm:text-xs mt-1 opacity-80">School records</p>
             </div>
 
             <!-- Paid -->
-            <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
-                <p class="text-green-100 text-sm font-medium">Paid</p>
-                <p class="text-3xl font-bold mt-2">{{ paid_school_fees|compact_number }}</p>
-                <p class="text-green-100 text-xs mt-1">Fully paid</p>
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-white">
+                <p class="text-emerald-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Paid</p>
+                <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ paid_school_fees|compact_number }}</p>
+                <p class="text-emerald-100 text-[10px] sm:text-xs mt-1 opacity-80">Fully paid</p>
             </div>
 
             <!-- Partial -->
-            <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-lg text-white">
-                <p class="text-yellow-100 text-sm font-medium">Partial</p>
-                <p class="text-3xl font-bold mt-2">{{ partial_school_fees|compact_number }}</p>
-                <p class="text-yellow-100 text-xs mt-1">Partially paid</p>
+            <div class="bg-gradient-to-br from-amber-500 to-amber-600 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-white">
+                <p class="text-amber-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Partial</p>
+                <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ partial_school_fees|compact_number }}</p>
+                <p class="text-amber-100 text-[10px] sm:text-xs mt-1 opacity-80">Partially paid</p>
             </div>
 
             <!-- Pending -->
-            <div class="bg-gradient-to-br from-orange-500 to-orange-600 p-6 rounded-xl shadow-lg text-white">
-                <p class="text-orange-100 text-sm font-medium">Pending</p>
-                <p class="text-3xl font-bold mt-2">{{ pending_school_fees|compact_number }}</p>
-                <p class="text-orange-100 text-xs mt-1">Not yet paid</p>
+            <div class="bg-gradient-to-br from-orange-500 to-orange-600 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-white">
+                <p class="text-orange-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Pending</p>
+                <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ pending_school_fees|compact_number }}</p>
+                <p class="text-orange-100 text-[10px] sm:text-xs mt-1 opacity-80">Not yet paid</p>
             </div>
 
             <!-- Overdue -->
-            <div class="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-xl shadow-lg text-white">
-                <p class="text-red-100 text-sm font-medium">Overdue</p>
-                <p class="text-3xl font-bold mt-2">{{ overdue_school_fees|compact_number }}</p>
-                <p class="text-red-100 text-xs mt-1">Overdue payments</p>
+            <div class="bg-gradient-to-br from-rose-500 to-rose-600 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-white">
+                <p class="text-rose-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Overdue</p>
+                <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ overdue_school_fees|compact_number }}</p>
+                <p class="text-rose-100 text-[10px] sm:text-xs mt-1 opacity-80">Overdue items</p>
             </div>
         </div>
 
         <!-- School Fees Financial Summary -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Required Amount -->
-            <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
-                <h3 class="text-sm font-semibold text-gray-600 mb-2">Required Amount</h3>
-                <p class="text-3xl font-bold text-gray-900">FRW {{ total_fees_required|compact_number }}</p>
-                <p class="text-xs text-gray-500 mt-2">Total amount required from all students</p>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-indigo-500">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Required Amount</h3>
+                <p class="text-3xl font-bold text-slate-900">FRW {{ total_fees_required|compact_number }}</p>
+                <p class="text-xs text-slate-500 mt-2">Total amount required from all students</p>
             </div>
 
             <!-- Collected Amount -->
-            <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
-                <h3 class="text-sm font-semibold text-gray-600 mb-2">Collected Amount</h3>
-                <p class="text-3xl font-bold text-green-600">FRW {{ total_fees_collected|compact_number }}</p>
-                <p class="text-xs text-gray-500 mt-2">{{ fees_collection_percentage }}% collection rate</p>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-emerald-500">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Collected Amount</h3>
+                <p class="text-3xl font-bold text-emerald-600">FRW {{ total_fees_collected|compact_number }}</p>
+                <p class="text-xs text-slate-500 mt-2">{{ fees_collection_percentage }}% collection rate</p>
             </div>
 
             <!-- Outstanding Amount -->
-            <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500">
-                <h3 class="text-sm font-semibold text-gray-600 mb-2">Outstanding Balance</h3>
-                <p class="text-3xl font-bold text-red-600">FRW {{ total_fees_outstanding|compact_number }}</p>
-                <p class="text-xs text-gray-500 mt-2">Amount still to be collected</p>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-rose-500">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Outstanding Balance</h3>
+                <p class="text-3xl font-bold text-rose-600">FRW {{ total_fees_outstanding|compact_number }}</p>
+                <p class="text-xs text-slate-500 mt-2">Amount still to be collected</p>
             </div>
         </div>
 
         <!-- Top Students with Outstanding Fees -->
-        <div class="bg-white p-6 rounded-xl shadow-md">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Top 5 Students - Outstanding Fees</h3>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-800">Top Outstanding Fees</h3>
+                <span class="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded-lg uppercase tracking-wider">Top 5</span>
+            </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50/50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Required</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paid</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Required</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Paid</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Balance</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="divide-y divide-slate-100 bg-white">
                         {% for fee in students_top_outstanding %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ fee.student.full_name }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ fee.total_fees|compact_number }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ fee.amount_paid|compact_number }}</td>
-                            <td class="px-6 py-4 text-sm font-bold text-red-600">FRW {{ fee.balance|compact_number }}</td>
-                            <td class="px-6 py-4 text-sm">
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                    {% if fee.payment_status == 'paid' %}bg-green-100 text-green-800
-                                    {% elif fee.payment_status == 'overdue' %}bg-red-100 text-red-800
-                                    {% elif fee.payment_status == 'partial' %}bg-yellow-100 text-yellow-800
-                                    {% else %}bg-orange-100 text-orange-800{% endif %}">
+                        <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" onclick="window.location='{% url 'finance:student_payments' fee.student.id %}'">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-semibold text-slate-900">{{ fee.student.full_name }}</div>
+                                <div class="text-[10px] text-slate-500 sm:hidden font-medium">Req: FRW {{ fee.total_fees|compact_number }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">FRW {{ fee.total_fees|compact_number }}</td>
+                            <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ fee.amount_paid|compact_number }}</td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-bold text-rose-600">FRW {{ fee.balance|compact_number }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                                    {% if fee.payment_status == 'paid' %}bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100
+                                    {% elif fee.payment_status == 'overdue' %}bg-rose-50 text-rose-700 ring-1 ring-rose-100
+                                    {% elif fee.payment_status == 'partial' %}bg-amber-50 text-amber-700 ring-1 ring-amber-100
+                                    {% else %}bg-orange-50 text-orange-700 ring-1 ring-orange-100{% endif %}">
                                     {{ fee.get_payment_status_display }}
                                 </span>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No outstanding fees</td>
+                            <td colspan="5" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                        <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <p class="text-slate-500 text-sm font-medium">No outstanding fees found</p>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -136,7 +159,7 @@
 
     <!-- MUTUELLE DE SANTÉ (INSURANCE) SECTION -->
     <div class="space-y-4">
-        <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+        <h2 class="text-2xl font-bold text-slate-800 flex items-center">
             <svg class="w-6 h-6 mr-2 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
@@ -144,95 +167,110 @@
         </h2>
 
         <!-- Insurance Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <!-- Total Families -->
-            <div class="bg-gradient-to-br from-teal-500 to-teal-600 p-6 rounded-xl shadow-lg text-white">
-                <p class="text-teal-100 text-sm font-medium">Total Families</p>
-                <p class="text-3xl font-bold mt-2">{{ total_families|compact_number }}</p>
-                <p class="text-teal-100 text-xs mt-1">Registered families</p>
+            <div class="bg-gradient-to-br from-teal-500 to-teal-600 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-white">
+                <p class="text-teal-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Total Families</p>
+                <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ total_families|compact_number }}</p>
+                <p class="text-teal-100 text-[10px] sm:text-xs mt-1 opacity-80">Registered</p>
             </div>
 
             <!-- Covered -->
-            <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl shadow-lg text-white">
-                <p class="text-green-100 text-sm font-medium">Fully Covered</p>
-                <p class="text-3xl font-bold mt-2">{{ families_with_insurance|compact_number }}</p>
-                <p class="text-green-100 text-xs mt-1">Active insurance</p>
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-white">
+                <p class="text-emerald-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Fully Covered</p>
+                <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ families_with_insurance|compact_number }}</p>
+                <p class="text-emerald-100 text-[10px] sm:text-xs mt-1 opacity-80">Active</p>
             </div>
 
             <!-- Partially Covered -->
-            <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 p-6 rounded-xl shadow-lg text-white">
-                <p class="text-yellow-100 text-sm font-medium">Partially Covered</p>
-                <p class="text-3xl font-bold mt-2">{{ families_partially_covered|compact_number }}</p>
-                <p class="text-yellow-100 text-xs mt-1">Partial payment</p>
+            <div class="bg-gradient-to-br from-amber-500 to-amber-600 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-white">
+                <p class="text-amber-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Partial</p>
+                <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ families_partially_covered|compact_number }}</p>
+                <p class="text-amber-100 text-[10px] sm:text-xs mt-1 opacity-80">Partial</p>
             </div>
 
             <!-- Not Covered -->
-            <div class="bg-gradient-to-br from-red-500 to-red-600 p-6 rounded-xl shadow-lg text-white">
-                <p class="text-red-100 text-sm font-medium">Not Covered</p>
-                <p class="text-3xl font-bold mt-2">{{ families_not_covered|compact_number }}</p>
-                <p class="text-red-100 text-xs mt-1">No insurance</p>
+            <div class="bg-gradient-to-br from-rose-500 to-rose-600 p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-white">
+                <p class="text-rose-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Not Covered</p>
+                <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ families_not_covered|compact_number }}</p>
+                <p class="text-rose-100 text-[10px] sm:text-xs mt-1 opacity-80">No insurance</p>
             </div>
         </div>
 
         <!-- Insurance Financial Summary -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Required Amount -->
-            <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-teal-500">
-                <h3 class="text-sm font-semibold text-gray-600 mb-2">Required Amount</h3>
-                <p class="text-3xl font-bold text-gray-900">FRW {{ total_insurance_required|compact_number }}</p>
-                <p class="text-xs text-gray-500 mt-2">Total insurance contribution required</p>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-teal-500">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Required Amount</h3>
+                <p class="text-3xl font-bold text-slate-900">FRW {{ total_insurance_required|compact_number }}</p>
+                <p class="text-xs text-slate-500 mt-2">Total insurance contribution required</p>
             </div>
 
             <!-- Collected Amount -->
-            <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
-                <h3 class="text-sm font-semibold text-gray-600 mb-2">Collected Amount</h3>
-                <p class="text-3xl font-bold text-green-600">FRW {{ total_insurance_collected|compact_number }}</p>
-                <p class="text-xs text-gray-500 mt-2">{{ insurance_collection_percentage }}% collection rate</p>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-emerald-500">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Collected Amount</h3>
+                <p class="text-3xl font-bold text-emerald-600">FRW {{ total_insurance_collected|compact_number }}</p>
+                <p class="text-xs text-slate-500 mt-2">{{ insurance_collection_percentage }}% collection rate</p>
             </div>
 
             <!-- Outstanding Amount -->
-            <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-red-500">
-                <h3 class="text-sm font-semibold text-gray-600 mb-2">Outstanding Balance</h3>
-                <p class="text-3xl font-bold text-red-600">FRW {{ total_insurance_outstanding|compact_number }}</p>
-                <p class="text-xs text-gray-500 mt-2">Amount still to be collected</p>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-rose-500">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Outstanding Balance</h3>
+                <p class="text-3xl font-bold text-rose-600">FRW {{ total_insurance_outstanding|compact_number }}</p>
+                <p class="text-xs text-slate-500 mt-2">Amount still to be collected</p>
             </div>
         </div>
 
         <!-- Top Families with Outstanding Insurance -->
-        <div class="bg-white p-6 rounded-xl shadow-md">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Top 5 Families - Outstanding Insurance Payments</h3>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-800">Top Outstanding Insurance</h3>
+                <span class="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded-lg uppercase tracking-wider">Top 5</span>
+            </div>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50/50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Family Code</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Year</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Required</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paid</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Coverage</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Family</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Year</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Required</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Balance</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200">
+                    <tbody class="divide-y divide-slate-100 bg-white">
                         {% for insurance in families_top_outstanding %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ insurance.family.family_code }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">{{ insurance.insurance_year.name|default:"N/A" }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ insurance.required_amount|compact_number }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-500">FRW {{ insurance.amount_paid|compact_number }}</td>
-                            <td class="px-6 py-4 text-sm font-bold text-red-600">FRW {{ insurance.balance|compact_number }}</td>
-                            <td class="px-6 py-4 text-sm">
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                    {% if insurance.coverage_status == 'covered' %}bg-green-100 text-green-800
-                                    {% elif insurance.coverage_status == 'partially_covered' %}bg-yellow-100 text-yellow-800
-                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-semibold text-slate-900">{{ insurance.family.family_code }}</div>
+                                <div class="text-[10px] text-slate-500 sm:hidden font-medium">{{ insurance.insurance_year.name|default:"N/A" }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">{{ insurance.insurance_year.name|default:"N/A" }}</td>
+                            <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ insurance.required_amount|compact_number }}</td>
+                            <td class="px-6 py-4">
+                                <span class="text-sm font-bold text-rose-600">FRW {{ insurance.balance|compact_number }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                                    {% if insurance.coverage_status == 'covered' %}bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100
+                                    {% elif insurance.coverage_status == 'partially_covered' %}bg-amber-50 text-amber-700 ring-1 ring-amber-100
+                                    {% else %}bg-rose-50 text-rose-700 ring-1 ring-rose-100{% endif %}">
                                     {{ insurance.get_coverage_status_display }}
                                 </span>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">No outstanding insurance payments</td>
+                            <td colspan="5" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                                        <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <p class="text-slate-500 text-sm font-medium">No outstanding insurance payments</p>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -242,22 +280,23 @@
     </div>
 
     <!-- SUMMARY SECTION -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
         <!-- Recent Activity -->
-        <div class="bg-white p-6 rounded-xl shadow-md">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
+            <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                Recent Activity (Last 7 Days)
+                Recent Activity
+                <span class="ml-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Last 7 Days</span>
             </h3>
-            <div class="space-y-3">
-                <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                    <span class="text-sm text-gray-700">School Fee Updates</span>
-                    <span class="text-lg font-bold text-blue-600">{{ recent_school_fees|compact_number }}</span>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center p-4 bg-slate-50/50 rounded-xl border border-slate-100 transition-hover hover:border-indigo-100">
+                    <span class="text-sm font-semibold text-slate-700">School Fee Updates</span>
+                    <span class="text-lg font-bold text-indigo-600">{{ recent_school_fees|compact_number }}</span>
                 </div>
-                <div class="flex justify-between items-center p-3 bg-teal-50 rounded-lg">
-                    <span class="text-sm text-gray-700">Insurance Updates</span>
+                <div class="flex justify-between items-center p-4 bg-slate-50/50 rounded-xl border border-slate-100 transition-hover hover:border-teal-100">
+                    <span class="text-sm font-semibold text-slate-700">Insurance Updates</span>
                     <span class="text-lg font-bold text-teal-600">{{ recent_insurance|compact_number }}</span>
                 </div>
             </div>

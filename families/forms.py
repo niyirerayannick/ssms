@@ -7,11 +7,46 @@ from core.utils import decode_id
 class FamilyForm(forms.ModelForm):
     """Form for creating and editing family information with Rwanda location."""
     
-    province = HashidModelChoiceField(queryset=Province.objects.all(), required=False)
-    district = HashidModelChoiceField(queryset=District.objects.none(), required=False)
-    sector = HashidModelChoiceField(queryset=Sector.objects.none(), required=False)
-    cell = HashidModelChoiceField(queryset=Cell.objects.none(), required=False)
-    village = HashidModelChoiceField(queryset=Village.objects.none(), required=False)
+    province = HashidModelChoiceField(
+        queryset=Province.objects.all(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_province'
+        })
+    )
+    district = HashidModelChoiceField(
+        queryset=District.objects.none(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_district'
+        })
+    )
+    sector = HashidModelChoiceField(
+        queryset=Sector.objects.none(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_sector'
+        })
+    )
+    cell = HashidModelChoiceField(
+        queryset=Cell.objects.none(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_cell'
+        })
+    )
+    village = HashidModelChoiceField(
+        queryset=Village.objects.none(), 
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+            'id': 'id_village'
+        })
+    )
     
     class Meta:
         model = Family
@@ -60,26 +95,6 @@ class FamilyForm(forms.ModelForm):
                 'min': '1',
                 'placeholder': 'Total number of family members',
                 'type': 'number'
-            }),
-            'province': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_province'
-            }),
-            'district': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_district'
-            }),
-            'sector': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_sector'
-            }),
-            'cell': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_cell'
-            }),
-            'village': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'id': 'id_village'
             }),
             'address_description': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',

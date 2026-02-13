@@ -4,45 +4,80 @@
 {% block title %}Overdue Fees - SIMS{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex justify-between items-center">
-        <h1 class="text-3xl font-bold text-gray-800">Overdue Fees</h1>
-        <a href="{% url 'finance:fees_list' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
-            Back to Fees List
-        </a>
+<div class="space-y-6 animate-fade-in">
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-rose-50 via-red-50 to-rose-50 border border-rose-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Overdue Fees</h1>
+                <p class="text-sm text-slate-600 mt-1">Outstanding balances requiring attention.</p>
+            </div>
+            <a href="{% url 'finance:fees_list' %}" class="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl border border-slate-200 transition-all shadow-sm active:scale-95 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to List
+            </a>
+        </div>
     </div>
     
     <!-- Overdue Fees Table -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-red-50">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50/50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Required</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Term</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Required</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Balance</th>
+                        <th class="px-6 py-4 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-slate-100">
                     {% for fee in overdue_fees %}
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ fee.student.full_name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.term }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.required_fees|compact_number }} RWF</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ fee.amount_paid|compact_number }} RWF</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">{{ fee.balance|compact_number }} RWF</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            {% if perms.finance.manage_fees %}
-                            <a href="{% url 'finance:fee_edit' fee.pk %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
-                            {% endif %}
+                    <tr class="hover:bg-slate-50/50 transition-colors group">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-slate-900">{{ fee.student.full_name }}</span>
+                                <span class="text-[10px] text-slate-500 sm:hidden mt-1 font-medium">{{ fee.term }} • {{ fee.required_fees|compact_number }} RWF</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden sm:table-cell font-medium">{{ fee.term }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden md:table-cell font-medium">{{ fee.required_fees|compact_number }} RWF</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 ring-1 ring-rose-100 uppercase tracking-wider">{{ fee.balance|compact_number }} RWF</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex justify-end gap-1 sm:gap-2">
+                                {% if perms.finance.manage_fees %}
+                                <a href="{% url 'finance:fee_edit' fee.pk %}" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Edit">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'finance:student_payments' fee.student.pk %}" class="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="History">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">No overdue fees found. Great job! 🎉</td>
+                        <td colspan="5" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
+                                    <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-bold text-slate-900">No overdue fees</h3>
+                                <p class="text-sm text-slate-500 font-medium">All student fees are currently up to date.</p>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
