@@ -10,7 +10,9 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 class="text-2xl sm:text-4xl font-bold text-slate-900 tracking-tight">Sponsored Students</h1>
-                <p class="text-sm sm:text-base text-slate-600 mt-1 sm:mt-2">Full detailed information for actively sponsored students.</p>
+                <p class="text-sm sm:text-base text-slate-600 mt-1 sm:mt-2">
+                    {{ subtitle|default:"Full detailed information for actively sponsored students." }}
+                </p>
             </div>
             <a href="{% url 'reports:index' %}" class="inline-flex items-center px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl border border-slate-200 shadow-sm transition-all active:scale-95 text-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -123,7 +123,18 @@ def create_letterhead(elements, report_title, report_subtitle=None):
 @permission_required('students.view_student', raise_exception=True)
 def students_pdf(request):
     """Export students list as PDF."""
+    year_id = request.GET.get('year')
     students = Student.objects.select_related('school', 'program_officer').all()
+    
+    subtitle = "All Students"
+    if year_id:
+        academic_year = get_object_or_404(AcademicYear, id=year_id)
+        # Filter students who have marks or fees in this year
+        students = students.filter(
+            Q(marks__academic_year=academic_year) | 
+            Q(fees__academic_year=academic_year)
+        ).distinct()
+        subtitle = f"Academic Year: {academic_year.name}"
     
     # Create PDF with custom canvas for page numbers
     buffer = io.BytesIO()
@@ -141,7 +152,7 @@ def students_pdf(request):
     create_letterhead(
         elements,
         "Students List Report",
-        f"Total Students: {students.count()}"
+        f"{subtitle} (Total: {students.count()})"
     )
     
     # Table data with better styling
@@ -201,11 +212,23 @@ def students_pdf(request):
 @permission_required('students.view_student', raise_exception=True)
 def sponsored_students_report(request):
     """Detailed report for sponsored (active) students."""
+    year_id = request.GET.get('year')
     students = (
         Student.objects.select_related('family', 'school', 'program_officer')
         .filter(sponsorship_status='active')
-        .order_by('last_name', 'first_name')
     )
+    
+    subtitle = "All Sponsored Students"
+    if year_id:
+        academic_year = get_object_or_404(AcademicYear, id=year_id)
+        students = students.filter(
+            Q(marks__academic_year=academic_year) | 
+            Q(fees__academic_year=academic_year)
+        ).distinct()
+        subtitle = f"Academic Year: {academic_year.name}"
+    
+    students = students.order_by('last_name', 'first_name')
+    
     total = students.count()
     boys = students.filter(gender='M').count()
     girls = students.filter(gender='F').count()
@@ -219,6 +242,7 @@ def sponsored_students_report(request):
         'girls': girls,
         'with_disability': with_disability,
         'without_disability': without_disability,
+        'subtitle': subtitle,
     }
     return render(request, 'reports/sponsored_students.html', context)
 
@@ -227,7 +251,14 @@ def sponsored_students_report(request):
 @permission_required('finance.view_schoolfee', raise_exception=True)
 def fees_pdf(request):
     """Export school fees summary as PDF."""
+    year_id = request.GET.get('year')
     fees = SchoolFee.objects.select_related('student', 'student__school').all()
+    
+    subtitle = "All Records"
+    if year_id:
+        academic_year = get_object_or_404(AcademicYear, id=year_id)
+        fees = fees.filter(academic_year=academic_year)
+        subtitle = f"Academic Year: {academic_year.name}"
     
     # Calculate summary statistics
     total_required = sum(float(fee.total_fees) for fee in fees)
@@ -254,7 +285,7 @@ def fees_pdf(request):
     create_letterhead(
         elements,
         "School Fees Summary Report",
-        f"Total Fee Records: {fees.count()}"
+        f"{subtitle} (Total: {fees.count()})"
     )
     
     # Summary statistics box
@@ -362,7 +393,12 @@ def fees_pdf(request):
 @permission_required('finance.manage_fees', raise_exception=True)
 def fees_excel(request):
     """Export fees summary as Excel."""
+    year_id = request.GET.get('year')
     fees = SchoolFee.objects.select_related('student').all()
+    
+    if year_id:
+        academic_year = get_object_or_404(AcademicYear, id=year_id)
+        fees = fees.filter(academic_year=academic_year)
     
     # Create workbook
     wb = Workbook()
@@ -430,7 +466,14 @@ def fees_excel(request):
 @permission_required('insurance.manage_insurance', raise_exception=True)
 def insurance_pdf(request):
     """Export insurance coverage as PDF."""
+    year_id = request.GET.get('year')
     insurance_records = FamilyInsurance.objects.select_related('family').all()
+    
+    subtitle = "All Records"
+    if year_id:
+        academic_year = get_object_or_404(AcademicYear, id=year_id)
+        insurance_records = insurance_records.filter(insurance_year=academic_year)
+        subtitle = f"Academic Year: {academic_year.name}"
     
     # Calculate summary statistics
     covered = insurance_records.filter(coverage_status='covered').count()
@@ -455,7 +498,7 @@ def insurance_pdf(request):
     create_letterhead(
         elements,
         "Mutuelle de Santé Coverage Report",
-        f"Total Families: {insurance_records.count()}"
+        f"{subtitle} (Total: {insurance_records.count()})"
     )
     
     # Summary statistics box
@@ -828,6 +871,34 @@ def analysis_dashboard(request):
     passed_count = marks_qs.filter(marks__gte=50).count()
     pass_rate = (passed_count / total_marks_count * 100) if total_marks_count > 0 else 0
 
+    # Best District Performance
+    district_performance = marks_qs.values(
+        'student__family__district__name'
+    ).annotate(
+        avg_marks=Avg('marks'),
+        success_rate=Count('id', filter=Q(marks__gte=50)) * 100.0 / Count('id')
+    ).order_by('-success_rate', '-avg_marks')
+    
+    best_district = district_performance.first() if district_performance else None
+
+    # Student Categories & Levels
+    # Categories: lower primary(p1,p2,p3), upper primary(p4,p5,p6), ordinary level(s1,s2,s3), advanced level(s4,s5,s6)
+    lower_primary_levels = ['P1', 'P2', 'P3']
+    upper_primary_levels = ['P4', 'P5', 'P6']
+    ordinary_level_levels = ['S1', 'S2', 'S3']
+    advanced_level_levels = ['S4', 'S5', 'S6']
+
+    category_counts = {
+        'lower_primary': students_qs.filter(class_level__in=lower_primary_levels).count(),
+        'upper_primary': students_qs.filter(class_level__in=upper_primary_levels).count(),
+        'ordinary_level': students_qs.filter(class_level__in=ordinary_level_levels).count(),
+        'advanced_level': students_qs.filter(class_level__in=advanced_level_levels).count(),
+    }
+
+    # Graduates (S6 students)
+    graduating_students = students_qs.filter(class_level='S6').select_related('family__district', 'school')
+    graduates_count = graduating_students.count()
+
     # Materials Analysis
     # If term filter is active, materials might show annual data still, which is fine, 
     # or we could clear it. For now, we show annual data filtered by year/student.
@@ -873,6 +944,11 @@ def analysis_dashboard(request):
         'materials_counts': materials_counts,
         'partner_labels': partner_labels,
         'partner_counts': partner_counts,
+        # Performance Updates
+        'best_district': best_district,
+        'category_counts': category_counts,
+        'graduating_students': graduating_students,
+        'graduates_count': graduates_count,
         # Filters
         'academic_years': academic_years,
         'districts': districts,

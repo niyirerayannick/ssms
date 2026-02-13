@@ -98,14 +98,37 @@
     </div>
 
     <!-- Key Metrics Grid -->
-    <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-6">
-        <!-- Total Students -->
-        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Students</p>
-            <div class="flex items-end justify-between mt-1">
-                <p class="text-xl sm:text-2xl font-black text-slate-900">{{ total_students|compact_number }}</p>
-                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                    <span class="material-symbols-rounded text-lg text-blue-600">groups</span>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <!-- Best District -->
+        <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-4 border border-blue-500 shadow-lg group relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-3 opacity-10">
+                <span class="material-symbols-rounded text-6xl text-white">trophy</span>
+            </div>
+            <p class="text-[10px] font-bold text-blue-100 uppercase tracking-wider relative z-10">Top Performing District</p>
+            <div class="flex items-end justify-between mt-1 relative z-10">
+                <div>
+                    <p class="text-xl sm:text-2xl font-black text-white truncate max-w-[120px]">{{ best_district.student__family__district__name|default:"N/A" }}</p>
+                    <p class="text-[10px] font-bold text-blue-200 uppercase tracking-tighter">{{ best_district.success_rate|floatformat:1 }}% Success Rate</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                    <span class="material-symbols-rounded text-xl text-white">location_on</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graduating Soon (S6) -->
+        <div class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-4 border border-emerald-500 shadow-lg group relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-3 opacity-10">
+                <span class="material-symbols-rounded text-6xl text-white">school</span>
+            </div>
+            <p class="text-[10px] font-bold text-emerald-100 uppercase tracking-wider relative z-10">Upcoming Graduates (S6)</p>
+            <div class="flex items-end justify-between mt-1 relative z-10">
+                <div>
+                    <p class="text-xl sm:text-2xl font-black text-white">{{ graduates_count|compact_number }}</p>
+                    <p class="text-[10px] font-bold text-emerald-200 uppercase tracking-tighter">Students in Final Year</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                    <span class="material-symbols-rounded text-xl text-white"></span>
                 </div>
             </div>
         </div>
@@ -116,7 +139,7 @@
             <div class="flex items-end justify-between mt-1">
                 <p class="text-xl sm:text-2xl font-black text-purple-600">{{ avg_marks }}%</p>
                 <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                    <span class="material-symbols-rounded text-lg text-purple-600">school</span>
+                    <span class="material-symbols-rounded text-lg text-purple-600">assessment</span>
                 </div>
             </div>
         </div>
@@ -131,12 +154,77 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Category Distribution Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <!-- Lower Primary -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
+                    <span class="material-symbols-rounded text-base text-blue-600">child_care</span>
+                </div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Lower Primary</p>
+            </div>
+            <p class="text-xl sm:text-2xl font-black text-slate-900">{{ category_counts.lower_primary|compact_number }}</p>
+            <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tighter mt-1">P1, P2, P3 Levels</p>
+        </div>
+
+        <!-- Upper Primary -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
+                    <span class="material-symbols-rounded text-base text-indigo-600">face</span>
+                </div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Upper Primary</p>
+            </div>
+            <p class="text-xl sm:text-2xl font-black text-slate-900">{{ category_counts.upper_primary|compact_number }}</p>
+            <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tighter mt-1">P4, P5, P6 Levels</p>
+        </div>
+
+        <!-- Ordinary Level -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-emerald-50 rounded-lg group-hover:bg-emerald-100 transition-colors">
+                    <span class="material-symbols-rounded text-base text-emerald-600">school</span>
+                </div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ordinary Level</p>
+            </div>
+            <p class="text-xl sm:text-2xl font-black text-slate-900">{{ category_counts.ordinary_level|compact_number }}</p>
+            <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tighter mt-1">S1, S2, S3 Levels</p>
+        </div>
+
+        <!-- Advanced Level -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+            <div class="flex items-center gap-3 mb-2">
+                <div class="p-2 bg-amber-50 rounded-lg group-hover:bg-amber-100 transition-colors">
+                    <span class="material-symbols-rounded text-base text-amber-600">military_tech</span>
+                </div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Advanced Level</p>
+            </div>
+            <p class="text-xl sm:text-2xl font-black text-slate-900">{{ category_counts.advanced_level|compact_number }}</p>
+            <p class="text-[10px] text-slate-400 font-medium uppercase tracking-tighter mt-1">S4, S5, S6 Levels</p>
+        </div>
+    </div>
+
+    <!-- Financial Status Row -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <!-- Total Students (Move here to make space for best district) -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Students</p>
+            <div class="flex items-end justify-between mt-1">
+                <p class="text-xl sm:text-2xl font-black text-slate-900">{{ total_students|compact_number }}</p>
+                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                    <span class="material-symbols-rounded text-lg text-blue-600">groups</span>
+                </div>
+            </div>
+        </div>
 
         <!-- Expected Fees -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expected</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expected Fees</p>
             <div class="flex items-end justify-between mt-1">
-                <p class="text-xl sm:text-2xl font-black text-emerald-600">{{ total_fees_expected|compact_number }}</p>
+                <p class="text-xl sm:text-2xl font-black text-slate-900">{{ total_fees_expected|compact_number }}</p>
                 <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
                     <span class="material-symbols-rounded text-lg text-emerald-600">payments</span>
                 </div>
@@ -145,7 +233,7 @@
 
         <!-- Paid Fees -->
         <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Paid</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Paid</p>
             <div class="flex items-end justify-between mt-1">
                 <p class="text-xl sm:text-2xl font-black text-green-600">{{ total_fees_paid|compact_number }}</p>
                 <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">

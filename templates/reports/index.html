@@ -35,7 +35,7 @@
             <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <p class="text-[11px] text-amber-700 font-medium italic leading-tight">Selected year applies to Financial Overview report</p>
+            <p class="text-[11px] text-amber-700 font-medium italic leading-tight">Selected year applies to all reports</p>
         </div>
     </div>
 
@@ -100,7 +100,7 @@
                             School and location details
                         </div>
                     </div>
-                    <a href="{% url 'reports:students_pdf' %}" class="inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-emerald-500/25">
+                    <a href="{% url 'reports:students_pdf' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-emerald-500/25">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -130,7 +130,7 @@
                             Family & location details
                         </div>
                     </div>
-                    <a href="{% url 'reports:sponsored_students_report' %}" class="inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-amber-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-amber-500/25">
+                    <a href="{% url 'reports:sponsored_students_report' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-amber-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-amber-500/25">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -206,7 +206,7 @@
                             Required vs Paid amounts
                         </div>
                     </div>
-                    <a href="{% url 'reports:fees_pdf' %}" class="inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-blue-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-blue-500/25">
+                    <a href="{% url 'reports:fees_pdf' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-blue-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-blue-500/25">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -236,7 +236,7 @@
                             Easy data manipulation
                         </div>
                     </div>
-                    <a href="{% url 'reports:fees_excel' %}" class="inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-emerald-500/25">
+                    <a href="{% url 'reports:fees_excel' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-emerald-500/25">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -281,7 +281,7 @@
                             Payment tracking & totals
                         </div>
                     </div>
-                    <a href="{% url 'reports:insurance_pdf' %}" class="inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-pink-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-pink-500/25">
+                    <a href="{% url 'reports:insurance_pdf' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-pink-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-pink-500/25">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
