@@ -30,7 +30,8 @@ def student_list(request):
     search_query = request.GET.get('search', '')
     if search_query:
         students = students.filter(
-            Q(full_name__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
             Q(family__district__name__icontains=search_query) |
             Q(school__name__icontains=search_query)
         )
