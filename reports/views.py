@@ -883,10 +883,10 @@ def analysis_dashboard(request):
 
     # Student Categories & Levels
     # Categories: lower primary(p1,p2,p3), upper primary(p4,p5,p6), ordinary level(s1,s2,s3), advanced level(s4,s5,s6)
-    lower_primary_levels = ['P1', 'P2', 'P3']
-    upper_primary_levels = ['P4', 'P5', 'P6']
-    ordinary_level_levels = ['S1', 'S2', 'S3']
-    advanced_level_levels = ['S4', 'S5', 'S6']
+    lower_primary_levels = ['P1', 'P2', 'P3', 'p1', 'p2', 'p3']
+    upper_primary_levels = ['P4', 'P5', 'P6', 'p4', 'p5', 'p6']
+    ordinary_level_levels = ['S1', 'S2', 'S3', 's1', 's2', 's3']
+    advanced_level_levels = ['S4', 'S5', 'S6', 's4', 's5', 's6']
 
     category_counts = {
         'lower_primary': students_qs.filter(class_level__in=lower_primary_levels).count(),
