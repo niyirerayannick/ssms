@@ -124,6 +124,7 @@ def create_letterhead(elements, report_title, report_subtitle=None):
 def students_pdf(request):
     """Export students list as PDF."""
     year_id = request.GET.get('year')
+    district_id = request.GET.get('district')
     students = Student.objects.select_related('school', 'program_officer').all()
     
     subtitle = "All Students"
@@ -135,6 +136,11 @@ def students_pdf(request):
             Q(fees__academic_year=academic_year)
         ).distinct()
         subtitle = f"Academic Year: {academic_year.name}"
+    
+    if district_id:
+        district = get_object_or_404(District, id=district_id)
+        students = students.filter(family__district_id=district_id)
+        subtitle += f" - {district.name}"
     
     # Create PDF with custom canvas for page numbers
     buffer = io.BytesIO()
@@ -213,6 +219,7 @@ def students_pdf(request):
 def sponsored_students_report(request):
     """Detailed report for sponsored (active) students."""
     year_id = request.GET.get('year')
+    district_id = request.GET.get('district')
     students = (
         Student.objects.select_related('family', 'school', 'program_officer')
         .filter(sponsorship_status='active')
@@ -226,6 +233,11 @@ def sponsored_students_report(request):
             Q(fees__academic_year=academic_year)
         ).distinct()
         subtitle = f"Academic Year: {academic_year.name}"
+    
+    if district_id:
+        district = get_object_or_404(District, id=district_id)
+        students = students.filter(family__district_id=district_id)
+        subtitle += f" - {district.name}"
     
     students = students.order_by('last_name', 'first_name')
     
@@ -252,6 +264,7 @@ def sponsored_students_report(request):
 def fees_pdf(request):
     """Export school fees summary as PDF."""
     year_id = request.GET.get('year')
+    district_id = request.GET.get('district')
     fees = SchoolFee.objects.select_related('student', 'student__school').all()
     
     subtitle = "All Records"
@@ -259,6 +272,11 @@ def fees_pdf(request):
         academic_year = get_object_or_404(AcademicYear, id=year_id)
         fees = fees.filter(academic_year=academic_year)
         subtitle = f"Academic Year: {academic_year.name}"
+    
+    if district_id:
+        district = get_object_or_404(District, id=district_id)
+        fees = fees.filter(student__family__district_id=district_id)
+        subtitle += f" - {district.name}"
     
     # Calculate summary statistics
     total_required = sum(float(fee.total_fees) for fee in fees)
@@ -394,11 +412,16 @@ def fees_pdf(request):
 def fees_excel(request):
     """Export fees summary as Excel."""
     year_id = request.GET.get('year')
+    district_id = request.GET.get('district')
     fees = SchoolFee.objects.select_related('student').all()
     
     if year_id:
         academic_year = get_object_or_404(AcademicYear, id=year_id)
         fees = fees.filter(academic_year=academic_year)
+    
+    if district_id:
+        district = get_object_or_404(District, id=district_id)
+        fees = fees.filter(student__family__district_id=district_id)
     
     # Create workbook
     wb = Workbook()
@@ -467,6 +490,7 @@ def fees_excel(request):
 def insurance_pdf(request):
     """Export insurance coverage as PDF."""
     year_id = request.GET.get('year')
+    district_id = request.GET.get('district')
     insurance_records = FamilyInsurance.objects.select_related('family').all()
     
     subtitle = "All Records"
@@ -474,6 +498,11 @@ def insurance_pdf(request):
         academic_year = get_object_or_404(AcademicYear, id=year_id)
         insurance_records = insurance_records.filter(insurance_year=academic_year)
         subtitle = f"Academic Year: {academic_year.name}"
+    
+    if district_id:
+        district = get_object_or_404(District, id=district_id)
+        insurance_records = insurance_records.filter(family__district_id=district_id)
+        subtitle += f" - {district.name}"
     
     # Calculate summary statistics
     covered = insurance_records.filter(coverage_status='covered').count()
@@ -614,6 +643,8 @@ def reports_index(request):
     
     # Get all academic years for filter dropdown
     academic_years = AcademicYear.objects.all().order_by('-name')
+    # Get all districts for filter dropdown
+    districts = District.objects.all().order_by('name')
 
     context = {
         'boarding_count': boarding_count,
@@ -623,6 +654,7 @@ def reports_index(request):
         'secondary_count': secondary_count,
         'tvet_count': tvet_count,
         'academic_years': academic_years,
+        'districts': districts,
     }
     return render(request, 'reports/index.html', context)
 
@@ -632,6 +664,7 @@ def reports_index(request):
 def financial_report_pdf(request):
     """Generate comprehensive financial report PDF."""
     year_id = request.GET.get('year')
+    district_id = request.GET.get('district')
     
     # Base querysets
     fees_qs = SchoolFee.objects.all()
@@ -644,6 +677,12 @@ def financial_report_pdf(request):
         fees_qs = fees_qs.filter(academic_year=academic_year)
         insurance_qs = insurance_qs.filter(insurance_year=academic_year)
         subtitle = f"Academic Year: {academic_year.name}"
+    
+    if district_id:
+        district = get_object_or_404(District, id=district_id)
+        fees_qs = fees_qs.filter(student__family__district_id=district_id)
+        insurance_qs = insurance_qs.filter(family__district_id=district_id)
+        subtitle += f" - {district.name}"
     
     # Calculate Fees Totals
     fees_total_req = fees_qs.aggregate(Sum('total_fees'))['total_fees__sum'] or 0

@@ -21,21 +21,34 @@
     </div>
 
     <!-- Report Filters -->
-    <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div class="w-full sm:w-auto">
-            <label for="year-filter" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Academic Year</label>
-            <select id="year-filter" class="w-full sm:w-72 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-sm">
-                <option value="">All Time</option>
-                {% for year in academic_years %}
-                <option value="{{ year.id }}">{{ year.name }}</option>
-                {% endfor %}
-            </select>
+    <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 border border-slate-100">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+            <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                <div class="w-full sm:w-auto">
+                    <label for="year-filter" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Academic Year</label>
+                    <select id="year-filter" class="w-full sm:w-72 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-sm">
+                        <option value="">All Time</option>
+                        {% for year in academic_years %}
+                        <option value="{{ year.id }}">{{ year.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="w-full sm:w-auto">
+                    <label for="district-filter" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">District</label>
+                    <select id="district-filter" class="w-full sm:w-72 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none text-sm">
+                        <option value="">All Districts</option>
+                        {% for district in districts %}
+                        <option value="{{ district.id }}">{{ district.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
         </div>
         <div class="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-xl border border-amber-100">
             <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <p class="text-[11px] text-amber-700 font-medium italic leading-tight">Selected year applies to all reports</p>
+            <p class="text-[11px] text-amber-700 font-medium italic leading-tight">Selected filters apply to all reports</p>
         </div>
     </div>
 
@@ -309,27 +322,47 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const yearFilter = document.getElementById('year-filter');
+            const districtFilter = document.getElementById('district-filter');
             const reportLinks = document.querySelectorAll('.report-link');
             
-            // Function to update links
-            function updateLinks() {
+            // Store original hrefs
+            const originalHrefs = new Map();
+            reportLinks.forEach(link => {
+                originalHrefs.set(link, link.href);
+            });
+            
+            // Function to update all links
+            function updateAllLinks() {
                 const year = yearFilter.value;
+                const district = districtFilter.value;
+                
                 reportLinks.forEach(link => {
-                    const url = new URL(link.href, window.location.origin);
+                    let url = originalHrefs.get(link);
+                    
+                    // Build query parameters
+                    let params = [];
                     if (year) {
-                        url.searchParams.set('year', year);
-                    } else {
-                        url.searchParams.delete('year');
+                        params.push('year=' + year);
                     }
-                    link.href = url.toString();
+                    if (district) {
+                        params.push('district=' + district);
+                    }
+                    
+                    // Add parameters to URL
+                    if (params.length > 0) {
+                        url += '?' + params.join('&');
+                    }
+                    
+                    link.href = url;
                 });
             }
             
-            // Listen for changes
-            yearFilter.addEventListener('change', updateLinks);
+            // Update links when filters change
+            yearFilter.addEventListener('change', updateAllLinks);
+            districtFilter.addEventListener('change', updateAllLinks);
             
-            // Initial update
-            updateLinks();
+            // Initial update in case there are default values
+            updateAllLinks();
         });
     </script>
 </div>
