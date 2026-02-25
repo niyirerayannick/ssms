@@ -60,7 +60,7 @@ def student_list(request):
     level_counts = {item['school_level']: item['total'] for item in students.values('school_level').annotate(total=Count('id'))}
     
     # Pagination
-    paginator = Paginator(students.order_by('-created_at'), 20)
+    paginator = Paginator(students.order_by('first_name', 'last_name'), 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
