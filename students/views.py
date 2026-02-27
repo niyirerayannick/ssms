@@ -494,6 +494,7 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
             'academic_year': self.request.GET.get('academic_year', '').strip(),
             'term': self.request.GET.get('term', '').strip(),
             'class_level': self.request.GET.get('class_level', '').strip(),
+            'search': self.request.GET.get('search', '').strip(),
             'status': status,
         }
 
@@ -507,6 +508,12 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
 
         if filters['class_level']:
             queryset = queryset.filter(class_level=filters['class_level'])
+
+        if filters['search']:
+            for term in filters['search'].split():
+                queryset = queryset.filter(
+                    Q(first_name__icontains=term) | Q(last_name__icontains=term)
+                )
 
         if filters['academic_year']:
             queryset = queryset.filter(academic_records__academic_year_id=filters['academic_year'])
@@ -570,6 +577,11 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
             trend_qs = trend_qs.filter(academic_year_id=filters['academic_year'])
         if filters['class_level']:
             trend_qs = trend_qs.filter(student__class_level=filters['class_level'])
+        if filters['search']:
+            for term in filters['search'].split():
+                trend_qs = trend_qs.filter(
+                    Q(student__first_name__icontains=term) | Q(student__last_name__icontains=term)
+                )
 
         trend_map = {
             row['term']: round(float(row['avg_marks'] or 0), 1)
@@ -634,6 +646,7 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
             'selected_year': filters['academic_year'],
             'selected_term': filters['term'],
             'selected_class': filters['class_level'],
+            'search_query': filters['search'],
             'status_filter': filters['status'],
             'status_filter_options': status_options,
             'trend_labels': trend_labels,
@@ -668,13 +681,14 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
 
         term_label = filters['term'] or 'All Terms'
         class_label = filters['class_level'] or 'All Classes'
+        search_label = filters['search'] or 'All Students'
         status_map = {
             'all': 'All Students',
             'passed': 'Passed Students',
             'failed': 'Failed Students',
         }
         status_label = status_map.get(filters['status'], 'All Students')
-        return f"Year: {year_label} | Term: {term_label} | Class: {class_label} | Status: {status_label}"
+        return f"Year: {year_label} | Term: {term_label} | Class: {class_label} | Search: {search_label} | Status: {status_label}"
 
     def export_data(self, export_format):
         rows = self.get_export_rows()
