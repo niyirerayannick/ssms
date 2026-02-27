@@ -140,24 +140,25 @@
                     <tr>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student Name</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Class</th>
-                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total / Average</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider" title="Number of academic terms recorded for this student">Total Terms Recorded</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Average</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-slate-50">
                     {% for student in performance_rows %}
-                    {% with avg=student.avg_marks|default:0 total=student.total_marks|default:0 %}
+                    {% with avg=student.avg_marks|default:0 terms=student.records_count|default:0 %}
                     <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm font-bold text-slate-900">{{ student.full_name }}</div>
-                            <div class="text-[10px] text-slate-500 mt-0.5">{{ student.records_count|default:0 }} record{{ student.records_count|default:0|pluralize }}</div>
+                            <div class="text-[10px] text-slate-500 mt-0.5">{{ terms }} record{{ terms|pluralize }}</div>
                             <div class="text-[10px] text-slate-500 sm:hidden mt-0.5">{{ student.class_level|default:"N/A" }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden sm:table-cell">{{ student.class_level|default:"N/A" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">{{ terms }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-bold text-slate-900">{{ total|floatformat:1 }}</div>
-                            <p class="text-[11px] text-slate-500">Avg {{ avg|floatformat:1 }}%</p>
+                            <p class="text-sm font-bold text-slate-900">{{ avg|floatformat:1 }}%</p>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if student.has_passed %}
@@ -168,7 +169,7 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <a href="{% url 'students:student_performance_detail' student.pk %}"
-                               class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl shadow-sm hover:bg-slate-800 active:scale-95">
+                               class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-xl shadow-sm hover:bg-emerald-700 active:scale-95">
                                 View All Records
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -179,7 +180,7 @@
                     {% endwith %}
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center">
+                        <td colspan="6" class="px-6 py-12 text-center">
                             <div class="flex flex-col items-center">
                                 <div class="p-4 bg-slate-50 rounded-full mb-4">
                                     <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">

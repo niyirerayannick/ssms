@@ -43,16 +43,16 @@
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-5 border border-slate-100">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Marks</p>
-            <p class="text-xl sm:text-3xl font-bold text-slate-900 mt-1">{{ total_marks|floatformat:1 }}</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Terms Recorded</p>
+            <p class="text-xl sm:text-3xl font-bold text-slate-900 mt-1">{{ subjects_count|default:0 }}</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-5 border border-slate-100">
-            <p class="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Average</p>
+            <p class="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Average (%)</p>
             <p class="text-xl sm:text-3xl font-bold text-blue-600 mt-1">{{ average_marks|floatformat:1 }}%</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-5 border border-slate-100">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Records</p>
-            <p class="text-xl sm:text-3xl font-bold text-slate-900 mt-1">{{ subjects_count|default:0 }}</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cumulative Marks</p>
+            <p class="text-xl sm:text-3xl font-bold text-slate-900 mt-1">{{ total_marks|floatformat:1 }}</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-5 border border-slate-100">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Status</p>

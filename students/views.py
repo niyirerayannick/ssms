@@ -650,11 +650,10 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
         rows = []
         for student in self.get_queryset():
             avg = student.avg_marks or 0
-            total = student.total_marks or 0
             rows.append({
                 'name': student.full_name,
                 'class_level': student.class_level or 'N/A',
-                'total_marks': float(total),
+                'terms_count': student.records_count or 0,
                 'avg_marks': float(avg),
                 'status': 'Pass' if student.has_passed else 'Fail',
             })
@@ -705,12 +704,12 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
             Spacer(1, 18),
         ]
 
-        table_data = [['Student Name', 'Class', 'Total Marks', 'Average (%)', 'Status']]
+        table_data = [['Student Name', 'Class', 'Total Terms Recorded', 'Average (%)', 'Status']]
         for row in rows:
             table_data.append([
                 row['name'],
                 row['class_level'],
-                f"{row['total_marks']:.1f}",
+                str(row['terms_count']),
                 f"{row['avg_marks']:.1f}",
                 row['status'],
             ])
@@ -757,7 +756,7 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
         worksheet['A2'].alignment = Alignment(horizontal='center')
 
         worksheet.append([])
-        headers = ['Student Name', 'Class', 'Total Marks', 'Average (%)', 'Status']
+        headers = ['Student Name', 'Class', 'Total Terms Recorded', 'Average (%)', 'Status']
         worksheet.append(headers)
         header_row_idx = worksheet.max_row
         for col_idx, header in enumerate(headers, start=1):
@@ -770,7 +769,7 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
             worksheet.append([
                 record['name'],
                 record['class_level'],
-                round(record['total_marks'], 1),
+                record['terms_count'],
                 round(record['avg_marks'], 1),
                 record['status'],
             ])
