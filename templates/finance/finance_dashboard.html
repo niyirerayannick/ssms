@@ -6,24 +6,48 @@
 {% block content %}
 <div class="space-y-6">
     <!-- Page Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Finance Dashboard</h1>
-            <p class="text-sm sm:text-base text-slate-600 mt-1">School Fees & Mutuelle de Santé Summary</p>
+    <div class="bg-gradient-to-r from-indigo-50 via-sky-50 to-teal-50 border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <p class="text-[10px] sm:text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Financial Insights</p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">Finance Dashboard</h1>
+                <p class="text-sm sm:text-base text-slate-600 mt-1">School Fees & Mutuelle de Santé Summary</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <a href="{% url 'finance:fees_list' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-95">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    View Fees
+                </a>
+                <a href="{% url 'finance:fee_create' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-95">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Add Payment
+                </a>
+            </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
-            <a href="{% url 'finance:fees_list' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-95">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>
-                View Fees
-            </a>
-            <a href="{% url 'finance:fee_create' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-95">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Add Payment
-            </a>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="bg-white/90 border border-slate-200 rounded-xl p-3">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-600 uppercase tracking-wider">
+                    <span>School Fees Collection</span>
+                    <span>{{ fees_collection_percentage }}%</span>
+                </div>
+                <div class="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-indigo-600 rounded-full" style="width: {{ fees_collection_percentage }}%;"></div>
+                </div>
+            </div>
+            <div class="bg-white/90 border border-slate-200 rounded-xl p-3">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-600 uppercase tracking-wider">
+                    <span>Insurance Collection</span>
+                    <span>{{ insurance_collection_percentage }}%</span>
+                </div>
+                <div class="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-teal-600 rounded-full" style="width: {{ insurance_collection_percentage }}%;"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -303,21 +327,31 @@
         </div>
 
         <!-- Coverage Summary -->
-        <div class="bg-white p-6 rounded-xl shadow-md">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60">
+            <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 Students Coverage
+                <span class="ml-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Mutuelle</span>
             </h3>
-            <div class="space-y-3">
-                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                    <span class="text-sm text-gray-700">Covered by Mutuelle</span>
-                    <span class="text-lg font-bold text-green-600">{{ students_covered|compact_number }}</span>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                    <span class="text-sm font-semibold text-slate-700">Covered Members</span>
+                    <span class="text-lg font-bold text-emerald-600">{{ students_covered|compact_number }}</span>
                 </div>
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <span class="text-sm text-gray-700">Total Students</span>
-                    <span class="text-lg font-bold text-gray-600">{{ total_school_fees|compact_number }}</span>
+                <div class="flex justify-between items-center p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <span class="text-sm font-semibold text-slate-700">Total Family Members</span>
+                    <span class="text-lg font-bold text-slate-600">{{ total_members_all|compact_number }}</span>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        <span>Coverage Rate</span>
+                        <span>{{ coverage_percentage }}%</span>
+                    </div>
+                    <div class="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full bg-emerald-600 rounded-full" style="width: {{ coverage_percentage }}%;"></div>
+                    </div>
                 </div>
             </div>
         </div>

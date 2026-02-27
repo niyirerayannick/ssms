@@ -1,11 +1,60 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.core.paginator import Paginator
 from core.models import District, AcademicYear
 from .models import FamilyInsurance
 from .forms import InsuranceForm
+from families.models import Family, FamilyStudent
+
+
+@login_required
+@permission_required('insurance.manage_insurance', raise_exception=True)
+def mutuelle_dashboard(request):
+    """Dashboard focused on Mutuelle de Santé only."""
+    total_families = Family.objects.count()
+    families_with_insurance = FamilyInsurance.objects.filter(coverage_status='covered').count()
+    families_partially_covered = FamilyInsurance.objects.filter(coverage_status='partially_covered').count()
+    families_not_covered = FamilyInsurance.objects.filter(coverage_status='not_covered').count()
+
+    total_members_all = Family.objects.aggregate(Sum('total_family_members'))['total_family_members__sum'] or 0
+    total_insurance_required = total_members_all * 3000
+    total_insurance_collected = FamilyInsurance.objects.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+    total_insurance_outstanding = total_insurance_required - total_insurance_collected
+    insurance_collection_percentage = round((total_insurance_collected / total_insurance_required * 100) if total_insurance_required > 0 else 0, 1)
+
+    families_covered_ids = FamilyInsurance.objects.filter(coverage_status='covered').values_list('family_id', flat=True)
+    students_covered = FamilyStudent.objects.filter(family_id__in=families_covered_ids).count()
+    coverage_percentage = round((students_covered / total_members_all * 100) if total_members_all > 0 else 0, 1)
+
+    from django.utils import timezone
+    from datetime import timedelta
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    recent_insurance = FamilyInsurance.objects.filter(updated_at__gte=seven_days_ago).count()
+
+    insurance_queryset = FamilyInsurance.objects.select_related('family', 'insurance_year').order_by('-created_at')
+    paginator = Paginator(insurance_queryset, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'total_families': total_families,
+        'families_with_insurance': families_with_insurance,
+        'families_partially_covered': families_partially_covered,
+        'families_not_covered': families_not_covered,
+        'total_insurance_required': total_insurance_required,
+        'total_insurance_collected': total_insurance_collected,
+        'total_insurance_outstanding': total_insurance_outstanding,
+        'insurance_collection_percentage': insurance_collection_percentage,
+        'students_covered': students_covered,
+        'total_members_all': total_members_all,
+        'coverage_percentage': coverage_percentage,
+        'recent_insurance': recent_insurance,
+        'insurance_records': page_obj,
+        'page_obj': page_obj,
+    }
+    return render(request, 'insurance/mutuelle_dashboard.html', context)
 
 
 @login_required

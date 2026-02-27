@@ -133,75 +133,21 @@
         <div class="mb-6">
             <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Finance & Payments</h3>
             <ul class="space-y-2">
-                <!-- Finance Dashboard -->
                 {% if perms.finance.view_schoolfee %}
                 <li>
-                    <a href="{% url 'finance:dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'finance' and request.resolver_match.url_name == 'dashboard' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
-                        <span class="material-symbols-rounded text-[20px]">analytics</span>
-                        <span class="font-medium">Finance Dashboard</span>
+                    <a href="{% url 'finance:school_fees_dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'finance' and request.resolver_match.url_name == 'school_fees_dashboard' or request.resolver_match.app_name == 'finance' and request.resolver_match.url_name == 'fees_list' or request.resolver_match.app_name == 'finance' and request.resolver_match.url_name == 'fee_create' or request.resolver_match.app_name == 'finance' and request.resolver_match.url_name == 'fee_edit' or request.resolver_match.app_name == 'finance' and request.resolver_match.url_name == 'overdue_fees' or request.resolver_match.app_name == 'finance' and request.resolver_match.url_name == 'student_payments' or request.resolver_match.app_name == 'finance' and request.resolver_match.url_name == 'add_student_payment' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
+                        <span class="material-symbols-rounded text-[20px]">payments</span>
+                        <span class="font-medium">School Fees</span>
                     </a>
-                </li>
-
-                <!-- School Fees Submenu -->
-                <li class="pt-2">
-                    <details class="group">
-                        <summary class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer hover:bg-white/10">
-                            <span class="material-symbols-rounded text-[20px]">payments</span>
-                            <span class="font-medium">School Fees</span>
-                            <span class="material-symbols-rounded text-[18px] ml-auto group-open:rotate-180 transition-transform">expand_more</span>
-                        </summary>
-                        <ul class="pl-4 mt-2 space-y-1 border-l border-white/10">
-                            <li>
-                                <a href="{% url 'finance:fees_list' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                                    <span class="material-symbols-rounded text-[18px]">receipt_long</span>
-                                    <span>View All Fees</span>
-                                </a>
-                            </li>
-                            {% if perms.finance.add_schoolfee %}
-                            <li>
-                                <a href="{% url 'finance:fee_create' %}?type=school_fee" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                                    <span class="material-symbols-rounded text-[18px]">add_circle</span>
-                                    <span>Record Fee Payment</span>
-                                </a>
-                            </li>
-                            {% endif %}
-                            <li>
-                                <a href="{% url 'finance:overdue_fees' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                                    <span class="material-symbols-rounded text-[18px]">report</span>
-                                    <span>Overdue Fees</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </details>
                 </li>
                 {% endif %}
 
-                <!-- Mutuelle de Santé Submenu -->
                 {% if perms.insurance.view_familyinsurance %}
-                <li class="pt-2">
-                    <details class="group">
-                        <summary class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer hover:bg-white/10">
-                            <span class="material-symbols-rounded text-[20px]">health_and_safety</span>
-                            <span class="font-medium">Mutuelle de Santé</span>
-                            <span class="material-symbols-rounded text-[18px] ml-auto group-open:rotate-180 transition-transform">expand_more</span>
-                        </summary>
-                        <ul class="pl-4 mt-2 space-y-1 border-l border-white/10">
-                            <li>
-                                <a href="{% url 'insurance:insurance_list' %}" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                                    <span class="material-symbols-rounded text-[18px]">folder_open</span>
-                                    <span>View All Records</span>
-                                </a>
-                            </li>
-                            {% if perms.insurance.add_familyinsurance %}
-                            <li>
-                                <a href="{% url 'finance:fee_create' %}?type=insurance" class="flex items-center space-x-3 px-4 py-2 text-sm rounded-lg transition-all duration-200 text-emerald-100 hover:bg-white/10 hover:text-white">
-                                    <span class="material-symbols-rounded text-[18px]">add_circle</span>
-                                    <span>Record Payment</span>
-                                </a>
-                            </li>
-                            {% endif %}
-                        </ul>
-                    </details>
+                <li>
+                    <a href="{% url 'insurance:mutuelle_dashboard' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.app_name == 'insurance' and request.resolver_match.url_name == 'mutuelle_dashboard' or request.resolver_match.app_name == 'insurance' and request.resolver_match.url_name == 'insurance_list' or request.resolver_match.app_name == 'insurance' and request.resolver_match.url_name == 'insurance_create' or request.resolver_match.app_name == 'insurance' and request.resolver_match.url_name == 'insurance_edit' or request.resolver_match.app_name == 'insurance' and request.resolver_match.url_name == 'coverage_summary' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
+                        <span class="material-symbols-rounded text-[20px]">health_and_safety</span>
+                        <span class="font-medium">Mutuelle de Santé</span>
+                    </a>
                 </li>
                 {% endif %}
             </ul>

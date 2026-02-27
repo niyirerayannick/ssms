@@ -285,7 +285,7 @@
             
             <!-- Form Actions -->
             <div class="pt-8 border-t border-slate-100 flex items-center justify-end space-x-4">
-                <a href="{% url 'finance:dashboard' %}" class="px-6 py-2.5 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition duration-200 font-bold text-xs uppercase tracking-wider">
+                <a href="{% if payment_type == 'insurance' %}{% url 'insurance:mutuelle_dashboard' %}{% else %}{% url 'finance:school_fees_dashboard' %}{% endif %}" class="px-6 py-2.5 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition duration-200 font-bold text-xs uppercase tracking-wider">
                     Cancel
                 </a>
                 <button type="submit" class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-300 font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg active:scale-95">

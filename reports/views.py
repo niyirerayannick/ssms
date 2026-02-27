@@ -408,7 +408,7 @@ def fees_pdf(request):
 
 
 @login_required
-@permission_required('finance.manage_fees', raise_exception=True)
+@permission_required('finance.view_schoolfee', raise_exception=True)
 def fees_excel(request):
     """Export fees summary as Excel."""
     year_id = request.GET.get('year')
@@ -486,7 +486,7 @@ def fees_excel(request):
 
 
 @login_required
-@permission_required('insurance.manage_insurance', raise_exception=True)
+@permission_required('insurance.view_familyinsurance', raise_exception=True)
 def insurance_pdf(request):
     """Export insurance coverage as PDF."""
     year_id = request.GET.get('year')

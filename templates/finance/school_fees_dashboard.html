@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}School Fees Dashboard - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-gradient-to-r from-indigo-50 via-sky-50 to-indigo-50 border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-[10px] sm:text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">Finance & Payments</p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">School Fees Dashboard</h1>
+                <p class="text-sm sm:text-base text-slate-600 mt-1">Track school fee collection, balances, and payment activity.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <a href="{% url 'finance:fees_list' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-95">
+                    View All Fees
+                </a>
+                <a href="{% url 'finance:fee_create' %}?type=school_fee" class="flex-1 sm:flex-none inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md active:scale-95">
+                    Record Payment
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+        <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 sm:p-6 rounded-2xl shadow-sm text-white">
+            <p class="text-indigo-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Total Records</p>
+            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ total_school_fees|compact_number }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 sm:p-6 rounded-2xl shadow-sm text-white">
+            <p class="text-emerald-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Paid</p>
+            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ paid_school_fees|compact_number }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-amber-500 to-amber-600 p-4 sm:p-6 rounded-2xl shadow-sm text-white">
+            <p class="text-amber-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Partial</p>
+            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ partial_school_fees|compact_number }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 p-4 sm:p-6 rounded-2xl shadow-sm text-white">
+            <p class="text-orange-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Pending</p>
+            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ pending_school_fees|compact_number }}</p>
+        </div>
+        <div class="bg-gradient-to-br from-rose-500 to-rose-600 p-4 sm:p-6 rounded-2xl shadow-sm text-white">
+            <p class="text-rose-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Overdue</p>
+            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ overdue_school_fees|compact_number }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-indigo-500">
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Required Amount</h3>
+            <p class="text-3xl font-bold text-slate-900">FRW {{ total_fees_required|compact_number }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-emerald-500">
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Collected Amount</h3>
+            <p class="text-3xl font-bold text-emerald-600">FRW {{ total_fees_collected|compact_number }}</p>
+            <p class="text-xs text-slate-500 mt-2">{{ fees_collection_percentage }}% collection rate</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-rose-500">
+            <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Outstanding Balance</h3>
+            <p class="text-3xl font-bold text-rose-600">FRW {{ total_fees_outstanding|compact_number }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50/50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Required</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Paid</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Balance</th>
+                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                    {% for fee in fees_records %}
+                    <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" onclick="window.location='{% url 'finance:student_payments' fee.student.id %}'">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-semibold text-slate-900">{{ fee.student.full_name }}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">FRW {{ fee.total_fees|compact_number }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ fee.amount_paid|compact_number }}</td>
+                        <td class="px-6 py-4"><span class="text-sm font-bold text-rose-600">FRW {{ fee.balance|compact_number }}</span></td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
+                                {% if fee.payment_status == 'paid' %}bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100
+                                {% elif fee.payment_status == 'overdue' %}bg-rose-50 text-rose-700 ring-1 ring-rose-100
+                                {% elif fee.payment_status == 'partial' %}bg-amber-50 text-amber-700 ring-1 ring-amber-100
+                                {% else %}bg-orange-50 text-orange-700 ring-1 ring-orange-100{% endif %}">
+                                {{ fee.get_payment_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-500 font-medium">No school fee records found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/pagination.html' %}
+    </div>
+
+</div>
+{% endblock %}

@@ -71,6 +71,48 @@ def fees_list(request):
 
 @login_required
 @permission_required('finance.manage_fees', raise_exception=True)
+def school_fees_dashboard(request):
+    """Dashboard focused on school fees only."""
+    total_school_fees = SchoolFee.objects.count()
+    paid_school_fees = SchoolFee.objects.filter(payment_status='paid').count()
+    partial_school_fees = SchoolFee.objects.filter(payment_status='partial').count()
+    pending_school_fees = SchoolFee.objects.filter(payment_status='pending').count()
+    overdue_school_fees = SchoolFee.objects.filter(payment_status='overdue').count()
+
+    total_fees_required = SchoolFee.objects.aggregate(Sum('total_fees'))['total_fees__sum'] or 0
+    total_fees_collected = SchoolFee.objects.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+    total_fees_outstanding = SchoolFee.objects.aggregate(Sum('balance'))['balance__sum'] or 0
+    fees_collection_percentage = round((total_fees_collected / total_fees_required * 100) if total_fees_required > 0 else 0, 1)
+
+    from django.utils import timezone
+    from datetime import timedelta
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    recent_school_fees = SchoolFee.objects.filter(updated_at__gte=seven_days_ago).count()
+
+    fees_queryset = SchoolFee.objects.select_related('student', 'academic_year').order_by('-created_at')
+    paginator = Paginator(fees_queryset, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'total_school_fees': total_school_fees,
+        'paid_school_fees': paid_school_fees,
+        'partial_school_fees': partial_school_fees,
+        'pending_school_fees': pending_school_fees,
+        'overdue_school_fees': overdue_school_fees,
+        'total_fees_required': total_fees_required,
+        'total_fees_collected': total_fees_collected,
+        'total_fees_outstanding': total_fees_outstanding,
+        'fees_collection_percentage': fees_collection_percentage,
+        'recent_school_fees': recent_school_fees,
+        'fees_records': page_obj,
+        'page_obj': page_obj,
+    }
+    return render(request, 'finance/school_fees_dashboard.html', context)
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
 def fee_create(request):
     """Create a new fee record - for both school fees and Mutuelle de Santé."""
     payment_type = request.GET.get('type', 'school_fee')  # 'school_fee' or 'insurance'
@@ -86,7 +128,7 @@ def fee_create(request):
             if form.is_valid():
                 insurance = form.save()
                 messages.success(request, f'Mutuelle de Santé payment recorded for family {insurance.family.family_code}!')
-                return redirect('finance:dashboard')
+                return redirect('insurance:mutuelle_dashboard')
         else:
             # Handle School Fee payment
             form = FeeForm(request.POST)
@@ -96,7 +138,7 @@ def fee_create(request):
             if form.is_valid():
                 fee = form.save()
                 messages.success(request, f'School fee recorded for {fee.student.full_name}!')
-                return redirect('finance:dashboard')
+                return redirect('finance:school_fees_dashboard')
     else:
         if payment_type == 'insurance':
             form = FamilyInsuranceForm()
@@ -149,104 +191,8 @@ def overdue_fees(request):
 @login_required
 @permission_required('finance.manage_fees', raise_exception=True)
 def finance_dashboard(request):
-    """Comprehensive finance dashboard showing both school fees and insurance payments."""
-    
-    # ===== SCHOOL FEES STATISTICS =====
-    total_school_fees = SchoolFee.objects.count()
-    paid_school_fees = SchoolFee.objects.filter(payment_status='paid').count()
-    partial_school_fees = SchoolFee.objects.filter(payment_status='partial').count()
-    pending_school_fees = SchoolFee.objects.filter(payment_status='pending').count()
-    overdue_school_fees = SchoolFee.objects.filter(payment_status='overdue').count()
-    
-    # Financial aggregates for school fees
-    total_fees_required = SchoolFee.objects.aggregate(Sum('total_fees'))['total_fees__sum'] or 0
-    total_fees_collected = SchoolFee.objects.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
-    total_fees_outstanding = SchoolFee.objects.aggregate(Sum('balance'))['balance__sum'] or 0
-    
-    # Calculate percentage
-    fees_collection_percentage = round((total_fees_collected / total_fees_required * 100) if total_fees_required > 0 else 0, 1)
-    
-    # ===== MUTUELLE DE SANTÉ (INSURANCE) STATISTICS =====
-    total_families = Family.objects.count()
-    families_with_insurance = FamilyInsurance.objects.filter(coverage_status='covered').count()
-    families_partially_covered = FamilyInsurance.objects.filter(coverage_status='partially_covered').count()
-    families_not_covered = FamilyInsurance.objects.filter(coverage_status='not_covered').count()
-    
-    # Financial aggregates for insurance
-    # Calculate total insurance required for ALL families (Total Members * 3000)
-    total_members_all = Family.objects.aggregate(Sum('total_family_members'))['total_family_members__sum'] or 0
-    total_insurance_required = total_members_all * 3000
-    
-    total_insurance_collected = FamilyInsurance.objects.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
-    total_insurance_outstanding = total_insurance_required - total_insurance_collected
-    
-    # Calculate insurance collection percentage
-    insurance_collection_percentage = round((total_insurance_collected / total_insurance_required * 100) if total_insurance_required > 0 else 0, 1)
-    
-    # Helper to format numbers with k/M
-    def format_compact(val):
-        if val >= 1_000_000:
-            val = val / 1_000_000
-            return f"{val:.1f}M".replace('.0M', 'M')
-        elif val >= 1_000:
-            val = val / 1_000
-            return f"{val:.1f}k".replace('.0k', 'k')
-        return f"{val}"
-
-    total_insurance_required_display = format_compact(total_insurance_required)
-    
-    # Students covered via family insurance
-    families_covered_ids = FamilyInsurance.objects.filter(coverage_status='covered').values_list('family_id', flat=True)
-    students_covered = FamilyStudent.objects.filter(family_id__in=families_covered_ids).count()
-    
-    # Recent payments (last 7 days)
-    from django.utils import timezone
-    from datetime import timedelta
-    seven_days_ago = timezone.now() - timedelta(days=7)
-    
-    recent_school_fees = SchoolFee.objects.filter(updated_at__gte=seven_days_ago).count()
-    recent_insurance = FamilyInsurance.objects.filter(updated_at__gte=seven_days_ago).count()
-    
-    # Top 5 families by insurance balance (need to pay more)
-    families_top_outstanding = FamilyInsurance.objects.select_related('family').order_by('-balance')[:5]
-    
-    # Top 5 students by school fee balance (need to pay more)
-    students_top_outstanding = SchoolFee.objects.select_related('student').order_by('-balance')[:5]
-    
-    context = {
-        # School Fees
-        'total_school_fees': total_school_fees,
-        'paid_school_fees': paid_school_fees,
-        'partial_school_fees': partial_school_fees,
-        'pending_school_fees': pending_school_fees,
-        'overdue_school_fees': overdue_school_fees,
-        'total_fees_required': total_fees_required,
-        'total_fees_collected': total_fees_collected,
-        'total_fees_outstanding': total_fees_outstanding,
-        'fees_collection_percentage': fees_collection_percentage,
-        
-        # Insurance (Mutuelle de Santé)
-        'total_families': total_families,
-        'families_with_insurance': families_with_insurance,
-        'families_partially_covered': families_partially_covered,
-        'families_not_covered': families_not_covered,
-        'total_insurance_required': total_insurance_required,
-        'total_insurance_required_display': total_insurance_required_display,
-        'total_insurance_collected': total_insurance_collected,
-        'total_insurance_outstanding': total_insurance_outstanding,
-        'insurance_collection_percentage': insurance_collection_percentage,
-        'students_covered': students_covered,
-        
-        # Recent activity
-        'recent_school_fees': recent_school_fees,
-        'recent_insurance': recent_insurance,
-        
-        # Top outstanding
-        'families_top_outstanding': families_top_outstanding,
-        'students_top_outstanding': students_top_outstanding,
-    }
-    
-    return render(request, 'finance/finance_dashboard.html', context)
+    """Legacy finance dashboard endpoint redirected to School Fees dashboard."""
+    return redirect('finance:school_fees_dashboard')
 
 
 @login_required
