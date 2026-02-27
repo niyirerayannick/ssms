@@ -36,7 +36,7 @@ cloudinary.config(
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-production-!@#$%^&*()')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False') == 'False'
 
 # ALLOWED_HOSTS configuration with Coolify support
 default_allowed_hosts = [
@@ -45,7 +45,8 @@ default_allowed_hosts = [
     'z0sw44wk8wck88g0k8wg8w4w.76.13.138.71.sslip.io',
     'safrwanda.online',
 ]
-raw_hosts = os.environ.get('ALLOWED_HOSTS', ','.join(default_allowed_hosts))
+raw_hosts_env = os.environ.get('ALLOWED_HOSTS')
+raw_hosts = raw_hosts_env if raw_hosts_env and raw_hosts_env.strip() else ','.join(default_allowed_hosts)
 ALLOWED_HOSTS = [host.strip() for host in raw_hosts.split(',') if host.strip()]
 # Add wildcard support for sslip.io (Coolify default domain)
 if not any('sslip.io' in host for host in ALLOWED_HOSTS):

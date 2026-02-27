@@ -1,13 +1,35 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
-from django.db.models import Q, Avg, Count
+from django.db.models import (
+    Q,
+    Avg,
+    Count,
+    Sum,
+    Case,
+    When,
+    Value,
+    BooleanField,
+    Prefetch,
+    DecimalField,
+)
 from django.core.paginator import Paginator
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.views.generic import ListView, DetailView
+from django.db.models.functions import Coalesce
+from django.http import Http404, HttpResponse
+from io import BytesIO
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import landscape, A4
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
 from core.models import District, School, Partner
 from django.utils import timezone
 from django.core import signing
@@ -448,75 +470,372 @@ def student_report_cards(request, pk):
     records = student.academic_records.exclude(report_card_image='').exclude(report_card_image__isnull=True)
     return render(request, 'students/student_report_cards.html', {'student': student, 'records': records})
 
-@login_required
-@permission_required('students.view_studentmark', raise_exception=True)
-def student_performance(request):
-    """View student performance with filters and charts."""
-    academic_year = request.GET.get('academic_year', '')
-    term = request.GET.get('term', '')
-    class_level = request.GET.get('class_level', '')
+class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """Paginated student performance dashboard."""
 
-    marks_qs = StudentMark.objects.select_related('student')
-    if academic_year:
-        marks_qs = marks_qs.filter(academic_year_id=academic_year)
-    if term:
-        marks_qs = marks_qs.filter(term=term)
-    if class_level:
-        marks_qs = marks_qs.filter(student__class_level=class_level)
+    template_name = 'students/student_performance.html'
+    context_object_name = 'performance_rows'
+    paginate_by = 10
+    permission_required = 'students.view_studentmark'
+    raise_exception = True
 
-    performance_rows = list(
-        marks_qs.values(
-            'student_id',
-            'student__first_name',
-            'student__last_name',
-            'student__class_level',
-            'academic_year__name',
-            'term'
-        ).annotate(avg_marks=Avg('marks')).order_by('student__first_name', 'student__last_name')
-    )
+    def get(self, request, *args, **kwargs):
+        export_format = request.GET.get('export')
+        if export_format in {'pdf', 'excel'}:
+            self.object_list = self.get_queryset()
+            return self.export_data(export_format)
+        return super().get(request, *args, **kwargs)
 
-    total_records = len(performance_rows)
-    passed = sum(1 for row in performance_rows if (row.get('avg_marks') or 0) >= 50)
-    failed = total_records - passed
-    pass_rate = round((passed / total_records) * 100, 1) if total_records else 0
+    def get_filters(self):
+        status = self.request.GET.get('status', 'all').lower()
+        if status not in {'passed', 'failed'}:
+            status = 'all'
+        return {
+            'academic_year': self.request.GET.get('academic_year', '').strip(),
+            'term': self.request.GET.get('term', '').strip(),
+            'class_level': self.request.GET.get('class_level', '').strip(),
+            'status': status,
+        }
 
-    available_years = AcademicYear.objects.order_by('-name')
-    available_classes = (
-        StudentMark.objects.values_list('student__class_level', flat=True)
-        .exclude(student__class_level__isnull=True)
-        .exclude(student__class_level__exact='')
-        .distinct().order_by('student__class_level')
-    )
-    term_choices = [choice[0] for choice in StudentMark.TERM_CHOICES]
+    def get_queryset(self):
+        if hasattr(self, '_performance_qs'):
+            return self._performance_qs
 
-    trend_qs = StudentMark.objects.all()
-    if academic_year:
-        trend_qs = trend_qs.filter(academic_year_id=academic_year)
-    if class_level:
-        trend_qs = trend_qs.filter(student__class_level=class_level)
-    trend_data = {
-        item['term']: float(item['avg_marks'] or 0)
-        for item in trend_qs.values('term').annotate(avg_marks=Avg('marks'))
-    }
-    trend_labels = term_choices
-    trend_values = [round(trend_data.get(label, 0), 1) for label in trend_labels]
+        filters = self.get_filters()
+        queryset = Student.objects.filter(academic_records__isnull=False)
+        mark_filter = Q()
 
-    context = {
-        'performance_rows': performance_rows,
-        'total_records': total_records,
-        'passed': passed,
-        'failed': failed,
-        'pass_rate': pass_rate,
-        'available_years': available_years,
-        'available_terms': term_choices,
-        'available_classes': available_classes,
-        'selected_year': academic_year,
-        'selected_term': term,
-        'selected_class': class_level,
-        'trend_labels': trend_labels,
-        'trend_values': trend_values,
-    }
-    return render(request, 'students/student_performance.html', context)
+        if filters['class_level']:
+            queryset = queryset.filter(class_level=filters['class_level'])
+
+        if filters['academic_year']:
+            queryset = queryset.filter(academic_records__academic_year_id=filters['academic_year'])
+            mark_filter &= Q(academic_records__academic_year_id=filters['academic_year'])
+
+        if filters['term']:
+            queryset = queryset.filter(academic_records__term=filters['term'])
+            mark_filter &= Q(academic_records__term=filters['term'])
+
+        mark_filter = mark_filter if mark_filter.children else Q()
+
+        queryset = queryset.annotate(
+            avg_marks=Avg('academic_records__marks', filter=mark_filter),
+            total_marks=Coalesce(
+                Sum('academic_records__marks', filter=mark_filter),
+                Value(0, output_field=DecimalField(max_digits=10, decimal_places=2))
+            ),
+            records_count=Count('academic_records', filter=mark_filter, distinct=True),
+        )
+
+        queryset = queryset.annotate(
+            has_passed=Case(
+                When(avg_marks__gte=Value(50), then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            )
+        )
+
+        if filters['status'] == 'passed':
+            queryset = queryset.filter(has_passed=True)
+        elif filters['status'] == 'failed':
+            queryset = queryset.filter(has_passed=False)
+
+        queryset = queryset.order_by('first_name', 'last_name').distinct()
+
+        self._performance_qs = queryset
+        return queryset
+
+    def get_summary_stats(self):
+        if hasattr(self, '_summary_stats'):
+            return self._summary_stats
+
+        queryset = self.get_queryset()
+        total_students = queryset.count()
+        passed = queryset.filter(has_passed=True).count()
+        failed = max(total_students - passed, 0)
+        pass_rate = round((passed / total_students) * 100, 1) if total_students else 0
+
+        self._summary_stats = {
+            'total_students': total_students,
+            'passed': passed,
+            'failed': failed,
+            'pass_rate': pass_rate,
+        }
+        return self._summary_stats
+
+    def get_trend_data(self):
+        filters = self.get_filters()
+        trend_qs = StudentMark.objects.all()
+        if filters['academic_year']:
+            trend_qs = trend_qs.filter(academic_year_id=filters['academic_year'])
+        if filters['class_level']:
+            trend_qs = trend_qs.filter(student__class_level=filters['class_level'])
+
+        trend_map = {
+            row['term']: round(float(row['avg_marks'] or 0), 1)
+            for row in trend_qs.values('term').annotate(avg_marks=Avg('marks'))
+        }
+        labels = [choice[0] for choice in StudentMark.TERM_CHOICES]
+        values = [trend_map.get(label, 0) for label in labels]
+        return labels, values
+
+    def build_url(self, **overrides):
+        params = self.request.GET.copy()
+        params.pop('page', None)
+        params.pop('export', None)
+        for key, value in overrides.items():
+            if key == 'status' and value == 'all':
+                params.pop('status', None)
+                continue
+            if value in (None, ''):
+                params.pop(key, None)
+            else:
+                params[key] = value
+        query = params.urlencode()
+        return f"{self.request.path}?{query}" if query else self.request.path
+
+    def get_preserved_querystring(self):
+        params = self.request.GET.copy()
+        params.pop('page', None)
+        params.pop('export', None)
+        return params.urlencode()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        filters = self.get_filters()
+        summary = self.get_summary_stats()
+        trend_labels, trend_values = self.get_trend_data()
+
+        available_classes = (
+            StudentMark.objects.values_list('student__class_level', flat=True)
+            .exclude(student__class_level__isnull=True)
+            .exclude(student__class_level__exact='')
+            .distinct()
+            .order_by('student__class_level')
+        )
+
+        status_options = [
+            {'label': 'All Students', 'value': 'all'},
+            {'label': 'Passed Students', 'value': 'passed'},
+            {'label': 'Failed Students', 'value': 'failed'},
+        ]
+        for option in status_options:
+            option['url'] = self.build_url(status=option['value'])
+            option['active'] = option['value'] == filters['status']
+
+        filters_applied = any(
+            value for key, value in filters.items() if key != 'status'
+        ) or filters['status'] in {'passed', 'failed'}
+
+        context.update({
+            'available_years': AcademicYear.objects.order_by('-name'),
+            'available_terms': [choice[0] for choice in StudentMark.TERM_CHOICES],
+            'available_classes': available_classes,
+            'selected_year': filters['academic_year'],
+            'selected_term': filters['term'],
+            'selected_class': filters['class_level'],
+            'status_filter': filters['status'],
+            'status_filter_options': status_options,
+            'trend_labels': trend_labels,
+            'trend_values': trend_values,
+            'querystring': self.get_preserved_querystring(),
+            'filters_applied': filters_applied,
+            'export_pdf_url': self.build_url(export='pdf'),
+            'export_excel_url': self.build_url(export='excel'),
+        })
+        context.update(summary)
+        return context
+
+    def get_export_rows(self):
+        rows = []
+        for student in self.get_queryset():
+            avg = student.avg_marks or 0
+            total = student.total_marks or 0
+            rows.append({
+                'name': student.full_name,
+                'class_level': student.class_level or 'N/A',
+                'total_marks': float(total),
+                'avg_marks': float(avg),
+                'status': 'Pass' if student.has_passed else 'Fail',
+            })
+        return rows
+
+    def describe_filters(self):
+        filters = self.get_filters()
+        year_label = 'All Years'
+        if filters['academic_year']:
+            year = AcademicYear.objects.filter(id=filters['academic_year']).values_list('name', flat=True).first()
+            year_label = year or 'Selected Year'
+
+        term_label = filters['term'] or 'All Terms'
+        class_label = filters['class_level'] or 'All Classes'
+        status_map = {
+            'all': 'All Students',
+            'passed': 'Passed Students',
+            'failed': 'Failed Students',
+        }
+        status_label = status_map.get(filters['status'], 'All Students')
+        return f"Year: {year_label} | Term: {term_label} | Class: {class_label} | Status: {status_label}"
+
+    def export_data(self, export_format):
+        rows = self.get_export_rows()
+        if export_format == 'pdf':
+            return self.generate_pdf(rows)
+        return self.generate_excel(rows)
+
+    def generate_pdf(self, rows):
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=landscape(A4),
+            title='Student Performance Report',
+            leftMargin=24,
+            rightMargin=24,
+            topMargin=24,
+            bottomMargin=24,
+        )
+        styles = getSampleStyleSheet()
+        elements = [
+            Paragraph('Student Performance Report', styles['Title']),
+            Spacer(1, 12),
+            Paragraph(
+                f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M')} | {self.describe_filters()}",
+                styles['BodyText']
+            ),
+            Spacer(1, 18),
+        ]
+
+        table_data = [['Student Name', 'Class', 'Total Marks', 'Average (%)', 'Status']]
+        for row in rows:
+            table_data.append([
+                row['name'],
+                row['class_level'],
+                f"{row['total_marks']:.1f}",
+                f"{row['avg_marks']:.1f}",
+                row['status'],
+            ])
+
+        table = Table(table_data, repeatRows=1, colWidths=[220, 120, 120, 120, 100])
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('ALIGN', (2, 1), (3, -1), 'RIGHT'),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#cbd5f5')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#f8fafc'), colors.white]),
+        ])
+
+        for idx, row in enumerate(rows, start=1):
+            bg_color = colors.HexColor('#d1fae5') if row['status'] == 'Pass' else colors.HexColor('#fee2e2')
+            style.add('BACKGROUND', (0, idx), (-1, idx), bg_color)
+
+        table.setStyle(style)
+        elements.append(table)
+        doc.build(elements)
+        pdf = buffer.getvalue()
+        buffer.close()
+        response = HttpResponse(content_type='application/pdf')
+        filename = timezone.now().strftime('student_performance_%Y%m%d_%H%M%S.pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response.write(pdf)
+        return response
+
+    def generate_excel(self, rows):
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = 'Performance'
+
+        worksheet.merge_cells('A1:E1')
+        worksheet['A1'] = 'Student Performance Report'
+        worksheet['A1'].font = Font(size=14, bold=True)
+        worksheet['A1'].alignment = Alignment(horizontal='center')
+
+        worksheet.merge_cells('A2:E2')
+        worksheet['A2'] = f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M')} | {self.describe_filters()}"
+        worksheet['A2'].alignment = Alignment(horizontal='center')
+
+        worksheet.append([])
+        headers = ['Student Name', 'Class', 'Total Marks', 'Average (%)', 'Status']
+        worksheet.append(headers)
+        header_row_idx = worksheet.max_row
+        for col_idx, header in enumerate(headers, start=1):
+            cell = worksheet.cell(row=header_row_idx, column=col_idx)
+            cell.font = Font(bold=True, color='FFFFFF')
+            cell.fill = PatternFill(start_color='0F172A', end_color='0F172A', fill_type='solid')
+            cell.alignment = Alignment(horizontal='center')
+
+        for record in rows:
+            worksheet.append([
+                record['name'],
+                record['class_level'],
+                round(record['total_marks'], 1),
+                round(record['avg_marks'], 1),
+                record['status'],
+            ])
+            status_cell = worksheet.cell(row=worksheet.max_row, column=5)
+            fill_color = 'D1FAE5' if record['status'] == 'Pass' else 'FEE2E2'
+            status_cell.fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type='solid')
+
+        column_widths = [32, 18, 18, 18, 14]
+        for idx, width in enumerate(column_widths, start=1):
+            worksheet.column_dimensions[chr(64 + idx)].width = width
+
+        buffer = BytesIO()
+        workbook.save(buffer)
+        buffer.seek(0)
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = timezone.now().strftime('student_performance_%Y%m%d_%H%M%S.xlsx')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response.write(buffer.read())
+        buffer.close()
+        return response
+
+
+class StudentPerformanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
+    """Detailed performance history for a single student."""
+
+    model = Student
+    template_name = 'students/student_performance_detail.html'
+    context_object_name = 'student'
+    permission_required = 'students.view_studentmark'
+    raise_exception = True
+
+    def get_queryset(self):
+        return (
+            Student.objects.select_related('school')
+            .prefetch_related(
+                Prefetch(
+                    'academic_records',
+                    queryset=StudentMark.objects.select_related('academic_year')
+                    .order_by('-academic_year__name', '-term', 'subject')
+                )
+            )
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        records = self.object.academic_records.all()
+        stats = records.aggregate(
+            total_marks=Coalesce(
+                Sum('marks'),
+                Value(0, output_field=DecimalField(max_digits=10, decimal_places=2)),
+            ),
+            avg_marks=Avg('marks'),
+            subjects_count=Count('id'),
+        )
+        avg_marks = stats.get('avg_marks') or 0
+        context.update({
+            'performance_history': records,
+            'total_marks': stats.get('total_marks') or 0,
+            'average_marks': avg_marks,
+            'subjects_count': stats.get('subjects_count') or 0,
+            'has_passed': avg_marks >= 50,
+        })
+        return context
 
 
 @login_required

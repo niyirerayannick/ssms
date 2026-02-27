@@ -60,18 +60,43 @@
         </form>
     </div>
 
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex flex-wrap items-center gap-2">
+            {% for option in status_filter_options %}
+                <a href="{{ option.url }}"
+                   class="px-4 py-2 text-xs font-bold rounded-xl border transition-all {{ option.active|yesno:'bg-emerald-600 text-white border-emerald-600, bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200' }}">
+                    {{ option.label }}
+                </a>
+            {% endfor %}
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{{ export_pdf_url }}" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-xl hover:bg-slate-200">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11V3m0 8l3-3m-3 3L9 8m-4 3v8a2 2 0 002 2h10a2 2 0 002-2v-8" />
+                </svg>
+                Export to PDF
+            </a>
+            <a href="{{ export_excel_url }}" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 11h16M4 15h10" />
+                </svg>
+                Export to Excel
+            </a>
+        </div>
+    </div>
+
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
         <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-5 border border-slate-100 hover:shadow-md transition-shadow">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Records</p>
-            <p class="text-xl sm:text-3xl font-bold text-slate-900 mt-1 sm:mt-2">{{ total_records|compact_number }}</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Students</p>
+            <p class="text-xl sm:text-3xl font-bold text-slate-900 mt-1 sm:mt-2">{{ total_students|default:0|compact_number }}</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-5 border border-slate-100 hover:shadow-md transition-shadow">
             <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Passed</p>
-            <p class="text-xl sm:text-3xl font-bold text-emerald-600 mt-1 sm:mt-2">{{ passed|compact_number }}</p>
+            <p class="text-xl sm:text-3xl font-bold text-emerald-600 mt-1 sm:mt-2">{{ passed|default:0|compact_number }}</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-5 border border-slate-100 hover:shadow-md transition-shadow">
             <p class="text-[10px] font-bold text-rose-400 uppercase tracking-wider">Failed</p>
-            <p class="text-xl sm:text-3xl font-bold text-rose-600 mt-1 sm:mt-2">{{ failed|compact_number }}</p>
+            <p class="text-xl sm:text-3xl font-bold text-rose-600 mt-1 sm:mt-2">{{ failed|default:0|compact_number }}</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-5 border border-slate-100 hover:shadow-md transition-shadow">
             <p class="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Pass Rate</p>
@@ -113,42 +138,48 @@
             <table class="min-w-full divide-y divide-slate-100">
                 <thead class="bg-slate-50/50">
                     <tr>
-                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student</th>
-                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Class Level</th>
-                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Academic Year</th>
-                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Term</th>
-                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Avg Marks</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student Name</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Class</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total / Average</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Action</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-slate-50">
-                    {% for row in performance_rows %}
-                    {% with avg=row.avg_marks|default:0 %}
+                    {% for student in performance_rows %}
+                    {% with avg=student.avg_marks|default:0 total=student.total_marks|default:0 %}
                     <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-bold text-slate-900">{{ row.student__first_name }} {{ row.student__last_name }}</div>
-                            <div class="text-[10px] text-slate-500 sm:hidden mt-0.5">{{ row.student__class_level|default:"N/A" }} • {{ row.term|default:"N/A" }}</div>
+                            <div class="text-sm font-bold text-slate-900">{{ student.full_name }}</div>
+                            <div class="text-[10px] text-slate-500 mt-0.5">{{ student.records_count|default:0 }} record{{ student.records_count|default:0|pluralize }}</div>
+                            <div class="text-[10px] text-slate-500 sm:hidden mt-0.5">{{ student.class_level|default:"N/A" }}</div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden sm:table-cell">{{ row.student__class_level|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden md:table-cell">{{ row.academic_year__name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden lg:table-cell">{{ row.term|default:"N/A" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden sm:table-cell">{{ student.class_level|default:"N/A" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="text-sm font-bold {% if avg >= 50 %}text-emerald-600{% else %}text-rose-600{% endif %}">
-                                {{ avg|floatformat:1 }}
-                            </span>
+                            <div class="text-sm font-bold text-slate-900">{{ total|floatformat:1 }}</div>
+                            <p class="text-[11px] text-slate-500">Avg {{ avg|floatformat:1 }}%</p>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            {% if avg >= 50 %}
+                            {% if student.has_passed %}
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 uppercase tracking-wide">Pass</span>
                             {% else %}
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 uppercase tracking-wide">Fail</span>
                             {% endif %}
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <a href="{% url 'students:student_performance_detail' student.pk %}"
+                               class="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-slate-900 rounded-xl shadow-sm hover:bg-slate-800 active:scale-95">
+                                View All Records
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </a>
+                        </td>
                     </tr>
                     {% endwith %}
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center">
+                        <td colspan="5" class="px-6 py-12 text-center">
                             <div class="flex flex-col items-center">
                                 <div class="p-4 bg-slate-50 rounded-full mb-4">
                                     <svg class="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -164,6 +195,27 @@
                 </tbody>
             </table>
         </div>
+        {% if is_paginated %}
+        <div class="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-slate-100 gap-3 bg-slate-50/40">
+            <p class="text-xs text-slate-500">
+                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} students
+            </p>
+            <div class="flex items-center gap-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+                       class="px-4 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-100">Previous</a>
+                {% else %}
+                    <span class="px-4 py-2 text-xs font-bold text-slate-300 bg-white border border-slate-100 rounded-xl">Previous</span>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if querystring %}&{{ querystring }}{% endif %}"
+                       class="px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700">Next</a>
+                {% else %}
+                    <span class="px-4 py-2 text-xs font-bold text-slate-300 bg-white border border-slate-100 rounded-xl">Next</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 
