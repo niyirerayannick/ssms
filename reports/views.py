@@ -132,7 +132,7 @@ def students_pdf(request):
         academic_year = get_object_or_404(AcademicYear, id=year_id)
         # Filter students who have marks or fees in this year
         students = students.filter(
-            Q(marks__academic_year=academic_year) | 
+            Q(academic_records__academic_year=academic_year) | 
             Q(fees__academic_year=academic_year)
         ).distinct()
         subtitle = f"Academic Year: {academic_year.name}"
@@ -229,7 +229,7 @@ def sponsored_students_report(request):
     if year_id:
         academic_year = get_object_or_404(AcademicYear, id=year_id)
         students = students.filter(
-            Q(marks__academic_year=academic_year) | 
+            Q(academic_records__academic_year=academic_year) | 
             Q(fees__academic_year=academic_year)
         ).distinct()
         subtitle = f"Academic Year: {academic_year.name}"
@@ -634,12 +634,14 @@ def insurance_pdf(request):
 @login_required
 def reports_index(request):
     """Reports index page."""
-    boarding_count = Student.objects.filter(boarding_status='boarding').count()
-    non_boarding_count = Student.objects.filter(boarding_status='non_boarding').count()
-    nursery_count = Student.objects.filter(school_level='nursery').count()
-    primary_count = Student.objects.filter(school_level='primary').count()
-    secondary_count = Student.objects.filter(school_level='secondary').count()
-    tvet_count = Student.objects.filter(school_level='tvet').count()
+    counts = Student.objects.aggregate(
+        boarding_count=Count('id', filter=Q(boarding_status='boarding')),
+        non_boarding_count=Count('id', filter=Q(boarding_status='non_boarding')),
+        nursery_count=Count('id', filter=Q(school_level='nursery')),
+        primary_count=Count('id', filter=Q(school_level='primary')),
+        secondary_count=Count('id', filter=Q(school_level='secondary')),
+        tvet_count=Count('id', filter=Q(school_level='tvet')),
+    )
     
     # Get all academic years for filter dropdown
     academic_years = AcademicYear.objects.all().order_by('-name')
@@ -647,12 +649,12 @@ def reports_index(request):
     districts = District.objects.all().order_by('name')
 
     context = {
-        'boarding_count': boarding_count,
-        'non_boarding_count': non_boarding_count,
-        'nursery_count': nursery_count,
-        'primary_count': primary_count,
-        'secondary_count': secondary_count,
-        'tvet_count': tvet_count,
+        'boarding_count': counts['boarding_count'],
+        'non_boarding_count': counts['non_boarding_count'],
+        'nursery_count': counts['nursery_count'],
+        'primary_count': counts['primary_count'],
+        'secondary_count': counts['secondary_count'],
+        'tvet_count': counts['tvet_count'],
         'academic_years': academic_years,
         'districts': districts,
     }

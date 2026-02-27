@@ -43,6 +43,12 @@
                     </select>
                 </div>
             </div>
+            <button id="reset-filters" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold uppercase tracking-wider hover:bg-slate-50 transition-all active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Reset Filters
+            </button>
         </div>
         <div class="flex items-center gap-2 px-3 py-2 bg-amber-50 rounded-xl border border-amber-100">
             <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,6 +56,7 @@
             </svg>
             <p class="text-[11px] text-amber-700 font-medium italic leading-tight">Selected filters apply to all reports</p>
         </div>
+        <div id="active-filters" class="hidden mt-3 flex flex-wrap items-center gap-2"></div>
     </div>
 
     <!-- Stats Grid -->
@@ -94,7 +101,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <!-- Students List PDF -->
             <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-emerald-600/5 to-teal-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-emerald-600/5 to-teal-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div class="p-6">
                     <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors">
                         <svg class="w-6 h-6 text-slate-400 group-hover:text-emerald-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +131,7 @@
 
             <!-- Sponsored Students Report -->
             <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-amber-600/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-amber-600/5 to-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div class="p-6">
                     <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-amber-100 transition-colors">
                         <svg class="w-6 h-6 text-slate-400 group-hover:text-amber-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,7 +177,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <!-- Comprehensive Financial Report -->
             <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-indigo-600/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-indigo-600/5 to-blue-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div class="p-6">
                     <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition-colors">
                         <svg class="w-6 h-6 text-slate-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,7 +207,7 @@
 
             <!-- School Fees PDF -->
             <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-cyan-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-blue-600/5 to-cyan-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div class="p-6">
                     <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
                         <svg class="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -230,7 +237,7 @@
 
             <!-- School Fees Excel -->
             <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-emerald-600/5 to-green-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-emerald-600/5 to-green-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div class="p-6">
                     <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors">
                         <svg class="w-6 h-6 text-slate-400 group-hover:text-emerald-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,7 +282,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <!-- Insurance Coverage PDF -->
             <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-pink-600/5 to-rose-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-pink-600/5 to-rose-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div class="p-6">
                     <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-pink-100 transition-colors">
                         <svg class="w-6 h-6 text-slate-400 group-hover:text-pink-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,6 +330,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const yearFilter = document.getElementById('year-filter');
             const districtFilter = document.getElementById('district-filter');
+            const resetFiltersButton = document.getElementById('reset-filters');
+            const activeFilters = document.getElementById('active-filters');
             const reportLinks = document.querySelectorAll('.report-link');
             
             // Store original hrefs
@@ -330,6 +339,52 @@
             reportLinks.forEach(link => {
                 originalHrefs.set(link, link.href);
             });
+
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('year')) {
+                yearFilter.value = params.get('year');
+            }
+            if (params.get('district')) {
+                districtFilter.value = params.get('district');
+            }
+
+            function updateHistoryQuery() {
+                const historyParams = new URLSearchParams();
+                if (yearFilter.value) {
+                    historyParams.set('year', yearFilter.value);
+                }
+                if (districtFilter.value) {
+                    historyParams.set('district', districtFilter.value);
+                }
+                const newUrl = historyParams.toString()
+                    ? `${window.location.pathname}?${historyParams.toString()}`
+                    : window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            }
+
+            function updateActiveFilters() {
+                const chips = [];
+                const selectedYearText = yearFilter.options[yearFilter.selectedIndex]?.text;
+                const selectedDistrictText = districtFilter.options[districtFilter.selectedIndex]?.text;
+
+                if (yearFilter.value && selectedYearText) {
+                    chips.push(`Academic Year: ${selectedYearText}`);
+                }
+                if (districtFilter.value && selectedDistrictText) {
+                    chips.push(`District: ${selectedDistrictText}`);
+                }
+
+                if (!chips.length) {
+                    activeFilters.classList.add('hidden');
+                    activeFilters.innerHTML = '';
+                    return;
+                }
+
+                activeFilters.classList.remove('hidden');
+                activeFilters.innerHTML = chips.map(chip => `
+                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase tracking-wider">${chip}</span>
+                `).join('');
+            }
             
             // Function to update all links
             function updateAllLinks() {
@@ -337,29 +392,35 @@
                 const district = districtFilter.value;
                 
                 reportLinks.forEach(link => {
-                    let url = originalHrefs.get(link);
-                    
-                    // Build query parameters
-                    let params = [];
+                    const baseUrl = originalHrefs.get(link);
+                    const urlObj = new URL(baseUrl, window.location.origin);
+                    urlObj.search = '';
+
                     if (year) {
-                        params.push('year=' + year);
+                        urlObj.searchParams.set('year', year);
                     }
                     if (district) {
-                        params.push('district=' + district);
+                        urlObj.searchParams.set('district', district);
                     }
-                    
-                    // Add parameters to URL
-                    if (params.length > 0) {
-                        url += '?' + params.join('&');
-                    }
-                    
-                    link.href = url;
+
+                    link.href = `${urlObj.pathname}${urlObj.search}`;
                 });
+
+                updateActiveFilters();
+                updateHistoryQuery();
             }
             
             // Update links when filters change
             yearFilter.addEventListener('change', updateAllLinks);
             districtFilter.addEventListener('change', updateAllLinks);
+
+            if (resetFiltersButton) {
+                resetFiltersButton.addEventListener('click', function() {
+                    yearFilter.value = '';
+                    districtFilter.value = '';
+                    updateAllLinks();
+                });
+            }
             
             // Initial update in case there are default values
             updateAllLinks();
