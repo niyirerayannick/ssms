@@ -6,6 +6,6 @@ from .models import SchoolFee
 class SchoolFeesAdmin(admin.ModelAdmin):
     list_display = ['student', 'academic_year', 'total_fees', 'amount_paid', 'balance', 'payment_status', 'created_at']
     list_filter = ['payment_status', 'academic_year']
-    search_fields = ['student__full_name']
+    search_fields = ['student__first_name', 'student__last_name']
     readonly_fields = ['balance', 'created_at', 'updated_at']
 

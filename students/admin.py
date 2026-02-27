@@ -13,14 +13,14 @@ class StudentAdmin(admin.ModelAdmin):
 @admin.register(StudentPhoto)
 class StudentPhotoAdmin(admin.ModelAdmin):
     list_display = ['student', 'caption', 'created_at']
-    search_fields = ['student__full_name', 'caption']
+    search_fields = ['student__first_name', 'student__last_name', 'caption']
     list_filter = ['created_at']
 
 
 @admin.register(StudentMark)
 class AcademicRecordAdmin(admin.ModelAdmin):
     list_display = ['student', 'subject', 'marks', 'term', 'academic_year', 'created_at']
-    search_fields = ['student__full_name', 'subject']
+    search_fields = ['student__first_name', 'student__last_name', 'subject']
     list_filter = ['term', 'academic_year', 'created_at']
 
 

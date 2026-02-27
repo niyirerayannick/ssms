@@ -13,5 +13,5 @@ class FamilyAdmin(admin.ModelAdmin):
 @admin.register(FamilyStudent)
 class FamilyStudentAdmin(admin.ModelAdmin):
     list_display = ['family', 'student', 'relationship', 'created_at']
-    search_fields = ['family__guardian_name', 'student__full_name']
+    search_fields = ['family__guardian_name', 'student__first_name', 'student__last_name']
     list_filter = ['relationship', 'created_at']

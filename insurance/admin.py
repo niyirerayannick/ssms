@@ -14,7 +14,7 @@ class FamilyInsuranceAdmin(admin.ModelAdmin):
 class HealthInsuranceAdmin(admin.ModelAdmin):
     list_display = ['student', 'required_amount', 'amount_paid', 'coverage_status', 'created_at']
     list_filter = ['coverage_status']
-    search_fields = ['student__full_name']
+    search_fields = ['student__first_name', 'student__last_name']
     readonly_fields = ['created_at', 'updated_at']
     verbose_name = "Legacy Health Insurance"
     verbose_name_plural = "Legacy Health Insurance Records"
