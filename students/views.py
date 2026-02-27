@@ -503,7 +503,7 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
             return self._performance_qs
 
         filters = self.get_filters()
-        queryset = Student.objects.filter(academic_records__isnull=False)
+        queryset = Student.objects.select_related('school').filter(academic_records__isnull=False)
         mark_filter = Q()
 
         if filters['class_level']:
