@@ -157,3 +157,21 @@
     {% endif %}
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.TomSelect) {
+            const schoolSelect = document.getElementById('id_school');
+            if (schoolSelect) {
+                new TomSelect(schoolSelect, {
+                    create: false,
+                    sortField: { field: 'text', direction: 'asc' },
+                    placeholder: 'Search schools…',
+                    plugins: ['clear_button']
+                });
+            }
+        }
+    });
+</script>
+{% endblock %}
