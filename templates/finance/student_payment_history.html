@@ -75,16 +75,6 @@
             </div>
         </div>
         
-        <!-- Progress Bar -->
-        <div class="mt-8 pt-6 border-t border-slate-100">
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Payment Progress</span>
-                <span class="text-sm font-bold text-indigo-600">{{ payment_percentage }}%</span>
-            </div>
-            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner">
-                <div class="bg-indigo-600 h-full rounded-full transition-all duration-700 ease-out shadow-sm" style="width: {{ payment_percentage }}%"></div>
-            </div>
-        </div>
     </div>
 
     <!-- Payment Records Table -->
@@ -100,6 +90,7 @@
                 <thead class="bg-slate-50/50">
                     <tr>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Year</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Term</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">School</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Class</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Required</th>
@@ -117,6 +108,7 @@
                             <div class="text-sm font-bold text-slate-900">{{ fee.academic_year.name|default:"N/A" }}</div>
                             <div class="text-[10px] text-slate-500 md:hidden font-medium mt-1">{{ fee.school_name }}</div>
                         </td>
+                        <td class="px-6 py-4 text-sm font-medium text-slate-700">{{ fee.get_term_display }}</td>
                         <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">{{ fee.school_name }}</td>
                         <td class="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell font-medium">{{ fee.class_level }}</td>
                         <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">FRW {{ fee.total_fees|compact_number }}</td>
@@ -166,6 +158,7 @@
         </div>
         {% endif %}
     </div>
+
 
     <!-- Comments Section -->
     {% if fees %}

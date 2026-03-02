@@ -1,9 +1,12 @@
+from collections import OrderedDict
+from decimal import Decimal
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q, Sum, Count
 from django.core.paginator import Paginator
-from core.models import District, AcademicYear
+from core.models import District, AcademicYear, School
 from django.http import JsonResponse
 from .models import SchoolFee
 from .forms import FeeForm, FamilyInsuranceForm
@@ -74,10 +77,9 @@ def fees_list(request):
 def school_fees_dashboard(request):
     """Dashboard focused on school fees only."""
     total_school_fees = SchoolFee.objects.count()
-    paid_school_fees = SchoolFee.objects.filter(payment_status='paid').count()
-    partial_school_fees = SchoolFee.objects.filter(payment_status='partial').count()
-    pending_school_fees = SchoolFee.objects.filter(payment_status='pending').count()
-    overdue_school_fees = SchoolFee.objects.filter(payment_status='overdue').count()
+    students_paid_count = Student.objects.filter(fees__payment_status='paid').distinct().count()
+    academic_year_count = AcademicYear.objects.filter(school_fees__isnull=False).distinct().count()
+    term_record_count = total_school_fees
 
     total_fees_required = SchoolFee.objects.aggregate(Sum('total_fees'))['total_fees__sum'] or 0
     total_fees_collected = SchoolFee.objects.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
@@ -89,26 +91,122 @@ def school_fees_dashboard(request):
     seven_days_ago = timezone.now() - timedelta(days=7)
     recent_school_fees = SchoolFee.objects.filter(updated_at__gte=seven_days_ago).count()
 
-    fees_queryset = SchoolFee.objects.select_related('student', 'academic_year').order_by('-created_at')
-    paginator = Paginator(fees_queryset, 20)
+    fees_queryset = (
+        SchoolFee.objects.select_related('student', 'student__school')
+        .order_by('student__school__name', 'student__last_name')
+    )
+
+    school_groups_map = OrderedDict()
+    for fee in fees_queryset:
+        student = fee.student
+        school = student.school if student else None
+        school_name = school.name if school else (fee.school_name or 'Unassigned School')
+        key = ('school', school.id) if school else ('external', school_name.lower())
+        if key not in school_groups_map:
+            school_groups_map[key] = {
+                'school_id': school.id if school else None,
+                'school_name': school_name,
+                'student_ids': set(),
+                'total_required': Decimal('0'),
+                'total_paid': Decimal('0'),
+                'total_balance': Decimal('0'),
+                'status_counts': {
+                    'paid': 0,
+                    'partial': 0,
+                    'pending': 0,
+                    'overdue': 0,
+                },
+            }
+
+        entry = school_groups_map[key]
+        entry['student_ids'].add(student.id if student else None)
+        entry['total_required'] += fee.total_fees
+        entry['total_paid'] += fee.amount_paid
+        entry['total_balance'] += fee.balance
+        status = fee.payment_status or 'pending'
+        if status in entry['status_counts']:
+            entry['status_counts'][status] += 1
+
+    school_fee_groups = []
+    for entry in school_groups_map.values():
+        school_fee_groups.append({
+            'school_id': entry['school_id'],
+            'school_name': entry['school_name'],
+            'student_count': len({sid for sid in entry['student_ids'] if sid}),
+            'total_required': entry['total_required'],
+            'total_paid': entry['total_paid'],
+            'total_balance': entry['total_balance'],
+            'status_counts': entry['status_counts'],
+            'has_linked_school': entry['school_id'] is not None,
+        })
+
+    paginator = Paginator(school_fee_groups, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     context = {
-        'total_school_fees': total_school_fees,
-        'paid_school_fees': paid_school_fees,
-        'partial_school_fees': partial_school_fees,
-        'pending_school_fees': pending_school_fees,
-        'overdue_school_fees': overdue_school_fees,
+        'students_paid_count': students_paid_count,
+        'academic_year_count': academic_year_count,
+        'term_record_count': term_record_count,
         'total_fees_required': total_fees_required,
         'total_fees_collected': total_fees_collected,
         'total_fees_outstanding': total_fees_outstanding,
         'fees_collection_percentage': fees_collection_percentage,
         'recent_school_fees': recent_school_fees,
-        'fees_records': page_obj,
+        'school_fee_groups': page_obj,
         'page_obj': page_obj,
     }
     return render(request, 'finance/school_fees_dashboard.html', context)
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
+def school_fee_students(request, school_id):
+    """Display aggregated fee information for students within a school."""
+    school = get_object_or_404(School, pk=school_id)
+
+    school_fees = (
+        SchoolFee.objects.filter(student__school=school)
+        .select_related('student', 'academic_year')
+        .order_by('student__first_name', 'student__last_name')
+    )
+
+    student_map = OrderedDict()
+    for fee in school_fees:
+        student = fee.student
+        if not student:
+            continue
+        entry = student_map.setdefault(
+            student.id,
+            {
+                'student': student,
+                'total_required': Decimal('0'),
+                'total_paid': Decimal('0'),
+                'total_balance': Decimal('0'),
+                'latest_status': fee.payment_status,
+                'status_display': fee.get_payment_status_display(),
+            },
+        )
+        entry['total_required'] += fee.total_fees
+        entry['total_paid'] += fee.amount_paid
+        entry['total_balance'] += fee.balance
+        entry['latest_status'] = fee.payment_status
+        entry['status_display'] = fee.get_payment_status_display()
+
+    student_summaries = list(student_map.values())
+    school_totals = {
+        'required': sum((item['total_required'] for item in student_summaries), Decimal('0')),
+        'paid': sum((item['total_paid'] for item in student_summaries), Decimal('0')),
+        'balance': sum((item['total_balance'] for item in student_summaries), Decimal('0')),
+        'student_count': len(student_summaries),
+    }
+
+    context = {
+        'school': school,
+        'student_summaries': student_summaries,
+        'school_totals': school_totals,
+    }
+    return render(request, 'finance/school_fee_students.html', context)
 
 
 @login_required
@@ -202,15 +300,17 @@ def student_payment_history(request, student_id):
     student = get_object_or_404(Student, pk=student_id)
     
     # Get all fees for this student
-    fees = SchoolFee.objects.filter(student=student).order_by('-academic_year__name', '-created_at')
+    fees_qs = SchoolFee.objects.filter(student=student).select_related('academic_year').order_by('-academic_year__name', '-term')
     
     # Calculate totals for this student
-    total_required = fees.aggregate(Sum('total_fees'))['total_fees__sum'] or 0
-    total_paid = fees.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
-    total_outstanding = fees.aggregate(Sum('balance'))['balance__sum'] or 0
+    total_required = fees_qs.aggregate(Sum('total_fees'))['total_fees__sum'] or 0
+    total_paid = fees_qs.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
+    total_outstanding = fees_qs.aggregate(Sum('balance'))['balance__sum'] or 0
     
     # Payment percentage
     payment_percentage = round((total_paid / total_required * 100) if total_required > 0 else 0, 1)
+
+    fees = list(fees_qs)
     
     context = {
         'student': student,

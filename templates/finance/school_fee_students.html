@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ school.name }} - Students - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-500">School Breakdown</p>
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">{{ school.name }}</h1>
+            <p class="text-sm text-slate-600 mt-1">{{ school_totals.student_count }} student{{ school_totals.student_count|pluralize }} linked to this school.</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'finance:school_fees_dashboard' %}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:text-indigo-600 hover:border-indigo-200 transition-all text-sm font-semibold active:scale-95">
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white border border-slate-200/70 rounded-2xl p-5 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Total Required</p>
+            <p class="text-2xl font-bold text-slate-900 mt-2">FRW {{ school_totals.required|compact_number }}</p>
+        </div>
+        <div class="bg-white border border-slate-200/70 rounded-2xl p-5 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Amount Paid</p>
+            <p class="text-2xl font-bold text-emerald-600 mt-2">FRW {{ school_totals.paid|compact_number }}</p>
+        </div>
+        <div class="bg-white border border-slate-200/70 rounded-2xl p-5 shadow-sm">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Outstanding Balance</p>
+            <p class="text-2xl font-bold text-rose-600 mt-2">FRW {{ school_totals.balance|compact_number }}</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="text-lg font-bold text-slate-800">Student Fee Summary</h2>
+            <span class="text-[10px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg uppercase tracking-wider">Details</span>
+        </div>
+        {% if student_summaries %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50/50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Required</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Paid</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Balance</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                    {% for summary in student_summaries %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-semibold text-slate-900">{{ summary.student.full_name }}</div>
+                            <p class="text-xs text-slate-500">Class: {{ summary.student.class_level }}</p>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600">FRW {{ summary.total_required|compact_number }}</td>
+                        <td class="px-6 py-4 text-sm text-emerald-600 font-semibold">FRW {{ summary.total_paid|compact_number }}</td>
+                        <td class="px-6 py-4 text-sm font-semibold {% if summary.total_balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">FRW {{ summary.total_balance|compact_number }}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ring-1
+                                {% if summary.latest_status == 'paid' %}bg-emerald-50 text-emerald-700 ring-emerald-100
+                                {% elif summary.latest_status == 'overdue' %}bg-rose-50 text-rose-700 ring-rose-100
+                                {% elif summary.latest_status == 'partial' %}bg-amber-50 text-amber-700 ring-amber-100
+                                {% else %}bg-slate-50 text-slate-700 ring-slate-100{% endif %}">
+                                {{ summary.status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'finance:student_payments' summary.student.id %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-100 text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-100 active:scale-95">
+                                View Payments
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <p class="text-slate-500 font-medium">No students with recorded fees for this school yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

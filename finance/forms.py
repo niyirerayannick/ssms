@@ -83,6 +83,29 @@ class FeeForm(forms.ModelForm):
             except:
                 pass  # Instance doesn't have a student yet (new record)
 
+    def clean(self):
+        cleaned_data = super().clean()
+        student = cleaned_data.get('student')
+        academic_year = cleaned_data.get('academic_year')
+        term = cleaned_data.get('term')
+
+        if student and academic_year and term:
+            qs = SchoolFee.objects.filter(
+                student=student,
+                academic_year=academic_year,
+                term=term,
+            )
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+
+            if qs.exists():
+                term_label = dict(SchoolFee.TERM_CHOICES).get(term, term)
+                raise forms.ValidationError(
+                    f"{student.full_name} already has a fee record for {academic_year.name} - {term_label}."
+                )
+
+        return cleaned_data
+
 
 class FamilyInsuranceForm(forms.ModelForm):
     """Form for creating and editing family Mutuelle de Santé payments."""

@@ -23,26 +23,18 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4">
         <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 sm:p-6 rounded-2xl shadow-sm text-white">
-            <p class="text-indigo-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Total Records</p>
-            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ total_school_fees|compact_number }}</p>
+            <p class="text-indigo-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Students Paid</p>
+            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ students_paid_count|compact_number }}</p>
         </div>
         <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 p-4 sm:p-6 rounded-2xl shadow-sm text-white">
-            <p class="text-emerald-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Paid</p>
-            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ paid_school_fees|compact_number }}</p>
+            <p class="text-emerald-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Academic Years</p>
+            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ academic_year_count|compact_number }}</p>
         </div>
         <div class="bg-gradient-to-br from-amber-500 to-amber-600 p-4 sm:p-6 rounded-2xl shadow-sm text-white">
-            <p class="text-amber-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Partial</p>
-            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ partial_school_fees|compact_number }}</p>
-        </div>
-        <div class="bg-gradient-to-br from-orange-500 to-orange-600 p-4 sm:p-6 rounded-2xl shadow-sm text-white">
-            <p class="text-orange-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Pending</p>
-            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ pending_school_fees|compact_number }}</p>
-        </div>
-        <div class="bg-gradient-to-br from-rose-500 to-rose-600 p-4 sm:p-6 rounded-2xl shadow-sm text-white">
-            <p class="text-rose-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Overdue</p>
-            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ overdue_school_fees|compact_number }}</p>
+            <p class="text-amber-100 text-[10px] sm:text-sm font-bold uppercase tracking-wider">Term Records</p>
+            <p class="text-xl sm:text-3xl font-bold mt-1 sm:mt-2">{{ term_record_count|compact_number }}</p>
         </div>
     </div>
 
@@ -67,35 +59,50 @@
             <table class="min-w-full divide-y divide-slate-200">
                 <thead class="bg-slate-50/50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Required</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Paid</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Balance</th>
-                        <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">School</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Students</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Required</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Collected</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Balance</th>
+                            <th class="px-6 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Status Mix</th>
+                            <th class="px-6 py-3 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 bg-white">
-                    {% for fee in fees_records %}
-                    <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" onclick="window.location='{% url 'finance:student_payments' fee.student.id %}'">
+                        {% for school in school_fee_groups %}
+                        <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="px-6 py-4">
-                            <div class="text-sm font-semibold text-slate-900">{{ fee.student.full_name }}</div>
+                                <div class="text-sm font-semibold text-slate-900">{{ school.school_name }}</div>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Paid {{ school.status_counts.paid }} · Partial {{ school.status_counts.partial }} · Pending {{ school.status_counts.pending }} · Overdue {{ school.status_counts.overdue }}
+                                </p>
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">FRW {{ fee.total_fees|compact_number }}</td>
-                        <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ fee.amount_paid|compact_number }}</td>
-                        <td class="px-6 py-4"><span class="text-sm font-bold text-rose-600">FRW {{ fee.balance|compact_number }}</span></td>
-                        <td class="px-6 py-4">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
-                                {% if fee.payment_status == 'paid' %}bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100
-                                {% elif fee.payment_status == 'overdue' %}bg-rose-50 text-rose-700 ring-1 ring-rose-100
-                                {% elif fee.payment_status == 'partial' %}bg-amber-50 text-amber-700 ring-1 ring-amber-100
-                                {% else %}bg-orange-50 text-orange-700 ring-1 ring-orange-100{% endif %}">
-                                {{ fee.get_payment_status_display }}
-                            </span>
+                            <td class="px-6 py-4 text-sm text-slate-600">{{ school.student_count }} student{{ school.student_count|pluralize }}</td>
+                            <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">FRW {{ school.total_required|compact_number }}</td>
+                            <td class="px-6 py-4 text-sm text-emerald-600 hidden md:table-cell font-medium">FRW {{ school.total_paid|compact_number }}</td>
+                            <td class="px-6 py-4"><span class="text-sm font-bold {% if school.total_balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">FRW {{ school.total_balance|compact_number }}</span></td>
+                            <td class="px-6 py-4 hidden lg:table-cell">
+                                <div class="flex flex-wrap gap-2 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Paid {{ school.status_counts.paid }}</span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">Partial {{ school.status_counts.partial }}</span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-50 text-orange-700">Pending {{ school.status_counts.pending }}</span>
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">Overdue {{ school.status_counts.overdue }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                {% if school.has_linked_school %}
+                                <a href="{% url 'finance:school_fee_students' school.school_id %}"
+                                   class="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-600 border border-indigo-100 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-indigo-100 active:scale-95">
+                                    View Students
+                                </a>
+                                {% else %}
+                                <span class="text-[10px] font-semibold text-slate-400">Link school to view</span>
+                                {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-slate-500 font-medium">No school fee records found</td>
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-500 font-medium">No school fee records found</td>
                     </tr>
                     {% endfor %}
                 </tbody>

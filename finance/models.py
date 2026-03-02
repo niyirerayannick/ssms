@@ -49,6 +49,12 @@ class SchoolFee(models.Model):
         permissions = [
             ('manage_fees', 'Can manage fees'),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'academic_year', 'term'],
+                name='unique_student_term_year_fee',
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         """Auto-calculate balance and update payment status."""
