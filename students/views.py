@@ -542,17 +542,22 @@ def student_performance_bulk_entry(request):
             student__in=students,
             academic_year=academic_year,
             term=term,
-            subject__iexact=subject_value,
         )
-        existing_map = {mark.student_id: mark for mark in existing_marks_qs}
-        existing_avg = existing_marks_qs.aggregate(avg=Avg('marks'))['avg'] if existing_marks_qs.exists() else None
-
-        existing_count = existing_marks_qs.count()
+        existing_map = {}
+        for mark in existing_marks_qs:
+            current = existing_map.get(mark.student_id)
+            if not current:
+                existing_map[mark.student_id] = mark
+                continue
+            if current.subject != subject_value and mark.subject == subject_value:
+                existing_map[mark.student_id] = mark
+        existing_values = [float(mark.marks) for mark in existing_map.values() if mark.marks is not None]
+        existing_count = len(existing_map)
         summary = {
             'student_count': len(students),
             'records_existing': existing_count,
             'pending_records': max(len(students) - existing_count, 0),
-            'average_marks': round(existing_avg, 1) if existing_avg else 0,
+            'average_marks': round(sum(existing_values) / len(existing_values), 1) if existing_values else 0,
         }
 
         initial_data = []
@@ -580,21 +585,24 @@ def student_performance_bulk_entry(request):
                         if marks in (None, ''):
                             continue
 
-                        current_subject = existing_map.get(student_id).subject if existing_map.get(student_id) else subject_value
-                        defaults = {
-                            'marks': marks,
-                            'teacher_remark': remark or '',
-                        }
-                        StudentMark.objects.update_or_create(
-                            defaults=defaults,
-                            student=student_lookup[student_id],
-                            academic_year=academic_year,
-                            term=term,
-                            subject=current_subject,
-                        )
-                        if student_id in existing_map:
+                        existing_mark = existing_map.get(student_id)
+                        if existing_mark:
+                            existing_mark.subject = subject_value
+                            existing_mark.marks = marks
+                            existing_mark.teacher_remark = remark or ''
+                            existing_mark.academic_year = academic_year
+                            existing_mark.term = term
+                            existing_mark.save(update_fields=['subject', 'marks', 'teacher_remark', 'academic_year', 'term', 'updated_at'])
                             updated_count += 1
                         else:
+                            StudentMark.objects.create(
+                                student=student_lookup[student_id],
+                                academic_year=academic_year,
+                                term=term,
+                                subject=subject_value,
+                                marks=marks,
+                                teacher_remark=remark or '',
+                            )
                             created_count += 1
 
                 messages.success(
@@ -605,7 +613,6 @@ def student_performance_bulk_entry(request):
                     'academic_year': academic_year.id,
                     'school': school.id,
                     'term': term,
-                    'subject': subject_value,
                     'category': category,
                 }
                 if class_level:
@@ -629,7 +636,6 @@ def student_performance_bulk_entry(request):
             'academic_year': academic_year.id,
             'school': school.id,
             'term': term,
-            'subject': subject_value,
             'category': category,
         }
         if class_level:
