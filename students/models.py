@@ -214,6 +214,52 @@ class Student(models.Model):
         return self.full_name
 
 
+class StudentEnrollmentHistory(models.Model):
+    """Snapshot of a student's enrollment details per academic year."""
+
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        related_name='enrollment_history'
+    )
+    academic_year = models.ForeignKey(
+        AcademicYear,
+        on_delete=models.CASCADE,
+        related_name='student_enrollments'
+    )
+    class_level = models.CharField(max_length=50, blank=True)
+    school = models.ForeignKey(
+        School,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='enrollment_history_records'
+    )
+    school_name = models.CharField(max_length=200, blank=True)
+    school_level = models.CharField(
+        max_length=20,
+        choices=Student.SCHOOL_LEVEL_CHOICES,
+        blank=True,
+    )
+    promoted_on = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['student__last_name', 'academic_year__name']
+        unique_together = ('student', 'academic_year')
+        verbose_name = 'Student Enrollment'
+        verbose_name_plural = 'Student Enrollments'
+
+    def __str__(self):
+        return f"{self.student.full_name} - {self.academic_year.name if self.academic_year else 'Year N/A'}"
+
+    @property
+    def display_school_name(self):
+        if self.school:
+            return self.school.name
+        return self.school_name or (self.student.school.name if self.student.school else 'N/A')
+
 
 def student_photo_path(instance, filename):
     """
@@ -263,6 +309,13 @@ class StudentMark(models.Model):
     ]
     
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='academic_records')
+    enrollment_history = models.ForeignKey(
+        'students.StudentEnrollmentHistory',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='student_marks'
+    )
     subject = models.CharField(max_length=100)
     term = models.CharField(max_length=20, choices=TERM_CHOICES)
     academic_year = models.ForeignKey(
@@ -290,6 +343,22 @@ class StudentMark(models.Model):
     def __str__(self):
         year_display = self.academic_year.name if self.academic_year else "N/A"
         return f"{self.student.full_name} - {self.subject} - {self.term} ({year_display}) - {self.marks}%"
+
+    def save(self, *args, **kwargs):
+        if self.student_id and self.academic_year_id and not self.enrollment_history_id:
+            history = ensure_enrollment_history_record(
+                self.student,
+                self.academic_year,
+                {
+                    'class_level': self.student.class_level,
+                    'school': self.student.school,
+                    'school_name': self.student.school.name if self.student.school else self.student.school_name,
+                    'school_level': self.student.school_level,
+                },
+            )
+            if history:
+                self.enrollment_history = history
+        super().save(*args, **kwargs)
 
 
 class StudentMaterial(models.Model):
@@ -324,3 +393,45 @@ class StudentMaterial(models.Model):
     def __str__(self):
         year_display = self.academic_year.name if self.academic_year else "N/A"
         return f"{self.student.full_name} - {year_display}"
+
+
+def ensure_enrollment_history_record(student, academic_year, overrides=None):
+    """Return or create the per-year enrollment snapshot for a student."""
+
+    if not student or not academic_year:
+        return None
+
+    overrides = overrides or {}
+
+    defaults = {
+        'class_level': overrides.get('class_level') or student.class_level,
+        'school': overrides.get('school') or student.school,
+        'school_name': overrides.get('school_name') or (student.school.name if student.school else student.school_name),
+        'school_level': overrides.get('school_level') or student.school_level,
+    }
+
+    history, created = StudentEnrollmentHistory.objects.get_or_create(
+        student=student,
+        academic_year=academic_year,
+        defaults=defaults,
+    )
+
+    if not created:
+        fields_to_update = []
+        if not history.class_level and defaults['class_level']:
+            history.class_level = defaults['class_level']
+            fields_to_update.append('class_level')
+        if not history.school and defaults['school']:
+            history.school = defaults['school']
+            fields_to_update.append('school')
+        if not history.school_name and defaults['school_name']:
+            history.school_name = defaults['school_name']
+            fields_to_update.append('school_name')
+        if not history.school_level and defaults['school_level']:
+            history.school_level = defaults['school_level']
+            fields_to_update.append('school_level')
+        if fields_to_update:
+            fields_to_update.append('updated_at')
+            history.save(update_fields=fields_to_update)
+
+    return history

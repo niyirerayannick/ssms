@@ -50,3 +50,11 @@ def compact_number(value):
 def split(value, arg):
     """Splits a string by the given separator."""
     return value.split(arg)
+
+
+@register.filter
+def dict_get(value, key):
+    """Safely fetch a key from a dictionary in templates."""
+    if isinstance(value, dict):
+        return value.get(key)
+    return None

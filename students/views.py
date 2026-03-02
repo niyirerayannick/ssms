@@ -87,6 +87,10 @@ def student_list(request):
     if partner_filter:
         students = students.filter(partner_id=partner_filter)
 
+    school_level_filter = request.GET.get('school_level', '')
+    if school_level_filter:
+        students = students.filter(school_level=school_level_filter)
+
     boarding_counts = {item['boarding_status']: item['total'] for item in students.values('boarding_status').annotate(total=Count('id'))}
     level_counts = {item['school_level']: item['total'] for item in students.values('school_level').annotate(total=Count('id'))}
     
@@ -103,6 +107,8 @@ def student_list(request):
         'gender_filter': gender_filter,
         'district_filter': district_filter,
         'partner_filter': partner_filter,
+        'school_level_filter': school_level_filter,
+        'school_level_choices': Student.SCHOOL_LEVEL_CHOICES,
         'districts': District.objects.order_by('name'),
         'partners': Partner.objects.order_by('name'),
         'boarding_count': boarding_counts.get('boarding', 0),
