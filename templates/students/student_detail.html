@@ -378,6 +378,56 @@
                 {% endif %}
             </div>
             
+            {% if student.partner %}
+            <div class="bg-white p-6 rounded-xl shadow-md border border-emerald-100">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zm-6 7a4 4 0 00-4 4v1h12v-1a4 4 0 00-4-4H10z"/>
+                    </svg>
+                    Partner Organization
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <p class="text-gray-600 font-medium">Partner Name</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ student.partner.name }}</p>
+                        {% if student.partner.description %}
+                        <p class="text-xs text-gray-500 mt-1">{{ student.partner.description }}</p>
+                        {% endif %}
+                    </div>
+                    {% if student.partner.contact_person %}
+                    <div>
+                        <p class="text-gray-600 font-medium">Contact Person</p>
+                        <p class="text-gray-900">{{ student.partner.contact_person }}</p>
+                    </div>
+                    {% endif %}
+                    {% if student.partner.phone or student.partner.email %}
+                    <div class="grid grid-cols-1 gap-3">
+                        {% if student.partner.phone %}
+                        <div>
+                            <p class="text-gray-600 font-medium">Phone</p>
+                            <p class="text-gray-900">
+                                <a href="tel:{{ student.partner.phone }}" class="text-emerald-600 hover:underline">{{ student.partner.phone }}</a>
+                            </p>
+                        </div>
+                        {% endif %}
+                        {% if student.partner.email %}
+                        <div>
+                            <p class="text-gray-600 font-medium">Email</p>
+                            <p class="text-gray-900">
+                                <a href="mailto:{{ student.partner.email }}" class="text-emerald-600 hover:underline">{{ student.partner.email }}</a>
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <div>
+                        <p class="text-gray-600 font-medium">Address</p>
+                        <p class="text-gray-900">{{ student.partner.location_display|default:"Not specified" }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <!-- System Timestamps -->
             <div class="bg-white p-6 rounded-xl shadow-md">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
