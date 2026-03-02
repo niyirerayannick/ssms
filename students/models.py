@@ -175,6 +175,8 @@ class Student(models.Model):
     @property
     def family_district(self):
         """Return district from family location."""
+        if self.partner and self.partner.district:
+            return self.partner.district
         if self.family:
             return self.family.district
         return None
@@ -182,6 +184,8 @@ class Student(models.Model):
     @property
     def family_district_name(self):
         """Return district name from family location."""
+        if self.partner and self.partner.district:
+            return self.partner.district.name
         if self.family and self.family.district:
             return self.family.district.name
         return "N/A"
