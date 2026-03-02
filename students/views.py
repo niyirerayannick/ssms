@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import (
     Q,
     Avg,
@@ -33,12 +34,20 @@ from openpyxl.styles import Font, Alignment, PatternFill
 from core.models import District, School, Partner
 from django.utils import timezone
 from django.core import signing
-from django.http import Http404
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
+from django.forms import formset_factory
+from urllib.parse import urlencode
 from .models import Student, StudentPhoto, StudentMark, StudentMaterial
 from core.models import Notification, AcademicYear
-from .forms import StudentForm, StudentPhotoForm, StudentMarkForm, StudentMaterialForm
+from .forms import (
+    StudentForm,
+    StudentPhotoForm,
+    StudentMarkForm,
+    StudentMaterialForm,
+    BulkPerformanceFilterForm,
+    BulkStudentMarkForm,
+)
 from families.models import FamilyStudent
 
 
@@ -469,6 +478,178 @@ def student_report_cards(request, pk):
     student = get_object_or_404(Student, pk=pk)
     records = student.academic_records.exclude(report_card_image='').exclude(report_card_image__isnull=True)
     return render(request, 'students/student_report_cards.html', {'student': student, 'records': records})
+
+
+@login_required
+@permission_required('students.add_studentmark', raise_exception=True)
+def student_performance_bulk_entry(request):
+    """Bulk capture student marks filtered by school, year, and term."""
+
+    data_source = request.POST if request.method == 'POST' else request.GET
+    filter_form = BulkPerformanceFilterForm(data_source or None)
+    StudentBulkFormSet = formset_factory(BulkStudentMarkForm, extra=0)
+
+    formset = None
+    students_loaded = False
+    table_rows = []
+    selected_filters = {}
+    selected_school = None
+    selected_year = None
+    term_display = None
+    subject_label = None
+    category_label = None
+    class_label = None
+    summary = {
+        'student_count': 0,
+        'records_existing': 0,
+        'pending_records': 0,
+        'average_marks': 0,
+    }
+
+    if filter_form.is_valid():
+        students_loaded = True
+        academic_year = filter_form.cleaned_data['academic_year']
+        school = filter_form.cleaned_data['school']
+        term = filter_form.cleaned_data['term']
+        term_slug = term.lower().replace(' ', '')
+        subject_value = f"{academic_year.name}-{term_slug}-marks"
+        category = filter_form.cleaned_data['category']
+        class_level = filter_form.cleaned_data.get('class_level', '').strip()
+
+        selected_school = school
+        selected_year = academic_year
+        term_display = term
+        subject_label = subject_value
+        class_label = class_level or None
+        category_label = dict(filter_form.fields['category'].choices).get(category, category)
+
+        student_qs = (
+            Student.objects.filter(is_active=True, school=school)
+            .select_related('school')
+            .order_by('first_name', 'last_name')
+        )
+        if category == 'primary':
+            student_qs = student_qs.filter(school_level='primary')
+        elif category == 'secondary':
+            student_qs = student_qs.filter(school_level='secondary')
+        if class_level:
+            student_qs = student_qs.filter(class_level__iexact=class_level)
+
+        students = list(student_qs)
+        student_lookup = {student.id: student for student in students}
+
+        existing_marks_qs = StudentMark.objects.filter(
+            student__in=students,
+            academic_year=academic_year,
+            term=term,
+            subject__iexact=subject_value,
+        )
+        existing_map = {mark.student_id: mark for mark in existing_marks_qs}
+        existing_avg = existing_marks_qs.aggregate(avg=Avg('marks'))['avg'] if existing_marks_qs.exists() else None
+
+        existing_count = existing_marks_qs.count()
+        summary = {
+            'student_count': len(students),
+            'records_existing': existing_count,
+            'pending_records': max(len(students) - existing_count, 0),
+            'average_marks': round(existing_avg, 1) if existing_avg else 0,
+        }
+
+        initial_data = []
+        for student in students:
+            mark = existing_map.get(student.id)
+            initial_data.append({
+                'student_id': student.id,
+                'marks': mark.marks if mark else None,
+                'teacher_remark': mark.teacher_remark if mark else '',
+            })
+
+        if request.method == 'POST':
+            formset = StudentBulkFormSet(request.POST)
+            if formset.is_valid():
+                created_count = 0
+                updated_count = 0
+                with transaction.atomic():
+                    for form in formset:
+                        student_id = form.cleaned_data.get('student_id')
+                        marks = form.cleaned_data.get('marks')
+                        remark = form.cleaned_data.get('teacher_remark', '')
+
+                        if not student_id or student_id not in student_lookup:
+                            continue
+                        if marks in (None, ''):
+                            continue
+
+                        current_subject = existing_map.get(student_id).subject if existing_map.get(student_id) else subject_value
+                        defaults = {
+                            'marks': marks,
+                            'teacher_remark': remark or '',
+                        }
+                        StudentMark.objects.update_or_create(
+                            defaults=defaults,
+                            student=student_lookup[student_id],
+                            academic_year=academic_year,
+                            term=term,
+                            subject=current_subject,
+                        )
+                        if student_id in existing_map:
+                            updated_count += 1
+                        else:
+                            created_count += 1
+
+                messages.success(
+                    request,
+                    f"Bulk marks saved for {school.name}: {created_count} new, {updated_count} updated."
+                )
+                params = {
+                    'academic_year': academic_year.id,
+                    'school': school.id,
+                    'term': term,
+                    'subject': subject_value,
+                    'category': category,
+                }
+                if class_level:
+                    params['class_level'] = class_level
+                query = urlencode(params)
+                return redirect(f"{reverse('students:student_performance_bulk_entry')}?{query}")
+        else:
+            formset = StudentBulkFormSet(initial=initial_data)
+
+        if formset is not None:
+            for idx, student in enumerate(students):
+                if idx >= len(formset.forms):
+                    break
+                table_rows.append({
+                    'student': student,
+                    'form': formset.forms[idx],
+                    'existing_mark': existing_map.get(student.id),
+                })
+
+        selected_filters = {
+            'academic_year': academic_year.id,
+            'school': school.id,
+            'term': term,
+            'subject': subject_value,
+            'category': category,
+        }
+        if class_level:
+            selected_filters['class_level'] = class_level
+
+    context = {
+        'filter_form': filter_form,
+        'formset': formset,
+        'table_rows': table_rows,
+        'students_loaded': students_loaded,
+        'selected_filters': selected_filters,
+        'selected_school': selected_school,
+        'selected_year': selected_year,
+        'term_display': term_display,
+        'subject_label': subject_label,
+        'category_label': category_label,
+        'class_label': class_label,
+        'summary': summary,
+    }
+    return render(request, 'students/student_performance_bulk_entry.html', context)
 
 class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """Paginated student performance dashboard."""

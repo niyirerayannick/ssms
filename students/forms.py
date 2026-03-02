@@ -316,3 +316,86 @@ class StudentMaterialForm(forms.ModelForm):
         active_year = years.filter(is_active=True).first()
         if active_year and not self.instance.pk:
             self.fields['academic_year'].initial = active_year
+
+
+class BulkPerformanceFilterForm(forms.Form):
+    """Filter controls for bulk student mark entry."""
+
+    CATEGORY_CHOICES = [
+        ('all', 'All Students'),
+        ('primary', 'Primary Students'),
+        ('secondary', 'Secondary Students'),
+    ]
+
+    academic_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.none(),
+        required=True,
+        empty_label="Select academic year",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
+        })
+    )
+    school = forms.ModelChoiceField(
+        queryset=School.objects.none(),
+        required=True,
+        empty_label="Select school",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
+        })
+    )
+    term = forms.ChoiceField(
+        choices=StudentMark.TERM_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
+        })
+    )
+    class_level = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm',
+            'placeholder': 'Optional class filter (e.g., P6)'
+        })
+    )
+    category = forms.ChoiceField(
+        choices=CATEGORY_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        years = AcademicYear.objects.order_by('-name')
+        schools = School.objects.order_by('name')
+        self.fields['academic_year'].queryset = years
+        self.fields['school'].queryset = schools
+        if not self.data:
+            active_year = years.filter(is_active=True).first()
+            if active_year:
+                self.fields['academic_year'].initial = active_year
+
+
+class BulkStudentMarkForm(forms.Form):
+    """Single-row form capturing marks for one student."""
+
+    student_id = forms.IntegerField(widget=forms.HiddenInput())
+    marks = forms.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        min_value=0,
+        max_value=100,
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 text-sm',
+            'step': '0.01'
+        })
+    )
+    teacher_remark = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 text-sm',
+            'placeholder': 'Optional remark'
+        })
+    )

@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Bulk Student Marks{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 rounded-3xl p-6 text-white shadow-lg border border-white/10">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-[0.28em] text-emerald-200 font-semibold">Academic Records</p>
+                <h1 class="text-3xl font-bold mt-1">Bulk Student Performance Entry</h1>
+                <p class="text-sm text-emerald-100/90 mt-2 max-w-3xl">Select an academic year, school, and term, then capture marks for every student in one pass. Existing records load automatically so you can update or fill gaps quickly.</p>
+            </div>
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                <a href="{% url 'students:student_performance' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/20 backdrop-blur border border-white/30 transition-all">Back to Performance</a>
+            </div>
+        </div>
+    </div>
+
+    <form method="get" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div>
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Academic Year</label>
+                {{ filter_form.academic_year }}
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">School</label>
+                {{ filter_form.school }}
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Term</label>
+                {{ filter_form.term }}
+                <p class="text-[11px] text-slate-400 mt-1">Subject label auto-builds as <span class="font-semibold">year-term-marks</span>.</p>
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Class Level (optional)</label>
+                {{ filter_form.class_level }}
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Student Category</label>
+                {{ filter_form.category }}
+            </div>
+        </div>
+        {% if filter_form.errors %}
+            <div class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-2 rounded-xl">
+                {{ filter_form.errors.as_ul }}
+            </div>
+        {% endif %}
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'students:student_performance_bulk_entry' %}" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white text-slate-600 text-sm font-semibold border border-slate-200 hover:bg-slate-50 active:scale-95">Reset</a>
+            <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-500 active:scale-95">
+                Load Students
+            </button>
+        </div>
+    </form>
+
+    {% if students_loaded %}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-white rounded-2xl border border-emerald-100 p-5">
+                <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Students Loaded</p>
+                <p class="text-3xl font-bold text-slate-900 mt-1">{{ summary.student_count }}</p>
+                {% if selected_school %}
+                    <p class="text-xs text-slate-500 mt-1">{{ selected_school.name }}</p>
+                {% endif %}
+            </div>
+            <div class="bg-white rounded-2xl border border-emerald-100 p-5">
+                <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Existing Records</p>
+                <p class="text-3xl font-bold text-emerald-600 mt-1">{{ summary.records_existing }}</p>
+                {% if term_display %}
+                    <p class="text-xs text-slate-500 mt-1">{{ term_display }}</p>
+                {% endif %}
+            </div>
+            <div class="bg-white rounded-2xl border border-emerald-100 p-5">
+                <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Pending Entries</p>
+                <p class="text-3xl font-bold text-amber-600 mt-1">{{ summary.pending_records }}</p>
+                {% if category_label %}
+                    <p class="text-xs text-slate-500 mt-1">{{ category_label }}</p>
+                {% endif %}
+            </div>
+            <div class="bg-white rounded-2xl border border-emerald-100 p-5">
+                <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Average Marks</p>
+                <p class="text-3xl font-bold text-blue-600 mt-1">{{ summary.average_marks }}%</p>
+                {% if subject_label %}
+                    <p class="text-xs text-slate-500 mt-1">{{ subject_label }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if table_rows %}
+            <form method="post" class="bg-white border border-slate-200 rounded-2xl shadow-sm">
+                {% csrf_token %}
+                {{ formset.management_form }}
+                {% for key, value in selected_filters.items %}
+                    <input type="hidden" name="{{ key }}" value="{{ value }}">
+                {% endfor %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Student</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 hidden sm:table-cell">Class</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Marks (0-100)</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Teacher Remark</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 hidden md:table-cell">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            {% for row in table_rows %}
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-4 py-4 align-top">
+                                        <div class="text-sm font-semibold text-slate-900">{{ row.student.full_name }}</div>
+                                        <p class="text-xs text-slate-500">{{ row.student.school.name|default:'N/A' }}</p>
+                                        {% if subject_label %}
+                                            <p class="text-[10px] text-slate-400 mt-1">Subject: {{ subject_label }}</p>
+                                        {% endif %}
+                                        {{ row.form.student_id }}
+                                    </td>
+                                    <td class="px-4 py-4 text-sm text-slate-600 hidden sm:table-cell">{{ row.student.class_level|default:'N/A' }}</td>
+                                    <td class="px-4 py-4">
+                                        {{ row.form.marks }}
+                                        {% if row.form.marks.errors %}
+                                            <p class="text-xs text-rose-600 mt-1">{{ row.form.marks.errors|join:', ' }}</p>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-4">
+                                        {{ row.form.teacher_remark }}
+                                        {% if row.form.teacher_remark.errors %}
+                                            <p class="text-xs text-rose-600 mt-1">{{ row.form.teacher_remark.errors|join:', ' }}</p>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-4 hidden md:table-cell">
+                                        {% if row.existing_mark %}
+                                            <span class="inline-flex items-center px-3 py-1 text-[10px] font-bold rounded-full bg-emerald-50 text-emerald-700">Saved · {{ row.existing_mark.marks }}%</span>
+                                            <p class="text-[10px] text-slate-500 mt-1">Updated {{ row.existing_mark.updated_at|date:'M d, Y' }}</p>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-3 py-1 text-[10px] font-bold rounded-full bg-slate-100 text-slate-600">New entry</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl">
+                    <div class="text-sm text-slate-600">
+                        All updates run inside a single transaction so either every mark saves or none do.
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-500 active:scale-95">
+                            Save Marks
+                        </button>
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <div class="bg-white border border-dashed border-slate-300 rounded-2xl p-10 text-center text-slate-500">
+                No students matched the selected criteria. Adjust the filters and try again.
+            </div>
+        {% endif %}
+    {% elif filter_form.is_bound %}
+        <div class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-xl">Could not load students. Please check filter selections.</div>
+    {% else %}
+        <div class="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-10 text-center text-slate-500">
+            Choose a school, academic year, and term to begin bulk mark entry.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.TomSelect) {
+            const schoolSelect = document.getElementById('id_school');
+            if (schoolSelect) {
+                new TomSelect(schoolSelect, {
+                    create: false,
+                    sortField: { field: 'text', direction: 'asc' },
+                    placeholder: 'Search schools…',
+                    plugins: ['clear_button']
+                });
+            }
+        }
+    });
+</script>
+{% endblock %}
