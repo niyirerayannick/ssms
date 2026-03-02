@@ -1,4 +1,6 @@
 from django.db import models
+from django.conf import settings
+from django.utils import timezone
 from students.models import Student
 from core.models import AcademicYear
 
@@ -39,6 +41,20 @@ class SchoolFee(models.Model):
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     payment_dates = models.TextField(blank=True, help_text="Dates of payments (comma-separated)")
+    payment_date = models.DateField(
+        default=timezone.now,
+        null=True,
+        blank=True,
+        help_text="Date the payment was recorded"
+    )
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='recorded_school_fees',
+        help_text="User who recorded this payment"
+    )
     comments = models.TextField(blank=True, help_text="Additional comments or notes")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -59,6 +75,8 @@ class SchoolFee(models.Model):
     def save(self, *args, **kwargs):
         """Auto-calculate balance and update payment status."""
         self.balance = self.total_fees - self.amount_paid
+        if not self.payment_date:
+            self.payment_date = timezone.now().date()
         
         # Auto-update payment status based on balance
         if self.balance <= 0:

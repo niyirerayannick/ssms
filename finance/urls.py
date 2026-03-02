@@ -6,6 +6,7 @@ app_name = 'finance'
 urlpatterns = [
     path('dashboard/', views.finance_dashboard, name='dashboard'),
     path('school-fees/', views.school_fees_dashboard, name='school_fees_dashboard'),
+    path('school-fees/bulk-entry/', views.bulk_fee_entry, name='bulk_fee_entry'),
     path('school/<int:school_id>/students/', views.school_fee_students, name='school_fee_students'),
     path('', views.fees_list, name='fees_list'),
     path('add/', views.fee_create, name='fee_create'),

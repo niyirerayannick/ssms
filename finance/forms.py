@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 from .models import SchoolFee
 from insurance.models import FamilyInsurance
 from core.models import School, AcademicYear
@@ -105,6 +106,94 @@ class FeeForm(forms.ModelForm):
                 )
 
         return cleaned_data
+
+
+class BulkFeeFilterForm(forms.Form):
+    """Filter inputs required before loading bulk fee entries."""
+
+    CATEGORY_CHOICES = [
+        ('all', 'All Students'),
+        ('primary', 'Primary Students'),
+        ('secondary', 'Secondary Students'),
+    ]
+
+    academic_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.none(),
+        required=True,
+        empty_label="Select academic year",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+        })
+    )
+    school = forms.ModelChoiceField(
+        queryset=School.objects.none(),
+        required=True,
+        empty_label="Select school",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+        })
+    )
+    term = forms.ChoiceField(
+        choices=SchoolFee.TERM_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+        })
+    )
+    category = forms.ChoiceField(
+        choices=CATEGORY_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+        })
+    )
+    payment_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        years = AcademicYear.objects.order_by('-name')
+        schools = School.objects.order_by('name')
+        self.fields['academic_year'].queryset = years
+        self.fields['school'].queryset = schools
+
+        if not self.data and years:
+            active_year = years.filter(is_active=True).first()
+            if active_year:
+                self.fields['academic_year'].initial = active_year
+
+        if not self.data:
+            self.fields['payment_date'].initial = timezone.now().date()
+
+
+class BulkStudentFeeForm(forms.Form):
+    """Single row within the bulk fee entry table."""
+
+    student_id = forms.IntegerField(widget=forms.HiddenInput())
+    total_fees = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        min_value=0,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm',
+            'step': '0.01'
+        })
+    )
+    amount_paid = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        min_value=0,
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm',
+            'step': '0.01'
+        })
+    )
 
 
 class FamilyInsuranceForm(forms.ModelForm):

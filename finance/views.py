@@ -1,15 +1,25 @@
 from collections import OrderedDict
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Q, Sum, Count
 from django.core.paginator import Paginator
+from django.forms import formset_factory
+from django.urls import reverse
+from django.utils import timezone
 from core.models import District, AcademicYear, School
 from django.http import JsonResponse
 from .models import SchoolFee
-from .forms import FeeForm, FamilyInsuranceForm
+from .forms import (
+    FeeForm,
+    FamilyInsuranceForm,
+    BulkFeeFilterForm,
+    BulkStudentFeeForm,
+)
 from insurance.models import FamilyInsurance
 from families.models import Family, FamilyStudent
 from students.models import Student
@@ -211,6 +221,169 @@ def school_fee_students(request, school_id):
 
 @login_required
 @permission_required('finance.manage_fees', raise_exception=True)
+def bulk_fee_entry(request):
+    """Allow finance admins to record or update many school fee entries at once."""
+
+    data_source = request.POST if request.method == 'POST' else request.GET
+    filter_form = BulkFeeFilterForm(data_source or None)
+    formset = None
+    table_rows = []
+    students_loaded = False
+    selected_filters = {}
+    selected_school = None
+    selected_year = None
+    term_display = None
+    category_label = None
+    summary = {
+        'student_count': 0,
+        'total_required': Decimal('0'),
+        'total_paid': Decimal('0'),
+    }
+
+    if filter_form.is_valid():
+        students_loaded = True
+        academic_year = filter_form.cleaned_data['academic_year']
+        school = filter_form.cleaned_data['school']
+        term = filter_form.cleaned_data['term']
+        category = filter_form.cleaned_data['category']
+        payment_date = filter_form.cleaned_data.get('payment_date') or timezone.now().date()
+
+        selected_school = school
+        selected_year = academic_year
+        term_display = dict(SchoolFee.TERM_CHOICES).get(term, term)
+        category_label = dict(filter_form.fields['category'].choices).get(category, category)
+
+        student_qs = (
+            Student.objects.filter(school=school, is_active=True)
+            .select_related('school')
+            .order_by('first_name', 'last_name')
+        )
+        if category in ['primary', 'secondary']:
+            student_qs = student_qs.filter(school_level=category)
+
+        students = list(student_qs)
+        existing_fee_map = {
+            fee.student_id: fee
+            for fee in SchoolFee.objects.filter(
+                student__in=students,
+                academic_year=academic_year,
+                term=term,
+            )
+        }
+
+        initial_data = []
+        total_required_sum = Decimal('0')
+        total_paid_sum = Decimal('0')
+        for student in students:
+            existing_fee = existing_fee_map.get(student.id)
+            default_total = existing_fee.total_fees if existing_fee else (student.school.fee_amount if student.school else Decimal('0'))
+            default_paid = existing_fee.amount_paid if existing_fee else Decimal('0')
+            total_required_sum += default_total or Decimal('0')
+            total_paid_sum += default_paid or Decimal('0')
+            initial_data.append({
+                'student_id': student.id,
+                'total_fees': default_total,
+                'amount_paid': default_paid,
+            })
+
+        BulkFormSet = formset_factory(BulkStudentFeeForm, extra=0)
+        formset_valid = False
+        if request.method == 'POST':
+            formset = BulkFormSet(request.POST)
+            formset_valid = formset.is_valid()
+            if formset_valid:
+                created_count = 0
+                updated_count = 0
+                student_lookup = {student.id: student for student in students}
+                with transaction.atomic():
+                    for form in formset:
+                        student_id = form.cleaned_data.get('student_id')
+                        total_fees = form.cleaned_data.get('total_fees')
+                        amount_paid = form.cleaned_data.get('amount_paid')
+
+                        if not student_id or student_id not in student_lookup:
+                            continue
+                        if total_fees is None:
+                            continue
+                        if amount_paid is None:
+                            amount_paid = Decimal('0')
+
+                        student_instance = student_lookup[student_id]
+                        defaults = {
+                            'total_fees': total_fees,
+                            'amount_paid': amount_paid,
+                            'school_name': student_instance.school.name if student_instance.school else student_instance.school_name,
+                            'class_level': student_instance.class_level,
+                            'recorded_by': request.user,
+                            'payment_date': payment_date,
+                        }
+
+                        fee, created = SchoolFee.objects.update_or_create(
+                            student=student_instance,
+                            academic_year=academic_year,
+                            term=term,
+                            defaults=defaults,
+                        )
+                        if created:
+                            created_count += 1
+                        else:
+                            updated_count += 1
+
+                messages.success(
+                    request,
+                    f"Bulk fees saved for {school.name}: {created_count} new, {updated_count} updated.",
+                )
+                params = urlencode({
+                    'academic_year': academic_year.id,
+                    'school': school.id,
+                    'term': term,
+                    'category': category,
+                    'payment_date': payment_date.isoformat(),
+                })
+                return redirect(f"{reverse('finance:bulk_fee_entry')}?{params}")
+        else:
+            formset = BulkFormSet(initial=initial_data)
+
+        if formset is not None:
+            for idx, student in enumerate(students):
+                if idx >= len(formset.forms):
+                    break
+                table_rows.append({
+                    'student': student,
+                    'form': formset.forms[idx],
+                    'existing_fee': existing_fee_map.get(student.id),
+                })
+
+        summary = {
+            'student_count': len(students),
+            'total_required': total_required_sum,
+            'total_paid': total_paid_sum,
+        }
+        selected_filters = {
+            'academic_year': academic_year.id,
+            'school': school.id,
+            'term': term,
+            'category': category,
+            'payment_date': payment_date.isoformat(),
+        }
+
+    context = {
+        'filter_form': filter_form,
+        'formset': formset,
+        'table_rows': table_rows,
+        'students_loaded': students_loaded,
+        'selected_filters': selected_filters,
+        'selected_school': selected_school,
+        'selected_year': selected_year,
+        'term_display': term_display,
+        'category_label': category_label,
+        'summary': summary,
+    }
+    return render(request, 'finance/bulk_fee_entry.html', context)
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
 def fee_create(request):
     """Create a new fee record - for both school fees and Mutuelle de Santé."""
     payment_type = request.GET.get('type', 'school_fee')  # 'school_fee' or 'insurance'
@@ -234,7 +407,11 @@ def fee_create(request):
             form.fields['student'].queryset = Student.objects.all()
             
             if form.is_valid():
-                fee = form.save()
+                fee = form.save(commit=False)
+                if not fee.payment_date:
+                    fee.payment_date = timezone.now().date()
+                fee.recorded_by = request.user
+                fee.save()
                 messages.success(request, f'School fee recorded for {fee.student.full_name}!')
                 return redirect('finance:school_fees_dashboard')
     else:
@@ -265,7 +442,12 @@ def fee_edit(request, pk):
     if request.method == 'POST':
         form = FeeForm(request.POST, instance=fee)
         if form.is_valid():
-            fee = form.save()
+            fee = form.save(commit=False)
+            if not fee.payment_date:
+                fee.payment_date = timezone.now().date()
+            if not fee.recorded_by:
+                fee.recorded_by = request.user
+            fee.save()
             messages.success(request, f'Fee record updated for {fee.student.full_name}!')
             return redirect('finance:fees_list')
     else:
@@ -336,6 +518,9 @@ def add_student_payment(request, student_id):
             # Ensure the student is set correctly
             if fee.student != student:
                 fee.student = student
+            if not fee.payment_date:
+                fee.payment_date = timezone.now().date()
+            fee.recorded_by = request.user
             fee.save()
             messages.success(request, f'School fee payment recorded for {student.full_name}!')
             return redirect('finance:student_payments', student_id=student.id)
