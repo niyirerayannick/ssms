@@ -80,7 +80,10 @@ def student_list(request):
     # Filter by district (family district)
     district_filter = request.GET.get('district', '')
     if district_filter:
-        students = students.filter(family__district_id=district_filter)
+        students = students.filter(
+            Q(family__district_id=district_filter) |
+            Q(partner__district_id=district_filter)
+        )
 
     # Filter by partner
     partner_filter = request.GET.get('partner', '')
