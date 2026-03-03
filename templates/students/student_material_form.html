@@ -10,6 +10,15 @@
 
         <form method="post" class="space-y-6">
             {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-xl">
+                <ul class="list-disc list-inside space-y-1">
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
