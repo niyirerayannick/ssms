@@ -245,9 +245,26 @@ def student_edit(request, pk):
 @permission_required('students.view_studentmaterial', raise_exception=True)
 def student_materials(request):
     """List sponsored students and their school material status."""
-    academic_year = request.GET.get('academic_year', str(timezone.now().year))
+    academic_year_param = request.GET.get('academic_year', '').strip()
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '')
+
+    active_year = AcademicYear.objects.filter(is_active=True).first()
+    academic_year_id = None
+    if academic_year_param:
+        try:
+            academic_year_id = int(academic_year_param)
+        except (TypeError, ValueError):
+            academic_year_id = None
+    if academic_year_id is None and active_year:
+        academic_year_id = active_year.id
+    if academic_year_id is None:
+        academic_year_id = AcademicYear.objects.order_by('-name').values_list('id', flat=True).first()
+
+    selected_academic_year = (
+        AcademicYear.objects.filter(id=academic_year_id).first()
+        if academic_year_id else None
+    )
 
     students_qs = Student.objects.filter(sponsorship_status='active')
     if search_query:
@@ -257,7 +274,9 @@ def student_materials(request):
             Q(family__family_code__icontains=search_query)
         )
 
-    materials_qs = StudentMaterial.objects.filter(academic_year=academic_year).select_related('student')
+    materials_qs = StudentMaterial.objects.select_related('student')
+    if academic_year_id:
+        materials_qs = materials_qs.filter(academic_year_id=academic_year_id)
     materials_by_student = {material.student_id: material for material in materials_qs}
 
     rows = []
@@ -281,19 +300,16 @@ def student_materials(request):
     complete_rows = sum(1 for row in rows if row['has_all_required'])
     missing_rows = total_rows - complete_rows
 
-    available_years = list(
-        StudentMaterial.objects.values_list('academic_year', flat=True)
-        .distinct().order_by('-academic_year')
-    )
-    if academic_year and academic_year not in available_years:
-        available_years.insert(0, academic_year)
+    available_years = AcademicYear.objects.order_by('-name')
 
     context = {
         'rows': rows,
-        'academic_year': academic_year,
+        'selected_academic_year_id': academic_year_id,
+        'selected_academic_year': selected_academic_year,
         'status_filter': status_filter,
         'search_query': search_query,
         'available_years': available_years,
+        'academic_year_label': selected_academic_year.name if selected_academic_year else 'All Years',
         'total_rows': total_rows,
         'complete_rows': complete_rows,
         'missing_rows': missing_rows,
@@ -320,7 +336,10 @@ def student_material_create(request):
         if form.is_valid():
             record = form.save()
             messages.success(request, f"Materials saved for {record.student.full_name}.")
-            return redirect('students:student_materials')
+            redirect_url = reverse('students:student_materials')
+            if record.academic_year_id:
+                redirect_url = f"{redirect_url}?academic_year={record.academic_year_id}"
+            return redirect(redirect_url)
     else:
         form = StudentMaterialForm(initial=initial)
     return render(request, 'students/student_material_form.html', {'form': form, 'title': 'Add School Materials'})
@@ -336,7 +355,10 @@ def student_material_edit(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, f"Materials updated for {record.student.full_name}.")
-            return redirect('students:student_materials')
+            redirect_url = reverse('students:student_materials')
+            if record.academic_year_id:
+                redirect_url = f"{redirect_url}?academic_year={record.academic_year_id}"
+            return redirect(redirect_url)
     else:
         form = StudentMaterialForm(instance=record)
     return render(request, 'students/student_material_form.html', {'form': form, 'title': 'Edit School Materials'})
