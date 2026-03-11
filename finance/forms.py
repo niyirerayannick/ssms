@@ -2,7 +2,7 @@ from django import forms
 from django.utils import timezone
 from .models import SchoolFee
 from insurance.models import FamilyInsurance
-from core.models import School, AcademicYear
+from core.models import School, AcademicYear, Partner
 
 
 class FeeForm(forms.ModelForm):
@@ -127,8 +127,16 @@ class BulkFeeFilterForm(forms.Form):
     )
     school = forms.ModelChoiceField(
         queryset=School.objects.none(),
-        required=True,
+        required=False,
         empty_label="Select school",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+        })
+    )
+    partner = forms.ModelChoiceField(
+        queryset=Partner.objects.none(),
+        required=False,
+        empty_label="Select partner (optional)",
         widget=forms.Select(attrs={
             'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
         })
@@ -161,6 +169,7 @@ class BulkFeeFilterForm(forms.Form):
         schools = School.objects.order_by('name')
         self.fields['academic_year'].queryset = years
         self.fields['school'].queryset = schools
+        self.fields['partner'].queryset = Partner.objects.order_by('name')
 
         if not self.data and years:
             active_year = years.filter(is_active=True).first()
@@ -169,6 +178,14 @@ class BulkFeeFilterForm(forms.Form):
 
         if not self.data:
             self.fields['payment_date'].initial = timezone.now().date()
+
+    def clean(self):
+        cleaned = super().clean()
+        partner = cleaned.get('partner')
+        school = cleaned.get('school')
+        if not partner and not school:
+            raise forms.ValidationError('Select a school or choose a partner.')
+        return cleaned
 
 
 class BulkStudentFeeForm(forms.Form):

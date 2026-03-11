@@ -549,7 +549,8 @@ def student_performance_bulk_entry(request):
     if filter_form.is_valid():
         students_loaded = True
         academic_year = filter_form.cleaned_data['academic_year']
-        school = filter_form.cleaned_data['school']
+        school = filter_form.cleaned_data.get('school')
+        partner = filter_form.cleaned_data.get('partner')
         term = filter_form.cleaned_data['term']
         term_slug = term.lower().replace(' ', '')
         subject_value = f"{academic_year.name}-{term_slug}-marks"
@@ -557,17 +558,26 @@ def student_performance_bulk_entry(request):
         class_level = filter_form.cleaned_data.get('class_level', '').strip()
 
         selected_school = school
+        selected_partner = partner
         selected_year = academic_year
         term_display = term
         subject_label = subject_value
         class_label = class_level or None
         category_label = dict(filter_form.fields['category'].choices).get(category, category)
 
-        student_qs = (
-            Student.objects.filter(is_active=True, school=school)
-            .select_related('school')
-            .order_by('first_name', 'last_name')
-        )
+        # If a partner is selected, load students associated with that partner.
+        if partner:
+            student_qs = (
+                Student.objects.filter(is_active=True, partner=partner)
+                .select_related('school', 'partner')
+                .order_by('first_name', 'last_name')
+            )
+        else:
+            student_qs = (
+                Student.objects.filter(is_active=True, school=school)
+                .select_related('school', 'partner')
+                .order_by('first_name', 'last_name')
+            )
         if category == 'primary':
             student_qs = student_qs.filter(school_level='primary')
         elif category == 'secondary':
@@ -647,14 +657,18 @@ def student_performance_bulk_entry(request):
 
                 messages.success(
                     request,
-                    f"Bulk marks saved for {school.name}: {created_count} new, {updated_count} updated."
+                    f"Bulk marks saved{f' for {partner.name}' if partner else f' for {school.name}'}: {created_count} new, {updated_count} updated."
                 )
                 params = {
                     'academic_year': academic_year.id,
-                    'school': school.id,
                     'term': term,
                     'category': category,
                 }
+                if partner:
+                    params['partner'] = partner.id
+                else:
+                    if school:
+                        params['school'] = school.id
                 if class_level:
                     params['class_level'] = class_level
                 query = urlencode(params)
@@ -674,10 +688,14 @@ def student_performance_bulk_entry(request):
 
         selected_filters = {
             'academic_year': academic_year.id,
-            'school': school.id,
             'term': term,
             'category': category,
         }
+        if partner:
+            selected_filters['partner'] = partner.id
+        else:
+            if school:
+                selected_filters['school'] = school.id
         if class_level:
             selected_filters['class_level'] = class_level
 
@@ -688,6 +706,7 @@ def student_performance_bulk_entry(request):
         'students_loaded': students_loaded,
         'selected_filters': selected_filters,
         'selected_school': selected_school,
+        'selected_partner': selected_partner if 'selected_partner' in locals() else None,
         'selected_year': selected_year,
         'term_display': term_display,
         'subject_label': subject_label,

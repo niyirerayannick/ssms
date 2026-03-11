@@ -243,21 +243,31 @@ def bulk_fee_entry(request):
     if filter_form.is_valid():
         students_loaded = True
         academic_year = filter_form.cleaned_data['academic_year']
-        school = filter_form.cleaned_data['school']
+        school = filter_form.cleaned_data.get('school')
+        partner = filter_form.cleaned_data.get('partner')
         term = filter_form.cleaned_data['term']
         category = filter_form.cleaned_data['category']
         payment_date = filter_form.cleaned_data.get('payment_date') or timezone.now().date()
 
         selected_school = school
+        selected_partner = partner
         selected_year = academic_year
         term_display = dict(SchoolFee.TERM_CHOICES).get(term, term)
         category_label = dict(filter_form.fields['category'].choices).get(category, category)
 
-        student_qs = (
-            Student.objects.filter(school=school, is_active=True)
-            .select_related('school')
-            .order_by('first_name', 'last_name')
-        )
+        # If partner selected, load students for partner; otherwise load by school
+        if partner:
+            student_qs = (
+                Student.objects.filter(partner=partner, is_active=True)
+                .select_related('school', 'partner')
+                .order_by('first_name', 'last_name')
+            )
+        else:
+            student_qs = (
+                Student.objects.filter(school=school, is_active=True)
+                .select_related('school', 'partner')
+                .order_by('first_name', 'last_name')
+            )
         if category in ['primary', 'secondary']:
             student_qs = student_qs.filter(school_level=category)
 
@@ -331,15 +341,20 @@ def bulk_fee_entry(request):
 
                 messages.success(
                     request,
-                    f"Bulk fees saved for {school.name}: {created_count} new, {updated_count} updated.",
+                    f"Bulk fees saved{f' for {partner.name}' if partner else f' for {school.name}'}: {created_count} new, {updated_count} updated.",
                 )
-                params = urlencode({
+                params_dict = {
                     'academic_year': academic_year.id,
-                    'school': school.id,
                     'term': term,
                     'category': category,
                     'payment_date': payment_date.isoformat(),
-                })
+                }
+                if partner:
+                    params_dict['partner'] = partner.id
+                else:
+                    if school:
+                        params_dict['school'] = school.id
+                params = urlencode(params_dict)
                 return redirect(f"{reverse('finance:bulk_fee_entry')}?{params}")
         else:
             formset = BulkFormSet(initial=initial_data)
@@ -361,11 +376,15 @@ def bulk_fee_entry(request):
         }
         selected_filters = {
             'academic_year': academic_year.id,
-            'school': school.id,
             'term': term,
             'category': category,
             'payment_date': payment_date.isoformat(),
         }
+        if partner:
+            selected_filters['partner'] = partner.id
+        else:
+            if school:
+                selected_filters['school'] = school.id
 
     context = {
         'filter_form': filter_form,

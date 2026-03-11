@@ -1,6 +1,6 @@
 from django import forms
 from .models import Student, StudentPhoto, StudentMark, StudentMaterial
-from core.models import School, AcademicYear
+from core.models import School, AcademicYear, Partner
 from families.models import Family
 from django.contrib.auth.models import User
 
@@ -337,7 +337,7 @@ class BulkPerformanceFilterForm(forms.Form):
     )
     school = forms.ModelChoiceField(
         queryset=School.objects.none(),
-        required=True,
+        required=False,
         empty_label="Select school",
         widget=forms.Select(attrs={
             'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
@@ -364,17 +364,36 @@ class BulkPerformanceFilterForm(forms.Form):
             'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
         })
     )
+    partner = forms.ModelChoiceField(
+        queryset=Partner.objects.none(),
+        required=False,
+        empty_label="Select partner (optional)",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
+        })
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         years = AcademicYear.objects.order_by('-name')
         schools = School.objects.order_by('name')
+        partners = Partner.objects.order_by('name')
         self.fields['academic_year'].queryset = years
         self.fields['school'].queryset = schools
+        self.fields['partner'].queryset = partners
         if not self.data:
             active_year = years.filter(is_active=True).first()
             if active_year:
                 self.fields['academic_year'].initial = active_year
+
+    def clean(self):
+        cleaned = super().clean()
+        partner = cleaned.get('partner')
+        school = cleaned.get('school')
+        # If no partner is selected, school must be provided
+        if not partner and not school:
+            raise forms.ValidationError('Select a school or choose a partner.')
+        return cleaned
 
 
 class BulkStudentMarkForm(forms.Form):

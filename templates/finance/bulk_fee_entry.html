@@ -29,6 +29,10 @@
                 {{ filter_form.school }}
             </div>
             <div>
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partner (optional)</label>
+                {{ filter_form.partner }}
+            </div>
+            <div>
                 <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Term</label>
                 {{ filter_form.term }}
             </div>
@@ -60,6 +64,9 @@
                 <p class="text-3xl font-bold text-slate-900 mt-1">{{ summary.student_count }}</p>
                 {% if selected_school %}
                     <p class="text-xs text-slate-500 mt-1">{{ selected_school.name }} · {{ term_display }}</p>
+                {% endif %}
+                {% if selected_partner %}
+                    <p class="text-xs text-slate-500 mt-1">Partner: {{ selected_partner.name }} · {{ term_display }}</p>
                 {% endif %}
             </div>
             <div class="bg-white rounded-2xl border border-emerald-100 p-5">
@@ -170,6 +177,36 @@
                     placeholder: 'Search schools…',
                     plugins: ['clear_button']
                 });
+            }
+            const partnerSelect = document.getElementById('id_partner');
+            if (partnerSelect) {
+                new TomSelect(partnerSelect, {
+                    create: false,
+                    sortField: { field: 'text', direction: 'asc' },
+                    placeholder: 'Search partners…',
+                    plugins: ['clear_button']
+                });
+            }
+            // Toggle school field when partner selected
+            function toggleSchoolByPartner() {
+                if (!partnerSelect) return;
+                const school = document.getElementById('id_school');
+                if (!school) return;
+                const parent = school.closest('div');
+                if (partnerSelect.value) {
+                    school.value = '';
+                    school.disabled = true;
+                    school.removeAttribute('required');
+                    if (parent) parent.classList.add('opacity-50','pointer-events-none');
+                } else {
+                    school.disabled = false;
+                    school.setAttribute('required', 'true');
+                    if (parent) parent.classList.remove('opacity-50','pointer-events-none');
+                }
+            }
+            if (partnerSelect) {
+                partnerSelect.addEventListener('change', toggleSchoolByPartner);
+                toggleSchoolByPartner();
             }
         }
     });
