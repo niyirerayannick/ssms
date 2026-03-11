@@ -125,7 +125,7 @@ def students_pdf(request):
     """Export students list as PDF."""
     year_id = request.GET.get('year')
     district_id = request.GET.get('district')
-    students = Student.objects.select_related('school', 'program_officer').all()
+    students = Student.objects.select_related('school', 'program_officer', 'family', 'partner').all()
     
     subtitle = "All Students"
     if year_id:
@@ -139,7 +139,10 @@ def students_pdf(request):
     
     if district_id:
         district = get_object_or_404(District, id=district_id)
-        students = students.filter(family__district_id=district_id)
+        # Include students whose family is in the district OR whose partner's district matches
+        students = students.filter(
+            Q(family__district_id=district_id) | Q(partner__district_id=district_id)
+        )
         subtitle += f" - {district.name}"
     
     # Create PDF with custom canvas for page numbers
@@ -221,7 +224,7 @@ def sponsored_students_report(request):
     year_id = request.GET.get('year')
     district_id = request.GET.get('district')
     students = (
-        Student.objects.select_related('family', 'school', 'program_officer')
+        Student.objects.select_related('family', 'school', 'program_officer', 'partner')
         .filter(sponsorship_status='active')
     )
     
@@ -236,7 +239,10 @@ def sponsored_students_report(request):
     
     if district_id:
         district = get_object_or_404(District, id=district_id)
-        students = students.filter(family__district_id=district_id)
+        # Include sponsored students coming from partners whose district matches as well
+        students = students.filter(
+            Q(family__district_id=district_id) | Q(partner__district_id=district_id)
+        )
         subtitle += f" - {district.name}"
     
     students = students.order_by('last_name', 'first_name')

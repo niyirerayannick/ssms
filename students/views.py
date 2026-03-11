@@ -330,7 +330,16 @@ def student_material_create(request):
     initial = {}
     student_id = request.GET.get('student')
     if student_id:
-        initial['student'] = student_id
+        try:
+            initial['student'] = int(student_id)
+        except (TypeError, ValueError):
+            initial['student'] = student_id
+    academic_year_param = request.GET.get('academic_year')
+    if academic_year_param:
+        try:
+            initial['academic_year'] = int(academic_year_param)
+        except (TypeError, ValueError):
+            pass
     if request.method == 'POST':
         form = StudentMaterialForm(request.POST)
         if form.is_valid():

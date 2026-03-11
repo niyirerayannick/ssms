@@ -7,7 +7,6 @@ from core.models import AcademicYear
 
 class SchoolFee(models.Model):
     """School fees model for tracking fee payments."""
-    
     TERM_CHOICES = [
         ('1', 'TERM 1'),
         ('2', 'TERM 2'),
