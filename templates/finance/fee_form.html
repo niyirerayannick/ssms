@@ -18,7 +18,7 @@
                 {% if payment_type == 'insurance' %}
                 Record Mutuelle de Santé (Health Insurance) payment for a family.
                 {% else %}
-                Record school fee payment for a student.
+                Prepare or update a school fee term record with school and bank details.
                 {% endif %}
             </p>
         </div>
@@ -262,26 +262,25 @@
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.amount_paid.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Amount Paid (FRW) <span class="text-rose-500">*</span></label>
-                        {{ form.amount_paid }}
-                        {% if form.amount_paid.errors %}
-                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.amount_paid.errors.0 }}</p>
+                        <label for="{{ form.bank_name.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Bank Name</label>
+                        {{ form.bank_name }}
+                        {% if form.bank_name.errors %}
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.bank_name.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.payment_status.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Payment Status <span class="text-rose-500">*</span></label>
-                        {{ form.payment_status }}
-                        {% if form.payment_status.errors %}
-                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.payment_status.errors.0 }}</p>
+                        <label for="{{ form.bank_account_name.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Account Name</label>
+                        {{ form.bank_account_name }}
+                        {% if form.bank_account_name.errors %}
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.bank_account_name.errors.0 }}</p>
                         {% endif %}
                     </div>
                     <div>
-                        <label for="{{ form.payment_dates.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Payment Dates</label>
-                        {{ form.payment_dates }}
-                        {% if form.payment_dates.errors %}
-                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.payment_dates.errors.0 }}</p>
+                        <label for="{{ form.bank_account_number.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Account Number</label>
+                        {{ form.bank_account_number }}
+                        {% if form.bank_account_number.errors %}
+                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.bank_account_number.errors.0 }}</p>
                         {% endif %}
-                        <p class="text-[10px] text-slate-400 mt-1.5 ml-1">e.g., 2024-01-15, 2024-02-20</p>
                     </div>
                     <div class="md:col-span-2">
                         <label for="{{ form.comments.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Comments</label>
@@ -300,7 +299,7 @@
                     Cancel
                 </a>
                 <button type="submit" class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-300 font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-lg active:scale-95">
-                    Save Payment
+                    Save Fee Record
                 </button>
             </div>
         </form>
@@ -316,7 +315,9 @@
         const schoolNameInput = document.getElementById('id_school_name');
         const classLevelInput = document.getElementById('id_class_level');
         const totalFeesInput = document.getElementById('id_total_fees');
-        const paymentDatesInput = document.getElementById('id_payment_dates');
+        const bankNameInput = document.getElementById('id_bank_name');
+        const bankAccountNameInput = document.getElementById('id_bank_account_name');
+        const bankAccountNumberInput = document.getElementById('id_bank_account_number');
         
         let studentTomSelect = null;
         let schoolNameTomSelect = null;
@@ -395,7 +396,9 @@
                 }
                 if (classLevelInput) classLevelInput.value = '';
                 if (totalFeesInput) totalFeesInput.value = '';
-                if (paymentDatesInput) paymentDatesInput.value = '';
+                if (bankNameInput) bankNameInput.value = '';
+                if (bankAccountNameInput) bankAccountNameInput.value = '';
+                if (bankAccountNumberInput) bankAccountNumberInput.value = '';
                 return;
             }
             
@@ -428,10 +431,9 @@
                             totalFeesInput.value = data.total_fees;
                         }
 
-                        // Populate payment dates
-                        if (paymentDatesInput && data.payment_dates) {
-                            paymentDatesInput.value = data.payment_dates;
-                        }
+                        if (bankNameInput) bankNameInput.value = data.bank_name || '';
+                        if (bankAccountNameInput) bankAccountNameInput.value = data.bank_account_name || '';
+                        if (bankAccountNumberInput) bankAccountNumberInput.value = data.bank_account_number || '';
                     }
                 })
                 .catch(error => {

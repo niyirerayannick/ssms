@@ -350,15 +350,10 @@ class StudentMark(models.Model):
 
     def save(self, *args, **kwargs):
         if self.student_id and self.academic_year_id and not self.enrollment_history_id:
-            history = ensure_enrollment_history_record(
+            history = sync_student_enrollment_history(
                 self.student,
                 self.academic_year,
-                {
-                    'class_level': self.student.class_level,
-                    'school': self.student.school,
-                    'school_name': self.student.school.name if self.student.school else self.student.school_name,
-                    'school_level': self.student.school_level,
-                },
+                overwrite=False,
             )
             if history:
                 self.enrollment_history = history
@@ -399,7 +394,7 @@ class StudentMaterial(models.Model):
         return f"{self.student.full_name} - {year_display}"
 
 
-def ensure_enrollment_history_record(student, academic_year, overrides=None):
+def sync_student_enrollment_history(student, academic_year, overrides=None, overwrite=False, promoted_on=None):
     """Return or create the per-year enrollment snapshot for a student."""
 
     if not student or not academic_year:
@@ -420,22 +415,37 @@ def ensure_enrollment_history_record(student, academic_year, overrides=None):
         defaults=defaults,
     )
 
-    if not created:
-        fields_to_update = []
-        if not history.class_level and defaults['class_level']:
-            history.class_level = defaults['class_level']
-            fields_to_update.append('class_level')
-        if not history.school and defaults['school']:
-            history.school = defaults['school']
-            fields_to_update.append('school')
-        if not history.school_name and defaults['school_name']:
-            history.school_name = defaults['school_name']
-            fields_to_update.append('school_name')
-        if not history.school_level and defaults['school_level']:
-            history.school_level = defaults['school_level']
-            fields_to_update.append('school_level')
-        if fields_to_update:
-            fields_to_update.append('updated_at')
-            history.save(update_fields=fields_to_update)
+    fields_to_update = []
+    update_rules = {
+        'class_level': defaults['class_level'],
+        'school': defaults['school'],
+        'school_name': defaults['school_name'],
+        'school_level': defaults['school_level'],
+    }
+    for field_name, value in update_rules.items():
+        current_value = getattr(history, field_name)
+        should_update = current_value != value if overwrite else (not current_value and value)
+        if should_update:
+            setattr(history, field_name, value)
+            fields_to_update.append(field_name)
+
+    if promoted_on and history.promoted_on != promoted_on:
+        history.promoted_on = promoted_on
+        fields_to_update.append('promoted_on')
+
+    if fields_to_update:
+        fields_to_update.append('updated_at')
+        history.save(update_fields=fields_to_update)
 
     return history
+
+
+def ensure_enrollment_history_record(student, academic_year, overrides=None):
+    """Backward-compatible wrapper for creating/filling a yearly snapshot."""
+
+    return sync_student_enrollment_history(
+        student,
+        academic_year,
+        overrides=overrides,
+        overwrite=False,
+    )

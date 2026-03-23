@@ -27,8 +27,8 @@ from django.http import Http404, HttpResponse
 from io import BytesIO
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape, A4
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
 from core.models import District, School, Partner
@@ -38,17 +38,28 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from django.forms import formset_factory
 from urllib.parse import urlencode
-from .models import Student, StudentPhoto, StudentMark, StudentMaterial
+from .models import (
+    Student,
+    StudentPhoto,
+    StudentMark,
+    StudentMaterial,
+    sync_student_enrollment_history,
+)
 from core.models import Notification, AcademicYear
+from core.academic_years import get_default_academic_year
 from .forms import (
     StudentForm,
     StudentPhotoForm,
     StudentMarkForm,
     StudentMaterialForm,
+    AcademicYearPromotionForm,
     BulkPerformanceFilterForm,
     BulkStudentMarkForm,
 )
 from families.models import FamilyStudent
+from finance.models import SchoolFee
+from insurance.models import FamilyInsurance
+from students.services.promotion import promote_students_to_academic_year
 
 
 @login_required
@@ -191,6 +202,61 @@ def _can_approve_student(user):
     )
 
 
+def _build_pdf_table(data, col_widths=None, header_background='#0f766e', body_font_size=8):
+    """Create a consistently styled PDF table."""
+
+    table = Table(data, colWidths=col_widths, repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor(header_background)),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), body_font_size + 1),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), body_font_size),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e1')),
+        ('BOX', (0, 0), (-1, -1), 0.8, colors.HexColor('#94a3b8')),
+    ]))
+    return table
+
+
+def _build_pdf_image(field_file, width=60, height=60):
+    """Create a ReportLab image from Django storage without relying on absolute paths."""
+
+    if not field_file:
+        return None
+
+    try:
+        field_file.open('rb')
+        image_buffer = BytesIO(field_file.read())
+        image_buffer.seek(0)
+        return Image(image_buffer, width=width, height=height)
+    except Exception:
+        return None
+    finally:
+        try:
+            field_file.close()
+        except Exception:
+            pass
+
+
+def _pdf_text(value, fallback='N/A'):
+    """Return a safe string for PDF output."""
+
+    if value is None:
+        return fallback
+    if isinstance(value, str):
+        value = value.strip()
+        return value or fallback
+    return str(value)
+
+
 @login_required
 @permission_required('students.add_student', raise_exception=True)
 def student_create(request):
@@ -202,6 +268,9 @@ def student_create(request):
             student.sponsorship_status = 'pending'
             student.save()
             form.save_m2m()
+            default_year = get_default_academic_year()
+            if default_year:
+                sync_student_enrollment_history(student, default_year, overwrite=True)
             _notify_admins_and_exec(
                 request=request,
                 actor=request.user,
@@ -227,6 +296,9 @@ def student_edit(request, pk):
         form = StudentForm(request.POST, request.FILES, instance=student)
         if form.is_valid():
             student = form.save()
+            default_year = get_default_academic_year()
+            if default_year:
+                sync_student_enrollment_history(student, default_year, overwrite=True)
             _notify_admins_and_exec(
                 request=request,
                 actor=request.user,
@@ -249,7 +321,7 @@ def student_materials(request):
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '')
 
-    active_year = AcademicYear.objects.filter(is_active=True).first()
+    active_year = get_default_academic_year()
     academic_year_id = None
     if academic_year_param:
         try:
@@ -374,6 +446,41 @@ def student_material_edit(request, pk):
 
 
 @login_required
+@permission_required('students.change_student', raise_exception=True)
+def academic_year_promotion(request):
+    """Run yearly student promotion from the UI."""
+    promotion_summary = None
+
+    if request.method == 'POST':
+        form = AcademicYearPromotionForm(request.POST)
+        if form.is_valid():
+            promotion_summary = promote_students_to_academic_year(
+                form.cleaned_data['source_year'],
+                form.cleaned_data['target_year'],
+                overwrite=form.cleaned_data['overwrite_existing'],
+                include_inactive=form.cleaned_data['include_inactive'],
+                activate_target=form.cleaned_data['activate_target'],
+            )
+            messages.success(
+                request,
+                (
+                    f"Promotion completed from {promotion_summary.source_year.name} to {promotion_summary.target_year.name}: "
+                    f"{promotion_summary.created_count} created, {promotion_summary.updated_count} updated, "
+                    f"{promotion_summary.skipped_count} skipped, {promotion_summary.graduated_count} graduated."
+                ),
+            )
+    else:
+        form = AcademicYearPromotionForm()
+
+    context = {
+        'form': form,
+        'title': 'Academic Year Promotion',
+        'promotion_summary': promotion_summary,
+    }
+    return render(request, 'students/academic_year_promotion.html', context)
+
+
+@login_required
 @permission_required('students.view_student', raise_exception=True)
 def student_detail(request, pk):
     """View student profile with family, fees, and insurance information."""
@@ -394,6 +501,281 @@ def student_detail(request, pk):
         'can_approve_student': _can_approve_student(request.user),
     }
     return render(request, 'students/student_detail.html', context)
+
+
+@login_required
+@permission_required('students.view_student', raise_exception=True)
+def student_full_report_pdf(request, pk):
+    """Export a complete student report across all academic years."""
+
+    student = get_object_or_404(
+        Student.objects.select_related(
+            'family',
+            'family__district',
+            'family__sector',
+            'family__cell',
+            'family__village',
+            'school',
+            'partner',
+            'program_officer',
+        ),
+        pk=pk,
+    )
+    family_member = getattr(student, 'family_member', None)
+    family = student.family or (family_member.family if family_member else None)
+
+    enrollment_history = list(
+        student.enrollment_history.select_related('academic_year', 'school').order_by('-academic_year__name')
+    )
+    fees = list(
+        student.fees.select_related('academic_year').order_by('-academic_year__name', 'term')
+    )
+    marks = list(
+        student.academic_records.select_related('academic_year').order_by('-academic_year__name', 'term', 'subject')
+    )
+    materials = list(
+        student.material_records.select_related('academic_year').order_by('-academic_year__name')
+    )
+    photos = list(student.photos.all().order_by('-created_at'))
+    insurance_records = list(
+        family.insurance_records.select_related('insurance_year').order_by('-insurance_year__name')
+    ) if family else []
+
+    total_fees_required = sum((fee.total_fees for fee in fees), 0)
+    total_fees_paid = sum((fee.amount_paid for fee in fees), 0)
+    total_fees_balance = sum((fee.balance for fee in fees), 0)
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=36,
+        bottomMargin=36,
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'StudentReportTitle',
+        parent=styles['Title'],
+        fontSize=20,
+        textColor=colors.HexColor('#0f172a'),
+        spaceAfter=6,
+        alignment=1,
+    )
+    subtitle_style = ParagraphStyle(
+        'StudentReportSubtitle',
+        parent=styles['Normal'],
+        fontSize=10,
+        textColor=colors.HexColor('#475569'),
+        spaceAfter=6,
+        alignment=1,
+    )
+    section_style = ParagraphStyle(
+        'StudentReportSection',
+        parent=styles['Heading2'],
+        fontSize=13,
+        textColor=colors.HexColor('#0f766e'),
+        spaceBefore=8,
+        spaceAfter=8,
+    )
+    body_style = ParagraphStyle(
+        'StudentReportBody',
+        parent=styles['Normal'],
+        fontSize=10,
+        leading=14,
+        textColor=colors.HexColor('#1e293b'),
+        spaceAfter=4,
+    )
+    small_style = ParagraphStyle(
+        'StudentReportSmall',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor('#475569'),
+        spaceAfter=4,
+        alignment=1,
+    )
+
+    elements = [
+        Paragraph('Student Comprehensive Report', title_style),
+        Paragraph(student.full_name, subtitle_style),
+        Paragraph(
+            f'Generated on {timezone.now().strftime("%Y-%m-%d %H:%M")} | Student ID {student.pk}',
+            subtitle_style,
+        ),
+        Spacer(1, 8),
+    ]
+
+    photo_entries = []
+    if getattr(student, 'profile_picture', None):
+        photo_entries.append({
+            'file': student.profile_picture,
+            'caption': 'Profile Picture',
+            'created_at': None,
+            'source': 'Profile',
+        })
+    for photo in photos:
+        photo_entries.append({
+            'file': photo.image,
+            'caption': photo.caption or 'Student Photo',
+            'created_at': photo.created_at,
+            'source': 'Camera' if photo.captured_via_camera else 'Upload',
+        })
+
+    if photo_entries:
+        primary_photo = _build_pdf_image(photo_entries[0]['file'], width=110, height=110)
+        if primary_photo is not None:
+            primary_photo.hAlign = 'CENTER'
+            elements.append(primary_photo)
+            elements.append(Spacer(1, 8))
+        caption_parts = [_pdf_text(photo_entries[0]['caption']), _pdf_text(photo_entries[0]['source'])]
+        if photo_entries[0]['created_at']:
+            caption_parts.insert(1, photo_entries[0]['created_at'].strftime('%Y-%m-%d'))
+        elements.append(Paragraph(' | '.join(caption_parts), small_style))
+        elements.append(Spacer(1, 10))
+
+    personal_data = [
+        ['Field', 'Value', 'Field', 'Value'],
+        ['Full Name', student.full_name, 'Gender', student.get_gender_display()],
+        ['Date of Birth', student.date_of_birth.strftime('%Y-%m-%d') if student.date_of_birth else 'N/A', 'Age', str(student.age or 'N/A')],
+        ['Current School', student.school.name if student.school else (student.school_name or 'N/A'), 'Current Class', student.class_level or 'N/A'],
+        ['School Level', student.get_school_level_display() if student.school_level else 'N/A', 'Boarding', student.get_boarding_status_display()],
+        ['Enrollment Status', student.get_enrollment_status_display(), 'Sponsorship Status', student.get_sponsorship_status_display()],
+        ['Partner', student.partner.name if student.partner else 'N/A', 'Program Officer', student.program_officer.get_full_name() if student.program_officer else 'N/A'],
+        ['Location', student.location_display or 'N/A', 'Active Account', 'Yes' if student.is_active else 'No'],
+    ]
+    if student.sponsorship_reason:
+        personal_data.append(['Support Reason', student.sponsorship_reason, 'Disability', student.disability_display])
+    else:
+        personal_data.append(['Disability', student.disability_display, '', ''])
+    elements.append(Paragraph('Personal Information', section_style))
+    elements.append(_build_pdf_table(personal_data, [95, 180, 95, 150], body_font_size=8))
+    elements.append(Spacer(1, 10))
+
+    family_data = [['Field', 'Value']]
+    if family:
+        family_data.extend([
+            ['Family Code', family.family_code],
+            ['Head of Family', family.head_of_family],
+            ['Phone Number', family.phone_number],
+            ['Alternative Phone', family.alternative_phone or 'N/A'],
+            ['Father Name', family.father_name or 'N/A'],
+            ['Mother Name', family.mother_name or 'N/A'],
+            ['Guardian', family.guardian_name or 'N/A'],
+            ['Guardian Phone', family.guardian_phone or 'N/A'],
+            ['Total Family Members', str(family.total_family_members or 0)],
+            ['Location', family.location_display or 'N/A'],
+            ['Address Description', family.address_description or 'N/A'],
+            ['Notes', family.notes or 'N/A'],
+        ])
+    else:
+        family_data.append(['Family Information', 'No linked family record'])
+    elements.append(Paragraph('Family Information', section_style))
+    elements.append(_build_pdf_table(family_data, [140, 380], body_font_size=8))
+    elements.append(Spacer(1, 10))
+
+    history_data = [['Academic Year', 'School', 'Class', 'Level', 'Promoted On']]
+    if enrollment_history:
+        for row in enrollment_history:
+            history_data.append([
+                row.academic_year.name if row.academic_year else 'N/A',
+                row.display_school_name,
+                row.class_level or 'N/A',
+                row.get_school_level_display() if row.school_level else 'N/A',
+                row.promoted_on.strftime('%Y-%m-%d') if row.promoted_on else 'N/A',
+            ])
+    else:
+        history_data.append(['No academic year history recorded', '', '', '', ''])
+    elements.append(Paragraph('School History By Academic Year', section_style))
+    elements.append(_build_pdf_table(history_data, [90, 220, 80, 90, 80], body_font_size=8))
+    elements.append(Spacer(1, 10))
+
+    fees_data = [['Academic Year', 'Term', 'School', 'Class', 'Required', 'Paid', 'Balance', 'Status']]
+    if fees:
+        for fee in fees:
+            fees_data.append([
+                fee.academic_year.name if fee.academic_year else 'N/A',
+                fee.get_term_display(),
+                fee.school_name or (student.school.name if student.school else 'N/A'),
+                fee.class_level or 'N/A',
+                f'{fee.total_fees:,.2f}',
+                f'{fee.amount_paid:,.2f}',
+                f'{fee.balance:,.2f}',
+                fee.get_payment_status_display(),
+            ])
+        fees_data.append([
+            'TOTAL', '', '', '',
+            f'{total_fees_required:,.2f}',
+            f'{total_fees_paid:,.2f}',
+            f'{total_fees_balance:,.2f}',
+            '',
+        ])
+    else:
+        fees_data.append(['No fee records found', '', '', '', '', '', '', ''])
+    elements.append(Paragraph('School Fees Across All Academic Years', section_style))
+    elements.append(_build_pdf_table(fees_data, [75, 52, 140, 60, 55, 55, 55, 65], body_font_size=7))
+    elements.append(Spacer(1, 10))
+
+    marks_data = [['Academic Year', 'Term', 'Subject', 'Marks', 'Remark']]
+    if marks:
+        for record in marks:
+            marks_data.append([
+                record.academic_year.name if record.academic_year else 'N/A',
+                record.term,
+                record.subject,
+                f'{record.marks}',
+                record.teacher_remark or 'N/A',
+            ])
+    else:
+        marks_data.append(['No marks found', '', '', '', ''])
+    elements.append(Paragraph('Academic Marks Across All Academic Years', section_style))
+    elements.append(_build_pdf_table(marks_data, [85, 60, 130, 55, 210], body_font_size=7))
+    elements.append(Spacer(1, 10))
+
+    materials_data = [['Academic Year', 'Books', 'Bag', 'Shoes', 'Uniforms', 'Received Date', 'Notes']]
+    if materials:
+        for material in materials:
+            materials_data.append([
+                material.academic_year.name if material.academic_year else 'N/A',
+                'Yes' if material.books_received else 'No',
+                'Yes' if material.bag_received else 'No',
+                'Yes' if material.shoes_received else 'No',
+                'Yes' if material.uniforms_received else 'No',
+                material.received_date.strftime('%Y-%m-%d') if material.received_date else 'N/A',
+                material.notes or material.special_request or 'N/A',
+            ])
+    else:
+        materials_data.append(['No material records found', '', '', '', '', '', ''])
+    elements.append(Paragraph('Student Materials', section_style))
+    elements.append(_build_pdf_table(materials_data, [80, 45, 40, 45, 55, 70, 175], body_font_size=7))
+    elements.append(Spacer(1, 10))
+
+    insurance_data = [['Academic Year', 'Required', 'Paid', 'Balance', 'Coverage Status', 'Remarks']]
+    if insurance_records:
+        for record in insurance_records:
+            insurance_data.append([
+                record.insurance_year.name if record.insurance_year else 'N/A',
+                f'{record.required_amount:,.2f}',
+                f'{record.amount_paid:,.2f}',
+                f'{record.balance:,.2f}',
+                record.get_coverage_status_display(),
+                record.remarks or 'N/A',
+            ])
+    else:
+        insurance_data.append(['No family insurance records found', '', '', '', '', ''])
+    elements.append(Paragraph('Family Insurance Records', section_style))
+    elements.append(_build_pdf_table(insurance_data, [80, 65, 65, 65, 90, 155], body_font_size=7))
+
+    doc.build(elements)
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"{student.full_name.replace(' ', '_').lower()}_full_report.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response.write(pdf)
+    return response
 
 
 @login_required

@@ -5,15 +5,14 @@
 
 {% block content %}
 <div class="space-y-6">
-    <div class="bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 rounded-3xl p-6 text-white shadow-lg border border-white/10">
+    <div class="bg-to-b from-emerald-900 via-teal-900 to-emerald-800 rounded-3xl p-6 shadow-lg border border-green/10">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-                <p class="text-xs uppercase tracking-[0.28em] text-slate-300 font-semibold">Bulk Finance Ops</p>
-                <h1 class="text-3xl font-bold mt-1">School Fee Recording</h1>
-                <p class="text-sm text-emerald-100/90 mt-2 max-w-3xl">Capture dozens of student payments in one sweep. Filter by academic year, school, term, and level, then enter required and paid amounts before saving everything in a single submission.</p>
-            </div>
+                <p class="text-xs uppercase tracking-[0.28em] text-emerald-700 font-semibold">Bulk Finance Ops</p>
+                <h1 class="text-3xl font-bold mt-1 text-emerald-800">School Fee Recording</h1>
+               </div>
             <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-                <a href="{% url 'finance:school_fees_dashboard' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/20 backdrop-blur border border-white/30 transition-all">Back to Dashboard</a>
+                <a href="{% url 'finance:school_fees_dashboard' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 border border-emerald-600 transition-all">Back to Dashboard</a>
             </div>
         </div>
     </div>

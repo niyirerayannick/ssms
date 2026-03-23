@@ -7,7 +7,7 @@
 <div class="space-y-6 animate-fade-in">
     <!-- Header -->
     <div class="bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 rounded-xl shadow-lg p-4 sm:p-6 text-white">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex items-center space-x-3 sm:space-x-4">
                 {% if student.profile_picture %}
                     <img src="{{ student.profile_picture.url }}" 
@@ -41,6 +41,11 @@
                 </a>
             </div>
             {% endif %}
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2">
+            <a href="{% url 'students:student_full_report_pdf' student.pk %}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold transition-all shadow-sm">
+                Export Full PDF
+            </a>
         </div>
     </div>
     

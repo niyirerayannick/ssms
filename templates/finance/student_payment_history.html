@@ -159,6 +159,48 @@
         {% endif %}
     </div>
 
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="text-lg font-bold text-slate-800">Payment Transactions</h2>
+            <span class="text-[10px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg uppercase tracking-wider">Detailed Log</span>
+        </div>
+
+        {% if payment_records %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50/50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Year</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Term</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Method</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Reference</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Notes</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                    {% for payment in payment_records %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-6 py-4 text-sm font-medium text-slate-700">{{ payment.payment_date|date:"Y-m-d" }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-slate-700">{{ payment.school_fee.academic_year.name|default:"N/A" }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-slate-700">{{ payment.school_fee.get_term_display }}</td>
+                        <td class="px-6 py-4 text-sm font-bold text-emerald-600">FRW {{ payment.amount_paid|compact_number }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell">{{ payment.get_payment_method_display }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell">{{ payment.reference_number|default:"-" }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell">{{ payment.notes|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-10 text-center">
+            <p class="text-sm text-slate-500 font-medium">No individual payment transactions recorded yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
 
     <!-- Comments Section -->
     {% if fees %}

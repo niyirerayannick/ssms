@@ -29,6 +29,11 @@
                     + Add Student
                 </a>
                 {% endif %}
+                {% if perms.students.change_student %}
+                <a href="{% url 'students:academic_year_promotion' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-all shadow-sm active:scale-95">
+                    Promote Year
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>

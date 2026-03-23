@@ -42,6 +42,24 @@
                         {% endfor %}
                     </select>
                 </div>
+                <div class="w-full sm:w-auto">
+                    <label for="age-from-filter" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Age From</label>
+                    <select id="age-from-filter" class="w-full sm:w-40 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-sm">
+                        <option value="">Any Age</option>
+                        {% for age in age_options %}
+                        <option value="{{ age }}">{{ age }} years</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="w-full sm:w-auto">
+                    <label for="age-to-filter" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Age To</label>
+                    <select id="age-to-filter" class="w-full sm:w-40 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all outline-none text-sm">
+                        <option value="">Any Age</option>
+                        {% for age in age_options %}
+                        <option value="{{ age }}">{{ age }} years</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
             <button id="reset-filters" type="button" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-bold uppercase tracking-wider hover:bg-slate-50 transition-all active:scale-95">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,6 +143,35 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-teal-600/5 to-emerald-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="p-6">
+                    <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-teal-100 transition-colors">
+                        <svg class="w-6 h-6 text-slate-400 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10a2 2 0 002 2h12a2 2 0 002-2V7M8 11h8m-8 4h5M7 3h10a2 2 0 012 2v2H5V5a2 2 0 012-2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Students List (Excel)</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6">Spreadsheet export of students with optional age range filtering.</p>
+                    <div class="space-y-2 mb-8">
+                        <div class="flex items-center text-xs text-slate-600">
+                            <svg class="w-4 h-4 mr-2 text-teal-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            Includes age and birth date
+                        </div>
+                        <div class="flex items-center text-xs text-slate-600">
+                            <svg class="w-4 h-4 mr-2 text-teal-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            Filters by year, district, and age range
+                        </div>
+                    </div>
+                    <a href="{% url 'reports:students_excel' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-teal-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-teal-500/25">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Download Excel
                     </a>
                 </div>
             </div>
@@ -330,6 +377,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const yearFilter = document.getElementById('year-filter');
             const districtFilter = document.getElementById('district-filter');
+            const ageFromFilter = document.getElementById('age-from-filter');
+            const ageToFilter = document.getElementById('age-to-filter');
             const resetFiltersButton = document.getElementById('reset-filters');
             const activeFilters = document.getElementById('active-filters');
             const reportLinks = document.querySelectorAll('.report-link');
@@ -347,6 +396,12 @@
             if (params.get('district')) {
                 districtFilter.value = params.get('district');
             }
+            if (params.get('age_from')) {
+                ageFromFilter.value = params.get('age_from');
+            }
+            if (params.get('age_to')) {
+                ageToFilter.value = params.get('age_to');
+            }
 
             function updateHistoryQuery() {
                 const historyParams = new URLSearchParams();
@@ -355,6 +410,12 @@
                 }
                 if (districtFilter.value) {
                     historyParams.set('district', districtFilter.value);
+                }
+                if (ageFromFilter.value) {
+                    historyParams.set('age_from', ageFromFilter.value);
+                }
+                if (ageToFilter.value) {
+                    historyParams.set('age_to', ageToFilter.value);
                 }
                 const newUrl = historyParams.toString()
                     ? `${window.location.pathname}?${historyParams.toString()}`
@@ -373,6 +434,9 @@
                 if (districtFilter.value && selectedDistrictText) {
                     chips.push(`District: ${selectedDistrictText}`);
                 }
+                if (ageFromFilter.value || ageToFilter.value) {
+                    chips.push(`Age: ${ageFromFilter.value || '0'} to ${ageToFilter.value || 'above'}`);
+                }
 
                 if (!chips.length) {
                     activeFilters.classList.add('hidden');
@@ -390,6 +454,8 @@
             function updateAllLinks() {
                 const year = yearFilter.value;
                 const district = districtFilter.value;
+                const ageFrom = ageFromFilter.value;
+                const ageTo = ageToFilter.value;
                 
                 reportLinks.forEach(link => {
                     const baseUrl = originalHrefs.get(link);
@@ -402,6 +468,12 @@
                     if (district) {
                         urlObj.searchParams.set('district', district);
                     }
+                    if (ageFrom) {
+                        urlObj.searchParams.set('age_from', ageFrom);
+                    }
+                    if (ageTo) {
+                        urlObj.searchParams.set('age_to', ageTo);
+                    }
 
                     link.href = `${urlObj.pathname}${urlObj.search}`;
                 });
@@ -413,11 +485,15 @@
             // Update links when filters change
             yearFilter.addEventListener('change', updateAllLinks);
             districtFilter.addEventListener('change', updateAllLinks);
+            ageFromFilter.addEventListener('input', updateAllLinks);
+            ageToFilter.addEventListener('input', updateAllLinks);
 
             if (resetFiltersButton) {
                 resetFiltersButton.addEventListener('click', function() {
                     yearFilter.value = '';
                     districtFilter.value = '';
+                    ageFromFilter.value = '';
+                    ageToFilter.value = '';
                     updateAllLinks();
                 });
             }

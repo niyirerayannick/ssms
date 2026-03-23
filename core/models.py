@@ -92,6 +92,11 @@ class AcademicYear(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.is_active:
+            type(self).objects.exclude(pk=self.pk).filter(is_active=True).update(is_active=False)
+
 
 class School(models.Model):
     """School model for storing school information."""

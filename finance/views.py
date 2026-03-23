@@ -13,25 +13,27 @@ from django.urls import reverse
 from django.utils import timezone
 from core.models import District, AcademicYear, School
 from django.http import JsonResponse
-from .models import SchoolFee
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
+from .models import SchoolFee, SchoolFeePayment
 from .forms import (
     FeeForm,
     FamilyInsuranceForm,
     BulkFeeFilterForm,
     BulkStudentFeeForm,
+    SchoolFeePaymentForm,
 )
 from insurance.models import FamilyInsurance
 from families.models import Family, FamilyStudent
 from students.models import Student
 
 
-@login_required
-@permission_required('finance.manage_fees', raise_exception=True)
-def fees_list(request):
-    """List all school fees with filters."""
-    fees = SchoolFee.objects.select_related('student').all()
-    
-    # Search functionality
+def _get_filtered_fees(request):
+    """Return school fees queryset with the same filters used by the list page."""
+
+    fees = SchoolFee.objects.select_related('student', 'student__school', 'academic_year').all()
+
     search_query = request.GET.get('search', '')
     if search_query:
         fees = fees.filter(
@@ -39,29 +41,82 @@ def fees_list(request):
             Q(student__last_name__icontains=search_query) |
             Q(student__school_name__icontains=search_query)
         )
-    
-    # Filter by status
+
     status_filter = request.GET.get('status', '')
     if status_filter:
         fees = fees.filter(payment_status=status_filter)
-    
-    # Filter by academic year
+
     academic_year_filter = request.GET.get('academic_year', '')
     if academic_year_filter:
         fees = fees.filter(academic_year_id=academic_year_filter)
 
-    # Filter by term
     term_filter = request.GET.get('term', '')
     if term_filter:
         fees = fees.filter(term=term_filter)
 
-    # Filter by district (family or school district)
     district_filter = request.GET.get('district', '')
     if district_filter:
         fees = fees.filter(
             Q(student__family__district_id=district_filter) |
             Q(student__school__district_id=district_filter)
         )
+
+    return fees, {
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'academic_year_filter': academic_year_filter,
+        'term_filter': term_filter,
+        'district_filter': district_filter,
+    }
+
+
+def _build_fee_snapshot(student, total_fees=None):
+    """Prepare school/class/bank snapshot defaults from the current student school."""
+    school = student.school if student else None
+    snapshot = {
+        'school_name': school.name if school else getattr(student, 'school_name', ''),
+        'class_level': getattr(student, 'class_level', ''),
+        'bank_name': school.bank_name if school and school.bank_name else '',
+        'bank_account_name': school.bank_account_name if school and school.bank_account_name else '',
+        'bank_account_number': school.bank_account_number if school and school.bank_account_number else '',
+    }
+    if total_fees is not None:
+        snapshot['total_fees'] = total_fees
+    return snapshot
+
+
+def _get_or_create_school_fee(student, academic_year, term, total_fees=None):
+    """Return the fee plan for a student term, creating it when needed."""
+    defaults = _build_fee_snapshot(
+        student,
+        total_fees if total_fees is not None else (student.school.fee_amount if student and student.school else Decimal('0'))
+    )
+    fee, created = SchoolFee.objects.get_or_create(
+        student=student,
+        academic_year=academic_year,
+        term=term,
+        defaults=defaults,
+    )
+    if not created:
+        needs_save = False
+        snapshot = _build_fee_snapshot(student)
+        for field, value in snapshot.items():
+            if not getattr(fee, field):
+                setattr(fee, field, value)
+                needs_save = True
+        if total_fees is not None and fee.total_fees != total_fees:
+            fee.total_fees = total_fees
+            needs_save = True
+        if needs_save:
+            fee.save()
+    return fee
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
+def fees_list(request):
+    """List all school fees with filters."""
+    fees, filters = _get_filtered_fees(request)
     
     # Pagination
     paginator = Paginator(fees.order_by('-created_at'), 20)
@@ -71,15 +126,79 @@ def fees_list(request):
     context = {
         'fees': page_obj,
         'page_obj': page_obj,
-        'search_query': search_query,
-        'status_filter': status_filter,
-        'academic_year_filter': academic_year_filter,
-        'term_filter': term_filter,
-        'district_filter': district_filter,
+        **filters,
         'districts': District.objects.order_by('name'),
         'academic_years': AcademicYear.objects.order_by('-name'),
     }
     return render(request, 'finance/fees_list.html', context)
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
+def export_fees_excel(request):
+    """Export filtered school fee records with student and school banking details."""
+
+    fees, _filters = _get_filtered_fees(request)
+    fees = fees.order_by('student__last_name', 'student__first_name', '-academic_year__name', 'term')
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'School Fees Export'
+
+    headers = [
+        'Student Name',
+        'Academic Year',
+        'Term',
+        'Level',
+        'School',
+        'Bank Name',
+        'Bank Account Name',
+        'Bank Account Number',
+        'Required Amount',
+        'Amount Paid',
+        'Balance To Pay',
+        'Status',
+    ]
+    worksheet.append(headers)
+
+    header_fill = PatternFill(start_color='0F766E', end_color='0F766E', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF')
+    for cell in worksheet[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+
+    for fee in fees:
+        worksheet.append([
+            fee.student.full_name if fee.student else 'N/A',
+            fee.academic_year.name if fee.academic_year else 'N/A',
+            fee.get_term_display(),
+            fee.class_level or (fee.student.class_level if fee.student else 'N/A'),
+            fee.school_name or (fee.student.school.name if fee.student and fee.student.school else 'N/A'),
+            fee.bank_name or 'N/A',
+            fee.bank_account_name or 'N/A',
+            fee.bank_account_number or 'N/A',
+            float(fee.total_fees),
+            float(fee.amount_paid),
+            float(fee.balance),
+            fee.get_payment_status_display(),
+        ])
+
+    for column_cells in worksheet.columns:
+        max_length = 0
+        column_letter = column_cells[0].column_letter
+        for cell in column_cells:
+            value = '' if cell.value is None else str(cell.value)
+            if len(value) > max_length:
+                max_length = len(value)
+        worksheet.column_dimensions[column_letter].width = min(max_length + 2, 30)
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="school_fees_students_export.xlsx"'
+    workbook.save(response)
+    return response
 
 
 @login_required
@@ -321,9 +440,11 @@ def bulk_fee_entry(request):
                         student_instance = student_lookup[student_id]
                         defaults = {
                             'total_fees': total_fees,
-                            'amount_paid': amount_paid,
                             'school_name': student_instance.school.name if student_instance.school else student_instance.school_name,
                             'class_level': student_instance.class_level,
+                            'bank_name': student_instance.school.bank_name if student_instance.school and student_instance.school.bank_name else '',
+                            'bank_account_name': student_instance.school.bank_account_name if student_instance.school and student_instance.school.bank_account_name else '',
+                            'bank_account_number': student_instance.school.bank_account_number if student_instance.school and student_instance.school.bank_account_number else '',
                             'recorded_by': request.user,
                             'payment_date': payment_date,
                         }
@@ -334,6 +455,20 @@ def bulk_fee_entry(request):
                             term=term,
                             defaults=defaults,
                         )
+                        if amount_paid and amount_paid > 0:
+                            existing_payment = fee.payments.filter(
+                                payment_date=payment_date,
+                                amount_paid=amount_paid,
+                                recorded_by=request.user,
+                            ).first()
+                            if not existing_payment:
+                                SchoolFeePayment.objects.create(
+                                    school_fee=fee,
+                                    amount_paid=amount_paid,
+                                    payment_date=payment_date,
+                                    recorded_by=request.user,
+                                    payment_method='bank',
+                                )
                         if created:
                             created_count += 1
                         else:
@@ -501,7 +636,12 @@ def student_payment_history(request, student_id):
     student = get_object_or_404(Student, pk=student_id)
     
     # Get all fees for this student
-    fees_qs = SchoolFee.objects.filter(student=student).select_related('academic_year').order_by('-academic_year__name', '-term')
+    fees_qs = (
+        SchoolFee.objects.filter(student=student)
+        .select_related('academic_year')
+        .prefetch_related('payments')
+        .order_by('-academic_year__name', '-term')
+    )
     
     # Calculate totals for this student
     total_required = fees_qs.aggregate(Sum('total_fees'))['total_fees__sum'] or 0
@@ -512,6 +652,11 @@ def student_payment_history(request, student_id):
     payment_percentage = round((total_paid / total_required * 100) if total_required > 0 else 0, 1)
 
     fees = list(fees_qs)
+    payment_records = list(
+        SchoolFeePayment.objects.filter(school_fee__student=student)
+        .select_related('school_fee', 'school_fee__academic_year')
+        .order_by('-payment_date', '-created_at')
+    )
     
     context = {
         'student': student,
@@ -520,6 +665,7 @@ def student_payment_history(request, student_id):
         'total_paid': total_paid,
         'total_outstanding': total_outstanding,
         'payment_percentage': payment_percentage,
+        'payment_records': payment_records,
     }
     return render(request, 'finance/student_payment_history.html', context)
 
@@ -527,38 +673,34 @@ def student_payment_history(request, student_id):
 @login_required
 @permission_required('finance.manage_fees', raise_exception=True)
 def add_student_payment(request, student_id):
-    """Add a school fee payment for a specific student."""
+    """Add a school fee payment transaction for a specific student."""
     student = get_object_or_404(Student, pk=student_id)
     
     if request.method == 'POST':
-        form = FeeForm(request.POST)
+        form = SchoolFeePaymentForm(request.POST, student=student)
         if form.is_valid():
-            fee = form.save(commit=False)
-            # Ensure the student is set correctly
-            if fee.student != student:
-                fee.student = student
-            if not fee.payment_date:
-                fee.payment_date = timezone.now().date()
-            fee.recorded_by = request.user
-            fee.save()
+            academic_year = form.cleaned_data['academic_year']
+            term = form.cleaned_data['term']
+            total_fees = form.cleaned_data['total_fees']
+            fee = _get_or_create_school_fee(student, academic_year, term, total_fees=total_fees)
+
+            payment = form.save(commit=False)
+            payment.school_fee = fee
+            payment.recorded_by = request.user
+            payment.save()
             messages.success(request, f'School fee payment recorded for {student.full_name}!')
             return redirect('finance:student_payments', student_id=student.id)
     else:
-        # Pre-fill the student field and school name
-        initial_data = {
-            'student': student,
-            'school_name': student.school.name if student.school else '',
-            'class_level': student.class_level if hasattr(student, 'class_level') else ''
-        }
-        form = FeeForm(initial=initial_data)
-        # Disable student field since it's pre-selected
-        form.fields['student'].widget.attrs['readonly'] = True
-        form.fields['student'].disabled = True
+        form = SchoolFeePaymentForm(student=student)
     
     context = {
         'form': form,
         'student': student,
-        'title': f'Add School Fee Payment - {student.full_name}'
+        'title': f'Add School Fee Payment - {student.full_name}',
+        'student_school_name': student.school.name if student.school else student.school_name,
+        'student_bank_name': student.school.bank_name if student.school and student.school.bank_name else '',
+        'student_bank_account_name': student.school.bank_account_name if student.school and student.school.bank_account_name else '',
+        'student_bank_account_number': student.school.bank_account_number if student.school and student.school.bank_account_number else '',
     }
     return render(request, 'finance/student_fee_form.html', context)
 
@@ -589,6 +731,9 @@ def get_student_details(request, student_id):
             'enrollment_status': student.get_enrollment_status_display(),
             'total_fees': str(student.school.fee_amount) if student.school else '0',
             'payment_dates': payment_dates,
+            'bank_name': student.school.bank_name if student.school and student.school.bank_name else '',
+            'bank_account_name': student.school.bank_account_name if student.school and student.school.bank_account_name else '',
+            'bank_account_number': student.school.bank_account_number if student.school and student.school.bank_account_number else '',
         }
         return JsonResponse(data)
     except Student.DoesNotExist:

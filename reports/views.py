@@ -15,7 +15,7 @@ from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 from reportlab.pdfgen import canvas
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
-from datetime import datetime
+from datetime import datetime, date
 import io
 import os
 from django.conf import settings
@@ -119,31 +119,97 @@ def create_letterhead(elements, report_title, report_subtitle=None):
     elements.append(Spacer(1, 20))
 
 
+def _safe_year_shift(years_ago):
+    """Return today's date shifted back by whole years, handling leap years safely."""
+    today = date.today()
+    try:
+        return today.replace(year=today.year - years_ago)
+    except ValueError:
+        return today.replace(month=2, day=28, year=today.year - years_ago)
+
+
+def _apply_student_report_filters(request, queryset=None):
+    """Apply shared student report filters, including age range."""
+    students = queryset or Student.objects.select_related('school', 'program_officer', 'family', 'partner').all()
+
+    year_id = request.GET.get('year')
+    district_id = request.GET.get('district')
+    age_from = request.GET.get('age_from')
+    age_to = request.GET.get('age_to')
+
+    subtitle_parts = ["All Students"]
+
+    if year_id:
+        academic_year = get_object_or_404(AcademicYear, id=year_id)
+        students = students.filter(
+            Q(academic_records__academic_year=academic_year) |
+            Q(fees__academic_year=academic_year)
+        ).distinct()
+        subtitle_parts = [f"Academic Year: {academic_year.name}"]
+
+    if district_id:
+        district = get_object_or_404(District, id=district_id)
+        students = students.filter(
+            Q(family__district_id=district_id) | Q(partner__district_id=district_id)
+        )
+        subtitle_parts.append(district.name)
+
+    parsed_age_from = None
+    parsed_age_to = None
+
+    if age_from:
+        try:
+            parsed_age_from = max(int(age_from), 0)
+            born_on_or_before = _safe_year_shift(parsed_age_from)
+            students = students.filter(date_of_birth__lte=born_on_or_before)
+        except (TypeError, ValueError):
+            parsed_age_from = None
+
+    if age_to:
+        try:
+            parsed_age_to = max(int(age_to), 0)
+            born_after = _safe_year_shift(parsed_age_to + 1)
+            students = students.filter(date_of_birth__gt=born_after)
+        except (TypeError, ValueError):
+            parsed_age_to = None
+
+    if parsed_age_from is not None and parsed_age_to is not None and parsed_age_from > parsed_age_to:
+        parsed_age_from, parsed_age_to = parsed_age_to, parsed_age_from
+        students = queryset or Student.objects.select_related('school', 'program_officer', 'family', 'partner').all()
+
+        if year_id:
+            academic_year = get_object_or_404(AcademicYear, id=year_id)
+            students = students.filter(
+                Q(academic_records__academic_year=academic_year) |
+                Q(fees__academic_year=academic_year)
+            ).distinct()
+        if district_id:
+            students = students.filter(
+                Q(family__district_id=district_id) | Q(partner__district_id=district_id)
+            )
+        students = students.filter(
+            date_of_birth__lte=_safe_year_shift(parsed_age_from),
+            date_of_birth__gt=_safe_year_shift(parsed_age_to + 1),
+        )
+
+    if parsed_age_from is not None or parsed_age_to is not None:
+        age_label = f"Age {parsed_age_from if parsed_age_from is not None else 0} to {parsed_age_to if parsed_age_to is not None else 'above'}"
+        subtitle_parts.append(age_label)
+
+    subtitle = " - ".join(subtitle_parts)
+    return students.distinct(), subtitle, {
+        'year_id': year_id,
+        'district_id': district_id,
+        'age_from': parsed_age_from,
+        'age_to': parsed_age_to,
+    }
+
+
 @login_required
 @permission_required('students.view_student', raise_exception=True)
 def students_pdf(request):
     """Export students list as PDF."""
-    year_id = request.GET.get('year')
-    district_id = request.GET.get('district')
-    students = Student.objects.select_related('school', 'program_officer', 'family', 'partner').all()
-    
-    subtitle = "All Students"
-    if year_id:
-        academic_year = get_object_or_404(AcademicYear, id=year_id)
-        # Filter students who have marks or fees in this year
-        students = students.filter(
-            Q(academic_records__academic_year=academic_year) | 
-            Q(fees__academic_year=academic_year)
-        ).distinct()
-        subtitle = f"Academic Year: {academic_year.name}"
-    
-    if district_id:
-        district = get_object_or_404(District, id=district_id)
-        # Include students whose family is in the district OR whose partner's district matches
-        students = students.filter(
-            Q(family__district_id=district_id) | Q(partner__district_id=district_id)
-        )
-        subtitle += f" - {district.name}"
+    students, subtitle, _filters = _apply_student_report_filters(request)
     
     # Create PDF with custom canvas for page numbers
     buffer = io.BytesIO()
@@ -214,6 +280,64 @@ def students_pdf(request):
     buffer.seek(0)
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="students_list_report.pdf"'
+    return response
+
+
+@login_required
+@permission_required('students.view_student', raise_exception=True)
+def students_excel(request):
+    """Export students list as Excel with optional age range filters."""
+    students, subtitle, filters = _apply_student_report_filters(request)
+    students = students.order_by('last_name', 'first_name')
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Students List"
+
+    ws.append(['Students List Report'])
+    ws.append([subtitle])
+    ws.append([])
+
+    headers = ['Full Name', 'Gender', 'Age', 'Date of Birth', 'School', 'Class', 'District', 'Status']
+    ws.append(headers)
+
+    header_row = 4
+    header_fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
+    header_font = Font(bold=True, color="FFFFFF")
+    for cell in ws[header_row]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+
+    for student in students:
+        ws.append([
+            student.full_name,
+            student.get_gender_display(),
+            student.age if student.age is not None else '',
+            student.date_of_birth.strftime('%Y-%m-%d') if student.date_of_birth else '',
+            student.school.name if student.school else (student.school_name or 'N/A'),
+            student.class_level or 'N/A',
+            student.family_district_name,
+            student.get_sponsorship_status_display(),
+        ])
+
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            value = '' if cell.value is None else str(cell.value)
+            max_length = max(max_length, len(value))
+        ws.column_dimensions[column_letter].width = min(max_length + 2, 30)
+
+    filename_parts = ["students_list"]
+    if filters['age_from'] is not None or filters['age_to'] is not None:
+        filename_parts.append(f"age_{filters['age_from'] if filters['age_from'] is not None else 0}_to_{filters['age_to'] if filters['age_to'] is not None else 'all'}")
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{"_".join(filename_parts)}.xlsx"'
+    wb.save(response)
     return response
 
 
@@ -663,6 +787,7 @@ def reports_index(request):
         'tvet_count': counts['tvet_count'],
         'academic_years': academic_years,
         'districts': districts,
+        'age_options': range(1, 31),
     }
     return render(request, 'reports/index.html', context)
 

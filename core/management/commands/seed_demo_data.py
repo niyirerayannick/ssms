@@ -15,7 +15,7 @@ from core.models import (
     Partner,
 )
 from families.models import Family, FamilyStudent
-from students.models import Student
+from students.models import Student, sync_student_enrollment_history
 
 
 DEMO_DATA = [
@@ -277,6 +277,7 @@ class Command(BaseCommand):
                         student_payload,
                         family_payload,
                         family,
+                        academic_year,
                     )
                     if student_created:
                         students_created += 1
@@ -318,7 +319,7 @@ class Command(BaseCommand):
                 family.save()
         return family, created
 
-    def get_or_create_student(self, student_payload: Dict[str, Any], family_payload: Dict[str, Any], family: Family):
+    def get_or_create_student(self, student_payload: Dict[str, Any], family_payload: Dict[str, Any], family: Family, academic_year: AcademicYear):
         school = self.get_or_create_school(
             student_payload.get("school", {}),
             family_payload.get("location", {}),
@@ -360,6 +361,8 @@ class Command(BaseCommand):
                 "relationship": student_payload.get("relationship", "Child"),
             },
         )
+
+        sync_student_enrollment_history(student, academic_year, overwrite=True)
 
         return student, created
 

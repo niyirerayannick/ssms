@@ -1,6 +1,7 @@
 from django import forms
 from .models import FamilyInsurance
 from core.models import AcademicYear
+from core.academic_years import apply_default_academic_year_field
 
 
 class InsuranceForm(forms.ModelForm):
@@ -49,9 +50,5 @@ class InsuranceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        years = AcademicYear.objects.order_by('-name')
-        self.fields['insurance_year'].queryset = years
-        active_year = years.filter(is_active=True).first()
-        if active_year and not self.instance.pk:
-            self.fields['insurance_year'].initial = active_year
+        apply_default_academic_year_field(self, 'insurance_year')
 

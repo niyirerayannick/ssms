@@ -3,6 +3,8 @@ from .models import Student, StudentPhoto, StudentMark, StudentMaterial
 from core.models import School, AcademicYear, Partner
 from families.models import Family
 from django.contrib.auth.models import User
+from core.academic_years import apply_default_academic_year_field
+from students.services.promotion import get_or_create_next_academic_year
 
 
 class StudentForm(forms.ModelForm):
@@ -245,11 +247,7 @@ class StudentMarkForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        years = AcademicYear.objects.order_by('-name')
-        self.fields['academic_year'].queryset = years
-        active_year = years.filter(is_active=True).first()
-        if active_year and not self.instance.pk:
-            self.fields['academic_year'].initial = active_year
+        apply_default_academic_year_field(self, 'academic_year')
 
 
 class StudentMaterialForm(forms.ModelForm):
@@ -311,11 +309,7 @@ class StudentMaterialForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['student'].queryset = Student.objects.filter(sponsorship_status='active').order_by('first_name', 'last_name')
-        years = AcademicYear.objects.order_by('-name')
-        self.fields['academic_year'].queryset = years
-        active_year = years.filter(is_active=True).first()
-        if active_year and not self.instance.pk:
-            self.fields['academic_year'].initial = active_year
+        apply_default_academic_year_field(self, 'academic_year')
 
 
 class BulkPerformanceFilterForm(forms.Form):
@@ -375,16 +369,11 @@ class BulkPerformanceFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        years = AcademicYear.objects.order_by('-name')
         schools = School.objects.order_by('name')
         partners = Partner.objects.order_by('name')
-        self.fields['academic_year'].queryset = years
         self.fields['school'].queryset = schools
         self.fields['partner'].queryset = partners
-        if not self.data:
-            active_year = years.filter(is_active=True).first()
-            if active_year:
-                self.fields['academic_year'].initial = active_year
+        apply_default_academic_year_field(self, 'academic_year')
 
     def clean(self):
         cleaned = super().clean()
@@ -418,3 +407,76 @@ class BulkStudentMarkForm(forms.Form):
             'placeholder': 'Optional remark'
         })
     )
+
+
+class AcademicYearPromotionForm(forms.Form):
+    """Admin-facing form for promoting yearly student enrollments."""
+
+    source_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.none(),
+        required=True,
+        empty_label='Select source academic year',
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm'
+        }),
+    )
+    target_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.none(),
+        required=False,
+        empty_label='Auto-create next year',
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm'
+        }),
+    )
+    overwrite_existing = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500'
+        }),
+    )
+    include_inactive = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500'
+        }),
+    )
+    activate_target = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500'
+        }),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        years = AcademicYear.objects.order_by('-name')
+        self.fields['source_year'].queryset = years
+        self.fields['target_year'].queryset = years
+        apply_default_academic_year_field(self, 'source_year')
+
+        if not self.is_bound:
+            source_year = self.initial.get('source_year') or self.fields['source_year'].initial
+            if source_year:
+                try:
+                    self.fields['target_year'].initial = get_or_create_next_academic_year(source_year.name)
+                except ValueError:
+                    pass
+
+    def clean(self):
+        cleaned = super().clean()
+        source_year = cleaned.get('source_year')
+        target_year = cleaned.get('target_year')
+
+        if source_year and not target_year:
+            try:
+                cleaned['target_year'] = get_or_create_next_academic_year(source_year.name)
+            except ValueError as exc:
+                self.add_error('source_year', str(exc))
+                return cleaned
+
+        target_year = cleaned.get('target_year')
+        if source_year and target_year and source_year.pk == target_year.pk:
+            self.add_error('target_year', 'Target academic year must be different from the source year.')
+
+        return cleaned

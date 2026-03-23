@@ -22,8 +22,6 @@
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
         <form method="post" class="divide-y divide-slate-100">
             {% csrf_token %}
-            <input type="hidden" name="student" value="{{ student.id }}">
-
             {% if form.non_field_errors %}
             <div class="px-6 pt-6 pb-4">
                 <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 shadow-sm">
@@ -48,7 +46,7 @@
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em]">Student Information</h3>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="space-y-1">
                         <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Full Name</p>
                         <p class="text-sm font-bold text-slate-900">{{ student.full_name }}</p>
@@ -58,6 +56,14 @@
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-indigo-100 text-indigo-700">
                             {{ student.get_enrollment_status_display }}
                         </span>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">School</p>
+                        <p class="text-sm font-bold text-slate-900">{{ student_school_name|default:"N/A" }}</p>
+                    </div>
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Class</p>
+                        <p class="text-sm font-bold text-slate-900">{{ student.class_level|default:"N/A" }}</p>
                     </div>
                 </div>
             </div>
@@ -96,32 +102,9 @@
                         {% endif %}
                     </div>
 
-                    <!-- School Name -->
-                    <div class="space-y-1.5">
-                        <label for="{{ form.school_name.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                            School Name
-                        </label>
-                        {{ form.school_name }}
-                        {% if form.school_name.errors %}
-                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.school_name.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Class Level -->
-                    <div class="space-y-1.5">
-                        <label for="{{ form.class_level.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                            Class Level
-                        </label>
-                        {{ form.class_level }}
-                        {% if form.class_level.errors %}
-                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.class_level.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Total Fees -->
                     <div class="space-y-1.5">
                         <label for="{{ form.total_fees.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                            Total Fees (FRW) <span class="text-rose-500">*</span>
+                            Required Amount (FRW) <span class="text-rose-500">*</span>
                         </label>
                         <div class="relative">
                             {{ form.total_fees }}
@@ -131,10 +114,9 @@
                         {% endif %}
                     </div>
 
-                    <!-- Amount Paid -->
                     <div class="space-y-1.5">
                         <label for="{{ form.amount_paid.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                            Amount Paid (FRW) <span class="text-rose-500">*</span>
+                            Payment Amount (FRW) <span class="text-rose-500">*</span>
                         </label>
                         <div class="relative">
                             {{ form.amount_paid }}
@@ -144,39 +126,63 @@
                         {% endif %}
                     </div>
 
-                    <!-- Payment Status -->
                     <div class="space-y-1.5">
-                        <label for="{{ form.payment_status.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                            Payment Status <span class="text-rose-500">*</span>
+                        <label for="{{ form.payment_date.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                            Payment Date <span class="text-rose-500">*</span>
                         </label>
-                        {{ form.payment_status }}
-                        {% if form.payment_status.errors %}
-                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.payment_status.errors.0 }}</p>
+                        {{ form.payment_date }}
+                        {% if form.payment_date.errors %}
+                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.payment_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label for="{{ form.payment_method.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                            Payment Method
+                        </label>
+                        {{ form.payment_method }}
+                        {% if form.payment_method.errors %}
+                            <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.payment_method.errors.0 }}</p>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- Payment Dates -->
                 <div class="space-y-1.5">
-                    <label for="{{ form.payment_dates.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                        Payment Dates
+                    <label for="{{ form.reference_number.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                        Reference Number
                     </label>
-                    {{ form.payment_dates }}
-                    {% if form.payment_dates.errors %}
-                        <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.payment_dates.errors.0 }}</p>
+                    {{ form.reference_number }}
+                    {% if form.reference_number.errors %}
+                        <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.reference_number.errors.0 }}</p>
                     {% endif %}
-                    <p class="text-[10px] text-slate-400 mt-1.5 ml-1">Comma-separated dates, e.g., 2024-01-15, 2024-02-20</p>
                 </div>
 
-                <!-- Comments -->
                 <div class="space-y-1.5">
-                    <label for="{{ form.comments.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
-                        Comments
+                    <label for="{{ form.notes.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">
+                        Notes
                     </label>
-                    {{ form.comments }}
-                    {% if form.comments.errors %}
-                        <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.comments.errors.0 }}</p>
+                    {{ form.notes }}
+                    {% if form.notes.errors %}
+                        <p class="text-rose-600 text-[10px] mt-1 font-medium ml-1">{{ form.notes.errors.0 }}</p>
                     {% endif %}
+                </div>
+
+                <div class="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">
+                    <h4 class="text-[10px] font-bold text-emerald-700 uppercase tracking-[0.2em] mb-4">Bank Reference</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bank</p>
+                            <p class="text-sm font-bold text-slate-900 mt-1">{{ student_bank_name|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Name</p>
+                            <p class="text-sm font-bold text-slate-900 mt-1">{{ student_bank_account_name|default:"N/A" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Number</p>
+                            <p class="text-sm font-bold text-slate-900 mt-1">{{ student_bank_account_number|default:"N/A" }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             

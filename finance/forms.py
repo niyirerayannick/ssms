@@ -1,12 +1,13 @@
 from django import forms
 from django.utils import timezone
-from .models import SchoolFee
+from .models import SchoolFee, SchoolFeePayment
 from insurance.models import FamilyInsurance
 from core.models import School, AcademicYear, Partner
+from core.academic_years import apply_default_academic_year_field
 
 
 class FeeForm(forms.ModelForm):
-    """Form for creating and editing school fees."""
+    """Form for creating and editing school fee plans."""
     academic_year = forms.ModelChoiceField(
         queryset=AcademicYear.objects.none(),
         required=True,
@@ -28,7 +29,8 @@ class FeeForm(forms.ModelForm):
         model = SchoolFee
         fields = [
             'student', 'academic_year', 'term', 'school_name', 'class_level',
-            'total_fees', 'amount_paid', 'payment_status', 'payment_dates', 'comments'
+            'bank_name', 'bank_account_name', 'bank_account_number',
+            'total_fees', 'comments'
         ]
         widgets = {
             'student': forms.Select(attrs={
@@ -44,17 +46,17 @@ class FeeForm(forms.ModelForm):
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
                 'step': '0.01'
             }),
-            'amount_paid': forms.NumberInput(attrs={
+            'bank_name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'step': '0.01'
+                'placeholder': 'e.g. Bank of Kigali'
             }),
-            'payment_status': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
-            }),
-            'payment_dates': forms.Textarea(attrs={
+            'bank_account_name': forms.TextInput(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
-                'rows': 2,
-                'placeholder': 'Dates of payments (comma-separated)'
+                'placeholder': 'Account holder name'
+            }),
+            'bank_account_number': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
+                'placeholder': 'Account number'
             }),
             'comments': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
@@ -70,11 +72,7 @@ class FeeForm(forms.ModelForm):
         school_choices = [('', '--- Select School ---')] + [(school.name, school.name) for school in schools]
         self.fields['school_name'].choices = school_choices
 
-        years = AcademicYear.objects.all().order_by('-name')
-        self.fields['academic_year'].queryset = years
-        active_year = years.filter(is_active=True).first()
-        if active_year and not self.instance.pk:
-            self.fields['academic_year'].initial = active_year
+        apply_default_academic_year_field(self, 'academic_year')
         
         # If editing and instance has a student with a school, pre-select it
         if self.instance and self.instance.pk:  # Check if it's an existing instance
@@ -106,6 +104,25 @@ class FeeForm(forms.ModelForm):
                 )
 
         return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if instance.student_id:
+            school = instance.student.school
+            if not instance.school_name:
+                instance.school_name = school.name if school else instance.student.school_name
+            if not instance.class_level:
+                instance.class_level = instance.student.class_level
+            if school:
+                if not instance.bank_name:
+                    instance.bank_name = school.bank_name or ''
+                if not instance.bank_account_name:
+                    instance.bank_account_name = school.bank_account_name or ''
+                if not instance.bank_account_number:
+                    instance.bank_account_number = school.bank_account_number or ''
+        if commit:
+            instance.save()
+        return instance
 
 
 class BulkFeeFilterForm(forms.Form):
@@ -165,16 +182,10 @@ class BulkFeeFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        years = AcademicYear.objects.order_by('-name')
         schools = School.objects.order_by('name')
-        self.fields['academic_year'].queryset = years
         self.fields['school'].queryset = schools
         self.fields['partner'].queryset = Partner.objects.order_by('name')
-
-        if not self.data and years:
-            active_year = years.filter(is_active=True).first()
-            if active_year:
-                self.fields['academic_year'].initial = active_year
+        apply_default_academic_year_field(self, 'academic_year')
 
         if not self.data:
             self.fields['payment_date'].initial = timezone.now().date()
@@ -211,6 +222,79 @@ class BulkStudentFeeForm(forms.Form):
             'step': '0.01'
         })
     )
+
+
+class SchoolFeePaymentForm(forms.ModelForm):
+    """Record an actual payment against a school fee plan."""
+
+    academic_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.none(),
+        required=True,
+        empty_label="Select academic year",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+        })
+    )
+    term = forms.ChoiceField(
+        choices=SchoolFee.TERM_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+        })
+    )
+    total_fees = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        min_value=0,
+        required=True,
+        widget=forms.NumberInput(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+            'step': '0.01'
+        })
+    )
+
+    class Meta:
+        model = SchoolFeePayment
+        fields = ['amount_paid', 'payment_date', 'payment_method', 'reference_number', 'notes']
+        widgets = {
+            'amount_paid': forms.NumberInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+                'step': '0.01'
+            }),
+            'payment_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+            }),
+            'payment_method': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+            }),
+            'reference_number': forms.TextInput(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+                'placeholder': 'Bank slip or transaction reference'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+                'rows': 3
+            }),
+        }
+
+    def __init__(self, *args, student=None, **kwargs):
+        self.student = student
+        super().__init__(*args, **kwargs)
+        apply_default_academic_year_field(self, 'academic_year')
+        if not self.initial.get('payment_date'):
+            self.fields['payment_date'].initial = timezone.now().date()
+        if student:
+            self.fields['total_fees'].initial = student.school.fee_amount if student.school else 0
+            self.fields['term'].initial = SchoolFee.TERM_CHOICES[0][0]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        amount_paid = cleaned_data.get('amount_paid')
+        total_fees = cleaned_data.get('total_fees')
+        if amount_paid is not None and total_fees is not None and amount_paid > total_fees and total_fees >= 0:
+            self.add_error('amount_paid', 'Amount paid cannot be greater than the required amount for this term.')
+        return cleaned_data
 
 
 class FamilyInsuranceForm(forms.ModelForm):
@@ -259,8 +343,4 @@ class FamilyInsuranceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        years = AcademicYear.objects.order_by('-name')
-        self.fields['insurance_year'].queryset = years
-        active_year = years.filter(is_active=True).first()
-        if active_year and not self.instance.pk:
-            self.fields['insurance_year'].initial = active_year
+        apply_default_academic_year_field(self, 'insurance_year')
