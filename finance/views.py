@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q, Sum, Count
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.forms import formset_factory
 from django.urls import reverse
@@ -14,19 +15,25 @@ from django.utils import timezone
 from core.models import District, AcademicYear, School
 from django.http import JsonResponse
 from django.http import HttpResponse
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
-from .models import SchoolFee, SchoolFeePayment
+from .models import SchoolFee, SchoolFeePayment, SchoolFeeDisbursement
 from .forms import (
     FeeForm,
     FamilyInsuranceForm,
     BulkFeeFilterForm,
     BulkStudentFeeForm,
     SchoolFeePaymentForm,
+    SchoolFeeDisbursementMarkPaidForm,
 )
 from insurance.models import FamilyInsurance
 from families.models import Family, FamilyStudent
 from students.models import Student
+import os
 
 
 def _get_filtered_fees(request):
@@ -67,6 +74,115 @@ def _get_filtered_fees(request):
         'academic_year_filter': academic_year_filter,
         'term_filter': term_filter,
         'district_filter': district_filter,
+    }
+
+
+def _get_filtered_disbursements(request):
+    """Return school fee disbursement queryset with queue filters."""
+
+    disbursements = (
+        SchoolFeeDisbursement.objects.select_related(
+            'school_fee',
+            'school_fee__student',
+            'school_fee__academic_year',
+            'paid_by',
+        )
+        .all()
+    )
+
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        disbursements = disbursements.filter(
+            Q(student_name__icontains=search_query) |
+            Q(school_name__icontains=search_query) |
+            Q(bank_account_name__icontains=search_query) |
+            Q(bank_account_number__icontains=search_query)
+        )
+
+    status_filter = request.GET.get('status', '').strip()
+    if status_filter:
+        disbursements = disbursements.filter(status=status_filter)
+
+    academic_year_filter = request.GET.get('academic_year', '').strip()
+    if academic_year_filter:
+        disbursements = disbursements.filter(school_fee__academic_year_id=academic_year_filter)
+
+    district_filter = request.GET.get('district', '').strip()
+    if district_filter:
+        disbursements = disbursements.filter(
+            Q(school_fee__student__family__district_id=district_filter) |
+            Q(school_fee__student__school__district_id=district_filter) |
+            Q(school_fee__student__partner__district_id=district_filter)
+        )
+
+    return disbursements, {
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'academic_year_filter': academic_year_filter,
+        'district_filter': district_filter,
+    }
+
+
+def _sync_fee_disbursement_queue(fees_queryset):
+    """Ensure pending disbursement records mirror outstanding fee balances."""
+
+    synced_count = 0
+    for fee in fees_queryset.select_related('student', 'student__school'):
+        if fee.balance and fee.balance > 0:
+            SchoolFeeDisbursement.objects.update_or_create(
+                school_fee=fee,
+                defaults={
+                    'status': 'pending',
+                },
+            )
+            synced_count += 1
+        else:
+            SchoolFeeDisbursement.objects.filter(
+                school_fee=fee,
+                status__in=['pending', 'exported'],
+            ).update(status='cancelled')
+    return synced_count
+
+
+def _resolve_logo_path():
+    """Return the first existing local logo asset path."""
+
+    candidates = [
+        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.jpg'),
+        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.png'),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return None
+
+
+def _get_disbursement_totals(disbursements):
+    """Aggregate summary totals for the disbursement queue."""
+
+    active_disbursements = disbursements.exclude(status='cancelled')
+    totals = active_disbursements.aggregate(total=Sum('amount_to_pay'))
+    return {
+        'pending_count': active_disbursements.filter(status='pending').count(),
+        'exported_count': active_disbursements.filter(status='exported').count(),
+        'paid_count': disbursements.filter(status='paid').count(),
+        'listed_count': disbursements.count(),
+        'total_amount_to_pay': totals['total'] or Decimal('0'),
+    }
+
+
+def _get_disbursement_labels(filters):
+    academic_year_label = (
+        AcademicYear.objects.filter(id=filters.get('academic_year_filter')).values_list('name', flat=True).first()
+        if filters.get('academic_year_filter') else 'All Years'
+    )
+    district_label = (
+        District.objects.filter(id=filters.get('district_filter')).values_list('name', flat=True).first()
+        if filters.get('district_filter') else 'All Districts'
+    )
+    return {
+        'academic_year_label': academic_year_label or 'All Years',
+        'district_label': district_label or 'All Districts',
     }
 
 
@@ -199,6 +315,386 @@ def export_fees_excel(request):
     response['Content-Disposition'] = 'attachment; filename="school_fees_students_export.xlsx"'
     workbook.save(response)
     return response
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
+def fee_disbursement_queue(request):
+    """Queue of school fee balances finance still needs to pay out."""
+
+    disbursements, filters = _get_filtered_disbursements(request)
+    disbursements = disbursements.order_by('school_name', 'student_name')
+    paginator = Paginator(disbursements, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    totals = _get_disbursement_totals(disbursements)
+    labels = _get_disbursement_labels(filters)
+
+    context = {
+        'disbursements': page_obj,
+        'page_obj': page_obj,
+        'mark_paid_form': SchoolFeeDisbursementMarkPaidForm(),
+        'districts': District.objects.order_by('name'),
+        'academic_years': AcademicYear.objects.order_by('-name'),
+        **totals,
+        **labels,
+        **filters,
+    }
+    return render(request, 'finance/fee_disbursement_queue.html', context)
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
+def sync_fee_disbursement_queue(request):
+    """Populate the payout queue from outstanding school fee balances."""
+
+    fees, _filters = _get_filtered_fees(request)
+    synced_count = _sync_fee_disbursement_queue(fees)
+    messages.success(request, f'Payout queue synchronized. {synced_count} outstanding fee records are ready for finance.')
+    params = request.GET.copy()
+    params.pop('page', None)
+    query = params.urlencode()
+    redirect_url = reverse('finance:fee_disbursement_queue')
+    return redirect(f"{redirect_url}?{query}" if query else redirect_url)
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
+def export_fee_disbursement_excel(request):
+    """Export the current payout queue for finance processing."""
+
+    disbursements, filters = _get_filtered_disbursements(request)
+    disbursements = disbursements.exclude(status='cancelled').order_by('school_name', 'student_name')
+    totals = _get_disbursement_totals(disbursements)
+    labels = _get_disbursement_labels(filters)
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Fee Disbursements'
+
+    worksheet.merge_cells('A1:K1')
+    worksheet['A1'] = 'School Fee Disbursement Queue'
+    worksheet['A1'].font = Font(size=14, bold=True)
+    worksheet['A1'].alignment = Alignment(horizontal='center')
+
+    worksheet.merge_cells('A2:K2')
+    worksheet['A2'] = (
+        f"Academic Year: {labels['academic_year_label']} | "
+        f"District: {labels['district_label']} | "
+        f"Status: {filters.get('status_filter') or 'All Statuses'}"
+    )
+    worksheet['A2'].alignment = Alignment(horizontal='center')
+
+    worksheet.append([])
+
+    headers = [
+        'Student Name',
+        'Academic Year',
+        'Term',
+        'District',
+        'School',
+        'Class Level',
+        'Bank Name',
+        'Bank Account Name',
+        'Bank Account Number',
+        'Amount To Pay',
+        'Queue Status',
+    ]
+    worksheet.append(headers)
+
+    header_fill = PatternFill(start_color='0F766E', end_color='0F766E', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF')
+    for cell in worksheet[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+
+    export_ids = []
+    for item in disbursements:
+        fee = item.school_fee
+        student = fee.student
+        district_name = student.partner.district.name if student and student.partner and student.partner.district else (
+            student.family.district.name if student and student.family and student.family.district else (
+                student.school.district.name if student and student.school and student.school.district else 'N/A'
+            )
+        )
+        worksheet.append([
+            item.student_name,
+            fee.academic_year.name if fee.academic_year else 'N/A',
+            fee.get_term_display(),
+            district_name,
+            item.school_name or 'N/A',
+            item.class_level or 'N/A',
+            item.bank_name or 'N/A',
+            item.bank_account_name or 'N/A',
+            item.bank_account_number or 'N/A',
+            float(item.amount_to_pay),
+            item.get_status_display(),
+        ])
+        if item.status == 'pending':
+            export_ids.append(item.id)
+
+    for column_cells in worksheet.columns:
+        max_length = 0
+        column_letter = column_cells[0].column_letter
+        for cell in column_cells:
+            value = '' if cell.value is None else str(cell.value)
+            if len(value) > max_length:
+                max_length = len(value)
+        worksheet.column_dimensions[column_letter].width = min(max_length + 2, 32)
+
+    if export_ids:
+        SchoolFeeDisbursement.objects.filter(id__in=export_ids).update(
+            status='exported',
+            exported_at=timezone.now(),
+        )
+
+    worksheet.append([])
+    worksheet.append(['TOTAL RECORDS', totals['listed_count']])
+    worksheet.append(['TOTAL AMOUNT TO PAY', float(totals['total_amount_to_pay'])])
+    worksheet.append(['PENDING', totals['pending_count']])
+    worksheet.append(['EXPORTED', totals['exported_count']])
+    worksheet.append(['PAID', totals['paid_count']])
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="school_fee_disbursement_queue.xlsx"'
+    workbook.save(response)
+    return response
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
+def export_fee_disbursement_pdf(request):
+    """Export the current payout queue as a signable PDF."""
+
+    disbursements, filters = _get_filtered_disbursements(request)
+    disbursements = list(disbursements.exclude(status='cancelled').order_by('school_name', 'student_name'))
+    totals = _get_disbursement_totals(SchoolFeeDisbursement.objects.filter(id__in=[item.id for item in disbursements]))
+    labels = _get_disbursement_labels(filters)
+
+    buffer = HttpResponse(content_type='application/pdf')
+    buffer['Content-Disposition'] = 'attachment; filename="school_fee_disbursement_queue.pdf"'
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        leftMargin=20,
+        rightMargin=20,
+        topMargin=20,
+        bottomMargin=20,
+        title='School Fee Disbursement Queue',
+    )
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'DisbursementTitle',
+        parent=styles['Title'],
+        fontSize=18,
+        textColor=colors.HexColor('#0f172a'),
+        alignment=1,
+        spaceAfter=6,
+    )
+    meta_style = ParagraphStyle(
+        'DisbursementMeta',
+        parent=styles['BodyText'],
+        fontSize=9,
+        textColor=colors.HexColor('#475569'),
+        alignment=1,
+        spaceAfter=10,
+    )
+    elements = []
+    logo_path = _resolve_logo_path()
+    if logo_path:
+        logo = Image(logo_path, width=54, height=54)
+        logo.hAlign = 'CENTER'
+        elements.append(logo)
+        elements.append(Spacer(1, 6))
+
+    elements.append(Paragraph('School Fee Disbursement Queue', title_style))
+    elements.append(Paragraph(
+        (
+            f"Academic Year: {labels['academic_year_label']} | "
+            f"District: {labels['district_label']} | "
+            f"Status: {filters.get('status_filter') or 'All Statuses'} | "
+            f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}"
+        ),
+        meta_style,
+    ))
+
+    summary_data = [
+        ['Total Records', str(totals['listed_count']), 'Pending', str(totals['pending_count']), 'Exported', str(totals['exported_count']), 'Paid', str(totals['paid_count'])],
+        ['Total Amount To Pay', f"FRW {totals['total_amount_to_pay']:,.2f}", '', '', '', '', '', ''],
+    ]
+    summary_table = Table(summary_data, colWidths=[75, 110, 55, 50, 60, 50, 40, 45])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8fafc')),
+        ('BACKGROUND', (0, 1), (1, 1), colors.HexColor('#fef2f2')),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (0, 1), (1, 1), colors.HexColor('#dc2626')),
+        ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#cbd5e1')),
+        ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#94a3b8')),
+        ('PADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 12))
+
+    table_data = [[
+        'No.',
+        'Student',
+        'District',
+        'School',
+        'Bank',
+        'Account Name',
+        'Account Number',
+        'Amount To Pay',
+    ]]
+    for index, item in enumerate(disbursements, start=1):
+        fee = item.school_fee
+        student = fee.student
+        district_name = student.partner.district.name if student and student.partner and student.partner.district else (
+            student.family.district.name if student and student.family and student.family.district else (
+                student.school.district.name if student and student.school and student.school.district else 'N/A'
+            )
+        )
+        table_data.append([
+            str(index),
+            item.student_name,
+            district_name,
+            item.school_name or 'N/A',
+            item.bank_name or 'N/A',
+            item.bank_account_name or 'N/A',
+            item.bank_account_number or 'N/A',
+            f"{item.amount_to_pay:,.2f}",
+        ])
+
+    table_data.append([
+        '',
+        'TOTAL',
+        '',
+        '',
+        '',
+        '',
+        '',
+        f"{totals['total_amount_to_pay']:,.2f}",
+    ])
+    table = Table(table_data, colWidths=[28, 120, 70, 110, 90, 100, 95, 70], repeatRows=1)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f766e')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#fef3c7')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (7, -1), (7, -1), colors.HexColor('#b45309')),
+        ('FONTSIZE', (0, 1), (-1, -1), 7),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f8fafc')]),
+        ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#cbd5e1')),
+        ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#94a3b8')),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(table)
+    elements.append(Spacer(1, 24))
+
+    signature_table = Table([
+        [
+            Paragraph('Prepared By<br/><br/>_________________________<br/>Program Coordinator', styles['BodyText']),
+            Paragraph('Verified By<br/><br/>_________________________<br/>Corporate and HR Verification', styles['BodyText']),
+            Paragraph('Approved By<br/><br/>_________________________<br/>Executive Secretary', styles['BodyText']),
+        ]
+    ], colWidths=[240, 240, 240])
+    signature_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(signature_table)
+
+    doc.build(elements)
+    export_ids = [item.id for item in disbursements if item.status == 'pending']
+    if export_ids:
+        SchoolFeeDisbursement.objects.filter(id__in=export_ids).update(
+            status='exported',
+            exported_at=timezone.now(),
+        )
+    return buffer
+
+
+@login_required
+@permission_required('finance.manage_fees', raise_exception=True)
+@transaction.atomic
+def mark_fee_disbursements_paid(request):
+    """Mark selected payout queue entries as paid and post SchoolFeePayment records."""
+
+    if request.method != 'POST':
+        return redirect('finance:fee_disbursement_queue')
+
+    selected_ids = request.POST.getlist('selected_disbursements')
+    form = SchoolFeeDisbursementMarkPaidForm(request.POST)
+    if not selected_ids:
+        messages.error(request, 'Select at least one payout record to mark as paid.')
+        return redirect('finance:fee_disbursement_queue')
+    if not form.is_valid():
+        messages.error(request, 'Provide a valid payment date before marking payouts as paid.')
+        return redirect('finance:fee_disbursement_queue')
+
+    payment_date = form.cleaned_data['payment_date']
+    payment_reference = form.cleaned_data['payment_reference']
+    notes = form.cleaned_data['notes']
+
+    disbursements = list(
+        SchoolFeeDisbursement.objects.select_related('school_fee', 'school_fee__student')
+        .filter(id__in=selected_ids, status__in=['pending', 'exported'])
+    )
+
+    updated_count = 0
+    for disbursement in disbursements:
+        fee = disbursement.school_fee
+        amount_paid = min(fee.balance, disbursement.amount_to_pay)
+        if amount_paid <= 0:
+            disbursement.status = 'cancelled'
+            disbursement.notes = 'Cancelled automatically because no balance remained.'
+            disbursement.save(update_fields=['status', 'notes', 'updated_at'])
+            continue
+
+        SchoolFeePayment.objects.create(
+            school_fee=fee,
+            amount_paid=amount_paid,
+            payment_date=payment_date,
+            payment_method='bank',
+            reference_number=payment_reference,
+            recorded_by=request.user,
+            notes=notes or f'Processed from finance disbursement queue on {payment_date.isoformat()}.',
+        )
+        disbursement.payment_reference = payment_reference or disbursement.payment_reference
+        disbursement.notes = notes or disbursement.notes
+        disbursement.status = 'paid'
+        disbursement.paid_at = timezone.now()
+        disbursement.paid_by = request.user
+        disbursement.save(update_fields=[
+            'payment_reference',
+            'notes',
+            'status',
+            'paid_at',
+            'paid_by',
+            'student_name',
+            'school_name',
+            'class_level',
+            'bank_name',
+            'bank_account_name',
+            'bank_account_number',
+            'amount_to_pay',
+            'updated_at',
+        ])
+        updated_count += 1
+
+    messages.success(request, f'{updated_count} payout record(s) marked as paid and posted to school fee payments.')
+    return redirect('finance:fee_disbursement_queue')
 
 
 @login_required

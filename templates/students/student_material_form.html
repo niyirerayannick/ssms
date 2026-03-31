@@ -41,25 +41,90 @@
                 </div>
             </div>
 
-            <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4">
-                <p class="text-sm font-semibold text-emerald-800 mb-4">Materials Provided</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <label class="flex items-center gap-3">
-                        {{ form.books_received }}
-                        <span class="text-sm text-gray-700">Books (required)</span>
-                    </label>
-                    <label class="flex items-center gap-3">
-                        {{ form.bag_received }}
-                        <span class="text-sm text-gray-700">Bag (required)</span>
-                    </label>
-                    <label class="flex items-center gap-3">
-                        {{ form.shoes_received }}
-                        <span class="text-sm text-gray-700">Shoes (optional)</span>
-                    </label>
-                    <label class="flex items-center gap-3">
-                        {{ form.uniforms_received }}
-                        <span class="text-sm text-gray-700">Uniforms (optional)</span>
-                    </label>
+            <div class="space-y-6">
+                <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-4">
+                    <p class="text-sm font-semibold text-emerald-800 mb-2">Standard Materials Package</p>
+                    <p class="text-sm text-emerald-900/80 mb-4">
+                        Each beneficiary receives a core school materials package to support learning throughout the school year.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="flex items-center gap-3">
+                            {{ form.bag_received }}
+                            <span class="text-sm text-gray-700">School backpacks</span>
+                        </label>
+                        <label class="flex items-center gap-3">
+                            {{ form.books_received }}
+                            <span class="text-sm text-gray-700">Notebooks</span>
+                        </label>
+                        <label class="flex items-center gap-3">
+                            {{ form.pens_pencils_received }}
+                            <span class="text-sm text-gray-700">Pens and pencils</span>
+                        </label>
+                        <label class="flex items-center gap-3">
+                            {{ form.rulers_erasers_received }}
+                            <span class="text-sm text-gray-700">Rulers and erasers</span>
+                        </label>
+                        <label class="flex items-center gap-3">
+                            {{ form.drawing_books_received }}
+                            <span class="text-sm text-gray-700">Drawing books</span>
+                        </label>
+                        <label class="flex items-center gap-3">
+                            {{ form.register_files_received }}
+                            <span class="text-sm text-gray-700">Register files</span>
+                        </label>
+                        <label class="flex items-center gap-3">
+                            {{ form.mathematical_sets_received }}
+                            <span class="text-sm text-gray-700">Mathematical sets</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4">
+                    <p class="text-sm font-semibold text-indigo-800 mb-2">Secondary School Supplementary Materials</p>
+                    <p class="text-sm text-indigo-900/80 mb-4">
+                        Secondary students also receive additional academic tools required for their studies.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="flex items-center gap-3">
+                            {{ form.scientific_calculators_received }}
+                            <span class="text-sm text-gray-700">Scientific calculators</span>
+                        </label>
+                        <label class="flex items-center gap-3">
+                            {{ form.periodic_tables_received }}
+                            <span class="text-sm text-gray-700">Periodic tables</span>
+                        </label>
+                        <label class="flex items-center gap-3">
+                            {{ form.duplicating_papers_received }}
+                            <span class="text-sm text-gray-700">Duplicating papers</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-rose-50/60 border border-rose-100 rounded-xl p-4">
+                    <p class="text-sm font-semibold text-rose-800 mb-2">Girls Support Item</p>
+                    <p class="text-sm text-rose-900/80 mb-4">
+                        Girls aged 12 years and above should also receive cotex or sanitary pads.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="flex items-center gap-3">
+                            {{ form.sanitary_pads_received }}
+                            <span class="text-sm text-gray-700">Cotex / sanitary pads distributed</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                    <p class="text-sm font-semibold text-slate-800 mb-4">Additional Optional Items</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="flex items-center gap-3">
+                            {{ form.shoes_received }}
+                            <span class="text-sm text-gray-700">Shoes</span>
+                        </label>
+                        <label class="flex items-center gap-3">
+                            {{ form.uniforms_received }}
+                            <span class="text-sm text-gray-700">Uniforms</span>
+                        </label>
+                    </div>
                 </div>
             </div>
 

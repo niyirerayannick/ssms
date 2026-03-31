@@ -38,6 +38,7 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from django.forms import formset_factory
 from urllib.parse import urlencode
+import os
 from .models import (
     Student,
     StudentPhoto,
@@ -55,6 +56,8 @@ from .forms import (
     AcademicYearPromotionForm,
     BulkPerformanceFilterForm,
     BulkStudentMarkForm,
+    BulkMaterialFilterForm,
+    BulkStudentMaterialForm,
 )
 from families.models import FamilyStudent
 from finance.models import SchoolFee
@@ -246,6 +249,19 @@ def _build_pdf_image(field_file, width=60, height=60):
             pass
 
 
+def _resolve_logo_path():
+    """Return the first existing local logo asset path."""
+
+    candidates = [
+        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.jpg'),
+        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.png'),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return None
+
+
 def _pdf_text(value, fallback='N/A'):
     """Return a safe string for PDF output."""
 
@@ -316,10 +332,21 @@ def student_edit(request, pk):
 @login_required
 @permission_required('students.view_studentmaterial', raise_exception=True)
 def student_materials(request):
-    """List sponsored students and their school material status."""
+    """List sponsored students with material status, with export support."""
+    context = _build_student_materials_context(request)
+    export_format = request.GET.get('export', '').strip().lower()
+    if export_format == 'pdf':
+        return _export_student_materials_pdf(context)
+    if export_format == 'excel':
+        return _export_student_materials_excel(context)
+    return render(request, 'students/student_materials.html', context)
+
+
+def _material_filter_params(request):
     academic_year_param = request.GET.get('academic_year', '').strip()
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '')
+    district_filter = request.GET.get('district', '').strip()
 
     active_year = get_default_academic_year()
     academic_year_id = None
@@ -333,55 +360,100 @@ def student_materials(request):
     if academic_year_id is None:
         academic_year_id = AcademicYear.objects.order_by('-name').values_list('id', flat=True).first()
 
+    return {
+        'academic_year_id': academic_year_id,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'district_filter': district_filter,
+    }
+
+
+def _build_student_materials_context(request):
+    filters = _material_filter_params(request)
+    academic_year_id = filters['academic_year_id']
+    status_filter = filters['status_filter']
+    search_query = filters['search_query']
+    district_filter = filters['district_filter']
+
     selected_academic_year = (
         AcademicYear.objects.filter(id=academic_year_id).first()
         if academic_year_id else None
     )
+    selected_district = (
+        District.objects.filter(id=district_filter).first()
+        if district_filter else None
+    )
 
-    students_qs = Student.objects.filter(sponsorship_status='active')
+    students_qs = (
+        Student.objects.filter(sponsorship_status='active')
+        .select_related('family__district', 'partner__district', 'school')
+    )
     if search_query:
         students_qs = students_qs.filter(
             Q(first_name__icontains=search_query) |
             Q(last_name__icontains=search_query) |
             Q(family__family_code__icontains=search_query)
         )
+    if district_filter:
+        students_qs = students_qs.filter(
+            Q(family__district_id=district_filter) |
+            Q(partner__district_id=district_filter)
+        )
 
-    materials_qs = StudentMaterial.objects.select_related('student')
+    students = list(students_qs.order_by('first_name', 'last_name').distinct())
+    materials_qs = StudentMaterial.objects.select_related('student', 'academic_year')
     if academic_year_id:
         materials_qs = materials_qs.filter(academic_year_id=academic_year_id)
     materials_by_student = {material.student_id: material for material in materials_qs}
 
     rows = []
-    for student in students_qs.order_by('first_name', 'last_name'):
+    for student in students:
         material = materials_by_student.get(student.id)
         has_all_required = material.all_required_received if material else False
         if status_filter == 'complete' and not has_all_required:
             continue
         if status_filter == 'missing' and has_all_required:
             continue
+        district_name = student.partner.district.name if student.partner and student.partner.district else (
+            student.family.district.name if student.family and student.family.district else 'N/A'
+        )
         rows.append({
             'student': student,
             'material': material,
             'has_all_required': has_all_required,
+            'district_name': district_name,
         })
 
-    boarding_counts = {item['boarding_status']: item['total'] for item in students_qs.values('boarding_status').annotate(total=Count('id'))}
-    level_counts = {item['school_level']: item['total'] for item in students_qs.values('school_level').annotate(total=Count('id'))}
+    boarding_counts = {
+        item['boarding_status']: item['total']
+        for item in students_qs.values('boarding_status').annotate(total=Count('id'))
+    }
+    level_counts = {
+        item['school_level']: item['total']
+        for item in students_qs.values('school_level').annotate(total=Count('id'))
+    }
 
     total_rows = len(rows)
     complete_rows = sum(1 for row in rows if row['has_all_required'])
     missing_rows = total_rows - complete_rows
 
-    available_years = AcademicYear.objects.order_by('-name')
+    params = request.GET.copy()
+    params.pop('export', None)
+    querystring = params.urlencode()
+    path = request.path
 
     context = {
         'rows': rows,
         'selected_academic_year_id': academic_year_id,
         'selected_academic_year': selected_academic_year,
+        'selected_district': selected_district,
         'status_filter': status_filter,
         'search_query': search_query,
-        'available_years': available_years,
+        'district_filter': district_filter,
+        'districts': District.objects.order_by('name'),
+        'available_years': AcademicYear.objects.order_by('-name'),
         'academic_year_label': selected_academic_year.name if selected_academic_year else 'All Years',
+        'district_label': selected_district.name if selected_district else 'All Districts',
         'total_rows': total_rows,
         'complete_rows': complete_rows,
         'missing_rows': missing_rows,
@@ -391,8 +463,364 @@ def student_materials(request):
         'primary_count': level_counts.get('primary', 0),
         'secondary_count': level_counts.get('secondary', 0),
         'tvet_count': level_counts.get('tvet', 0),
+        'export_pdf_url': f"{path}?{querystring}&export=pdf" if querystring else f"{path}?export=pdf",
+        'export_excel_url': f"{path}?{querystring}&export=excel" if querystring else f"{path}?export=excel",
     }
-    return render(request, 'students/student_materials.html', context)
+    return context
+
+
+def _export_student_materials_pdf(context):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        title='Student Materials Report',
+        leftMargin=24,
+        rightMargin=24,
+        topMargin=24,
+        bottomMargin=24,
+    )
+    styles = getSampleStyleSheet()
+    elements = []
+    logo_path = _resolve_logo_path()
+    if logo_path:
+        logo = Image(logo_path, width=56, height=56)
+        logo.hAlign = 'CENTER'
+        elements.append(logo)
+        elements.append(Spacer(1, 8))
+
+    elements.extend([
+        Paragraph('Student Materials Report', styles['Title']),
+        Spacer(1, 12),
+        Paragraph(
+            (
+                f"Academic Year: {context['academic_year_label']} | "
+                f"District: {context['district_label']} | "
+                f"Status: {context['status_filter'] or 'all'} | "
+                f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}"
+            ),
+            styles['BodyText']
+        ),
+        Spacer(1, 18),
+    ])
+    table_data = [[
+        'No.',
+        'Name',
+        'District',
+        'Level',
+        'Bag',
+        'Books',
+        'Pens',
+        'Rulers',
+        'Drawing',
+        'Registers',
+        'Math Set',
+        'Calculator',
+        'Periodic',
+        'Dup Papers',
+        'Pads',
+    ]]
+
+    for index, row in enumerate(context['rows'], start=1):
+        student = row['student']
+        material = row['material']
+        table_data.append([
+            str(index),
+            student.full_name,
+            row['district_name'],
+            student.school_level or 'N/A',
+            'V' if material and material.bag_received else 'X',
+            'V' if material and material.books_received else 'X',
+            'V' if material and material.pens_pencils_received else 'X',
+            'V' if material and material.rulers_erasers_received else 'X',
+            'V' if material and material.drawing_books_received else 'X',
+            'V' if material and material.register_files_received else 'X',
+            'V' if material and material.mathematical_sets_received else 'X',
+            'V' if material and material.scientific_calculators_received else 'X',
+            'V' if material and material.periodic_tables_received else 'X',
+            'V' if material and material.duplicating_papers_received else 'X',
+            'V' if material and material.sanitary_pads_received else 'X',
+        ])
+
+    table = _build_pdf_table(
+        table_data,
+        [30, 120, 80, 55, 38, 40, 38, 42, 42, 45, 45, 45, 42, 48, 38],
+        body_font_size=6,
+    )
+    for row_index in range(1, len(table_data)):
+        for col_index in range(4, len(table_data[0])):
+            cell_value = table_data[row_index][col_index]
+            color = colors.HexColor('#15803d') if cell_value == 'V' else colors.HexColor('#dc2626')
+            table.setStyle(TableStyle([
+                ('TEXTCOLOR', (col_index, row_index), (col_index, row_index), color),
+                ('FONTNAME', (col_index, row_index), (col_index, row_index), 'Helvetica-Bold'),
+                ('ALIGN', (col_index, row_index), (col_index, row_index), 'CENTER'),
+            ]))
+    elements.append(
+        table
+    )
+    doc.build(elements)
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="student_materials_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
+    response.write(pdf)
+    return response
+
+
+def _export_student_materials_excel(context):
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Materials'
+
+    worksheet.merge_cells('A1:O1')
+    worksheet['A1'] = 'Student Materials Report'
+    worksheet['A1'].font = Font(size=14, bold=True)
+    worksheet['A1'].alignment = Alignment(horizontal='center')
+
+    worksheet.merge_cells('A2:O2')
+    worksheet['A2'] = (
+        f"Academic Year: {context['academic_year_label']} | "
+        f"District: {context['district_label']} | "
+        f"Status: {context['status_filter'] or 'all'}"
+    )
+    worksheet['A2'].alignment = Alignment(horizontal='center')
+
+    worksheet.append([])
+    headers = [
+        'No.',
+        'Name',
+        'District',
+        'Level',
+        'Bag',
+        'Books',
+        'Pens',
+        'Rulers',
+        'Drawing',
+        'Registers',
+        'Math Set',
+        'Calculator',
+        'Periodic',
+        'Dup Papers',
+        'Pads',
+    ]
+    worksheet.append(headers)
+    header_row_idx = worksheet.max_row
+    for col_idx, header in enumerate(headers, start=1):
+        cell = worksheet.cell(row=header_row_idx, column=col_idx)
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.fill = PatternFill(start_color='0F172A', end_color='0F172A', fill_type='solid')
+        cell.alignment = Alignment(horizontal='center')
+
+    for index, row in enumerate(context['rows'], start=1):
+        student = row['student']
+        material = row['material']
+        worksheet.append([
+            index,
+            student.full_name,
+            row['district_name'],
+            student.school_level or 'N/A',
+            'V' if material and material.bag_received else 'X',
+            'V' if material and material.books_received else 'X',
+            'V' if material and material.pens_pencils_received else 'X',
+            'V' if material and material.rulers_erasers_received else 'X',
+            'V' if material and material.drawing_books_received else 'X',
+            'V' if material and material.register_files_received else 'X',
+            'V' if material and material.mathematical_sets_received else 'X',
+            'V' if material and material.scientific_calculators_received else 'X',
+            'V' if material and material.periodic_tables_received else 'X',
+            'V' if material and material.duplicating_papers_received else 'X',
+            'V' if material and material.sanitary_pads_received else 'X',
+        ])
+
+        current_row = worksheet.max_row
+        for col_idx in range(5, 16):
+            cell = worksheet.cell(row=current_row, column=col_idx)
+            cell.font = Font(
+                bold=True,
+                color='15803D' if cell.value == 'V' else 'DC2626',
+            )
+            cell.alignment = Alignment(horizontal='center')
+
+    column_widths = [8, 28, 18, 14, 10, 10, 10, 10, 12, 12, 12, 12, 12, 12, 10]
+    for idx, width in enumerate(column_widths, start=1):
+        worksheet.column_dimensions[chr(64 + idx)].width = width
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="student_materials_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+    response.write(buffer.read())
+    buffer.close()
+    return response
+
+
+@login_required
+@permission_required('students.add_studentmaterial', raise_exception=True)
+def student_material_bulk_entry(request):
+    """Bulk capture materials filtered by academic year and district."""
+    data_source = request.POST if request.method == 'POST' else request.GET
+    filter_form = BulkMaterialFilterForm(data_source or None)
+    MaterialBulkFormSet = formset_factory(BulkStudentMaterialForm, extra=0)
+
+    formset = None
+    students_loaded = False
+    table_rows = []
+    selected_filters = {}
+    selected_year = None
+    selected_district = None
+    summary = {
+        'student_count': 0,
+        'records_existing': 0,
+        'pending_records': 0,
+        'complete_records': 0,
+    }
+
+    tracked_fields = [
+        'bag_received',
+        'books_received',
+        'pens_pencils_received',
+        'rulers_erasers_received',
+        'drawing_books_received',
+        'register_files_received',
+        'mathematical_sets_received',
+        'scientific_calculators_received',
+        'periodic_tables_received',
+        'duplicating_papers_received',
+        'sanitary_pads_received',
+        'shoes_received',
+        'uniforms_received',
+        'received_date',
+        'notes',
+    ]
+
+    if filter_form.is_valid():
+        students_loaded = True
+        academic_year = filter_form.cleaned_data['academic_year']
+        district = filter_form.cleaned_data['district']
+        selected_year = academic_year
+        selected_district = district
+
+        student_qs = (
+            Student.objects.filter(
+                sponsorship_status='active'
+            )
+            .filter(
+                Q(family__district=district) | Q(partner__district=district)
+            )
+            .select_related('family__district', 'partner__district', 'school')
+            .order_by('first_name', 'last_name')
+            .distinct()
+        )
+        students = list(student_qs)
+        student_lookup = {student.id: student for student in students}
+
+        existing_materials = StudentMaterial.objects.filter(
+            student__in=students,
+            academic_year=academic_year,
+        ).select_related('student')
+        existing_map = {record.student_id: record for record in existing_materials}
+
+        summary = {
+            'student_count': len(students),
+            'records_existing': len(existing_map),
+            'pending_records': max(len(students) - len(existing_map), 0),
+            'complete_records': sum(1 for record in existing_map.values() if record.all_required_received),
+        }
+
+        initial_data = []
+        for student in students:
+            material = existing_map.get(student.id)
+            initial_data.append({
+                'student_id': student.id,
+                'bag_received': material.bag_received if material else False,
+                'books_received': material.books_received if material else False,
+                'pens_pencils_received': material.pens_pencils_received if material else False,
+                'rulers_erasers_received': material.rulers_erasers_received if material else False,
+                'drawing_books_received': material.drawing_books_received if material else False,
+                'register_files_received': material.register_files_received if material else False,
+                'mathematical_sets_received': material.mathematical_sets_received if material else False,
+                'scientific_calculators_received': material.scientific_calculators_received if material else False,
+                'periodic_tables_received': material.periodic_tables_received if material else False,
+                'duplicating_papers_received': material.duplicating_papers_received if material else False,
+                'sanitary_pads_received': material.sanitary_pads_received if material else False,
+                'shoes_received': material.shoes_received if material else False,
+                'uniforms_received': material.uniforms_received if material else False,
+                'received_date': material.received_date if material else None,
+                'notes': material.notes if material else '',
+            })
+
+        if request.method == 'POST':
+            formset = MaterialBulkFormSet(request.POST)
+            if formset.is_valid():
+                created_count = 0
+                updated_count = 0
+                with transaction.atomic():
+                    for form in formset:
+                        student_id = form.cleaned_data.get('student_id')
+                        if not student_id or student_id not in student_lookup:
+                            continue
+
+                        defaults = {field: form.cleaned_data.get(field) for field in tracked_fields}
+                        record, created = StudentMaterial.objects.update_or_create(
+                            student=student_lookup[student_id],
+                            academic_year=academic_year,
+                            defaults=defaults,
+                        )
+                        if created:
+                            created_count += 1
+                        else:
+                            updated_count += 1
+                        existing_map[student_id] = record
+
+                messages.success(
+                    request,
+                    f"Bulk materials saved for {district.name}: {created_count} new, {updated_count} updated."
+                )
+                query = urlencode({
+                    'academic_year': academic_year.id,
+                    'district': district.id,
+                })
+                return redirect(f"{reverse('students:student_material_bulk_entry')}?{query}")
+        else:
+            formset = MaterialBulkFormSet(initial=initial_data)
+
+        if formset is not None:
+            for idx, student in enumerate(students):
+                if idx >= len(formset.forms):
+                    break
+                existing_record = existing_map.get(student.id)
+                table_rows.append({
+                    'student': student,
+                    'form': formset.forms[idx],
+                    'existing_record': existing_record,
+                    'requires_secondary_materials': student.school_level == 'secondary',
+                    'requires_sanitary_pads': student.gender == 'F' and (student.age or 0) >= 12,
+                    'district_name': student.partner.district.name if student.partner and student.partner.district else (
+                        student.family.district.name if student.family and student.family.district else 'N/A'
+                    ),
+                })
+
+        selected_filters = {
+            'academic_year': academic_year.id,
+            'district': district.id,
+        }
+
+    context = {
+        'filter_form': filter_form,
+        'formset': formset,
+        'table_rows': table_rows,
+        'students_loaded': students_loaded,
+        'selected_filters': selected_filters,
+        'selected_year': selected_year,
+        'selected_district': selected_district,
+        'summary': summary,
+    }
+    return render(request, 'students/student_material_bulk_entry.html', context)
 
 
 @login_required
@@ -733,22 +1161,48 @@ def student_full_report_pdf(request, pk):
     elements.append(_build_pdf_table(marks_data, [85, 60, 130, 55, 210], body_font_size=7))
     elements.append(Spacer(1, 10))
 
-    materials_data = [['Academic Year', 'Books', 'Bag', 'Shoes', 'Uniforms', 'Received Date', 'Notes']]
+    materials_data = [[
+        'Academic Year',
+        'Standard Package',
+        'Secondary Tools',
+        'Girls 12+',
+        'Optional Extras',
+        'Received Date',
+        'Notes',
+    ]]
     if materials:
         for material in materials:
+            standard_items = [
+                ('Backpack', material.bag_received),
+                ('Notebooks', material.books_received),
+                ('Pens/Pencils', material.pens_pencils_received),
+                ('Rulers/Erasers', material.rulers_erasers_received),
+                ('Drawing Books', material.drawing_books_received),
+                ('Register Files', material.register_files_received),
+                ('Math Set', material.mathematical_sets_received),
+            ]
+            secondary_items = [
+                ('Calculator', material.scientific_calculators_received),
+                ('Periodic Table', material.periodic_tables_received),
+                ('Duplicating Papers', material.duplicating_papers_received),
+            ]
+            optional_items = [
+                ('Shoes', material.shoes_received),
+                ('Uniforms', material.uniforms_received),
+            ]
             materials_data.append([
                 material.academic_year.name if material.academic_year else 'N/A',
-                'Yes' if material.books_received else 'No',
-                'Yes' if material.bag_received else 'No',
-                'Yes' if material.shoes_received else 'No',
-                'Yes' if material.uniforms_received else 'No',
+                ', '.join(label for label, present in standard_items if present) or 'None',
+                ', '.join(label for label, present in secondary_items if present) or 'N/A',
+                'Pads included' if material.sanitary_pads_received else ('Required but missing' if material.requires_sanitary_pads else 'N/A'),
+                ', '.join(label for label, present in optional_items if present) or 'None',
                 material.received_date.strftime('%Y-%m-%d') if material.received_date else 'N/A',
                 material.notes or material.special_request or 'N/A',
             ])
     else:
         materials_data.append(['No material records found', '', '', '', '', '', ''])
     elements.append(Paragraph('Student Materials', section_style))
-    elements.append(_build_pdf_table(materials_data, [80, 45, 40, 45, 55, 70, 175], body_font_size=7))
+    elements.append(_build_pdf_table(materials_data, [75, 130, 110, 70, 80, 65, 110], body_font_size=7))
     elements.append(Spacer(1, 10))
 
     insurance_data = [['Academic Year', 'Required', 'Paid', 'Balance', 'Coverage Status', 'Remarks']]

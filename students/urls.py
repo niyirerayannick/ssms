@@ -12,6 +12,7 @@ urlpatterns = [
     path('performance/bulk-entry/', views.student_performance_bulk_entry, name='student_performance_bulk_entry'),
     path('performance/<int:pk>/', views.StudentPerformanceDetailView.as_view(), name='student_performance_detail'),
     path('materials/', views.student_materials, name='student_materials'),
+    path('materials/bulk-entry/', views.student_material_bulk_entry, name='student_material_bulk_entry'),
     path('materials/add/', views.student_material_create, name='student_material_create'),
     path('materials/<hashid:pk>/edit/', views.student_material_edit, name='student_material_edit'),
     path('<hashid:pk>/full-report/pdf/', views.student_full_report_pdf, name='student_full_report_pdf'),

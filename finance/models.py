@@ -189,3 +189,73 @@ class SchoolFeePayment(models.Model):
 
     def __str__(self):
         return f"{self.school_fee.student.full_name} - {self.amount_paid} on {self.payment_date}"
+
+
+class SchoolFeeDisbursement(models.Model):
+    """Queue of school fee amounts finance still needs to pay out."""
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('exported', 'Exported'),
+        ('paid', 'Paid'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    school_fee = models.OneToOneField(
+        SchoolFee,
+        on_delete=models.CASCADE,
+        related_name='disbursement',
+    )
+    student_name = models.CharField(max_length=200, blank=True)
+    school_name = models.CharField(max_length=200, blank=True)
+    class_level = models.CharField(max_length=50, blank=True)
+    bank_name = models.CharField(max_length=200, blank=True)
+    bank_account_name = models.CharField(max_length=200, blank=True)
+    bank_account_number = models.CharField(max_length=50, blank=True)
+    amount_to_pay = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    requested_at = models.DateTimeField(auto_now_add=True)
+    exported_at = models.DateTimeField(null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    paid_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='processed_school_fee_disbursements',
+    )
+    payment_reference = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-requested_at']
+        verbose_name = 'School Fee Disbursement'
+        verbose_name_plural = 'School Fee Disbursements'
+
+    def sync_from_fee(self):
+        fee = self.school_fee
+        student = fee.student
+        school = student.school if student and student.school else None
+        self.student_name = student.full_name if student else ''
+        self.school_name = fee.school_name or (school.name if school else '')
+        self.class_level = fee.class_level or (student.class_level if student else '')
+        self.bank_name = fee.bank_name or (school.bank_name if school and school.bank_name else '')
+        self.bank_account_name = fee.bank_account_name or (
+            school.bank_account_name if school and school.bank_account_name else ''
+        )
+        self.bank_account_number = fee.bank_account_number or (
+            school.bank_account_number if school and school.bank_account_number else ''
+        )
+        self.amount_to_pay = fee.balance or 0
+
+    def save(self, *args, **kwargs):
+        if self.school_fee_id:
+            self.sync_from_fee()
+            if self.amount_to_pay <= 0 and self.status in {'pending', 'exported'}:
+                self.status = 'cancelled'
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.student_name or self.school_fee.student.full_name} - {self.amount_to_pay} ({self.get_status_display()})"

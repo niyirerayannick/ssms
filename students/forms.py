@@ -1,6 +1,6 @@
 from django import forms
 from .models import Student, StudentPhoto, StudentMark, StudentMaterial
-from core.models import School, AcademicYear, Partner
+from core.models import School, AcademicYear, Partner, District
 from families.models import Family
 from django.contrib.auth.models import User
 from core.academic_years import apply_default_academic_year_field
@@ -268,6 +268,15 @@ class StudentMaterialForm(forms.ModelForm):
             'academic_year',
             'books_received',
             'bag_received',
+            'pens_pencils_received',
+            'rulers_erasers_received',
+            'drawing_books_received',
+            'register_files_received',
+            'mathematical_sets_received',
+            'scientific_calculators_received',
+            'periodic_tables_received',
+            'duplicating_papers_received',
+            'sanitary_pads_received',
             'shoes_received',
             'uniforms_received',
             'received_date',
@@ -282,6 +291,33 @@ class StudentMaterialForm(forms.ModelForm):
                 'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
             }),
             'bag_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'pens_pencils_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'rulers_erasers_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'drawing_books_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'register_files_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'mathematical_sets_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'scientific_calculators_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'periodic_tables_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'duplicating_papers_received': forms.CheckboxInput(attrs={
+                'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
+            }),
+            'sanitary_pads_received': forms.CheckboxInput(attrs={
                 'class': 'h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded'
             }),
             'shoes_received': forms.CheckboxInput(attrs={
@@ -310,6 +346,65 @@ class StudentMaterialForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['student'].queryset = Student.objects.filter(sponsorship_status='active').order_by('first_name', 'last_name')
         apply_default_academic_year_field(self, 'academic_year')
+
+
+class BulkMaterialFilterForm(forms.Form):
+    """Filter controls for bulk student material entry."""
+
+    academic_year = forms.ModelChoiceField(
+        queryset=AcademicYear.objects.none(),
+        required=True,
+        empty_label="Select academic year",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
+        })
+    )
+    district = forms.ModelChoiceField(
+        queryset=District.objects.none(),
+        required=True,
+        empty_label="Select district",
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['district'].queryset = District.objects.order_by('name')
+        apply_default_academic_year_field(self, 'academic_year')
+
+
+class BulkStudentMaterialForm(forms.Form):
+    """Single-row form capturing material distribution for one student."""
+
+    student_id = forms.IntegerField(widget=forms.HiddenInput())
+    bag_received = forms.BooleanField(required=False)
+    books_received = forms.BooleanField(required=False)
+    pens_pencils_received = forms.BooleanField(required=False)
+    rulers_erasers_received = forms.BooleanField(required=False)
+    drawing_books_received = forms.BooleanField(required=False)
+    register_files_received = forms.BooleanField(required=False)
+    mathematical_sets_received = forms.BooleanField(required=False)
+    scientific_calculators_received = forms.BooleanField(required=False)
+    periodic_tables_received = forms.BooleanField(required=False)
+    duplicating_papers_received = forms.BooleanField(required=False)
+    sanitary_pads_received = forms.BooleanField(required=False)
+    shoes_received = forms.BooleanField(required=False)
+    uniforms_received = forms.BooleanField(required=False)
+    received_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 text-sm',
+            'type': 'date',
+        })
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 text-sm',
+            'placeholder': 'Optional notes'
+        })
+    )
 
 
 class BulkPerformanceFilterForm(forms.Form):

@@ -373,6 +373,15 @@ class StudentMaterial(models.Model):
     )
     books_received = models.BooleanField(default=False)
     bag_received = models.BooleanField(default=False)
+    pens_pencils_received = models.BooleanField(default=False)
+    rulers_erasers_received = models.BooleanField(default=False)
+    drawing_books_received = models.BooleanField(default=False)
+    register_files_received = models.BooleanField(default=False)
+    mathematical_sets_received = models.BooleanField(default=False)
+    scientific_calculators_received = models.BooleanField(default=False)
+    periodic_tables_received = models.BooleanField(default=False)
+    duplicating_papers_received = models.BooleanField(default=False)
+    sanitary_pads_received = models.BooleanField(default=False)
     shoes_received = models.BooleanField(default=False)
     uniforms_received = models.BooleanField(default=False)
     special_request = models.TextField(blank=True, help_text="Special needs or requests")
@@ -386,8 +395,37 @@ class StudentMaterial(models.Model):
         unique_together = ['student', 'academic_year']
 
     @property
+    def requires_secondary_materials(self):
+        return bool(self.student_id and self.student.school_level == 'secondary')
+
+    @property
+    def requires_sanitary_pads(self):
+        return bool(
+            self.student_id and
+            self.student.gender == 'F' and
+            (self.student.age or 0) >= 12
+        )
+
+    @property
     def all_required_received(self):
-        return self.books_received and self.bag_received
+        required_items = [
+            self.bag_received,
+            self.books_received,
+            self.pens_pencils_received,
+            self.rulers_erasers_received,
+            self.drawing_books_received,
+            self.register_files_received,
+            self.mathematical_sets_received,
+        ]
+        if self.requires_secondary_materials:
+            required_items.extend([
+                self.scientific_calculators_received,
+                self.periodic_tables_received,
+                self.duplicating_papers_received,
+            ])
+        if self.requires_sanitary_pads:
+            required_items.append(self.sanitary_pads_received)
+        return all(required_items)
 
     def __str__(self):
         year_display = self.academic_year.name if self.academic_year else "N/A"

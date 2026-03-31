@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Bulk Material Entry - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6 animate-fade-in">
+    <div class="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Bulk Material Entry</h1>
+                <p class="text-sm text-slate-600 mt-1">Select an academic year and district to record materials for many students at once.</p>
+            </div>
+            <div class="flex w-full sm:w-auto gap-2">
+                <a href="{% url 'students:student_materials' %}" class="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white text-slate-700 text-sm font-semibold border border-slate-200 hover:bg-slate-50 active:scale-95">
+                    <span class="material-symbols-rounded text-[18px]">arrow_back</span>
+                    Back To List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Academic Year</label>
+                {{ filter_form.academic_year }}
+                {% if filter_form.academic_year.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ filter_form.academic_year.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">District</label>
+                {{ filter_form.district }}
+                {% if filter_form.district.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ filter_form.district.errors.0 }}</p>
+                {% endif %}
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-end gap-2 xl:col-span-2">
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 active:scale-95">
+                    Load Students
+                </button>
+                <a href="{% url 'students:student_material_bulk_entry' %}" class="w-full sm:w-auto text-center px-6 py-2.5 rounded-xl bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-200 active:scale-95">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    {% if students_loaded %}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Students</p>
+            <p class="text-2xl font-bold text-slate-900 mt-1">{{ summary.student_count }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Existing</p>
+            <p class="text-2xl font-bold text-indigo-600 mt-1">{{ summary.records_existing }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pending</p>
+            <p class="text-2xl font-bold text-amber-600 mt-1">{{ summary.pending_records }}</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Complete</p>
+            <p class="text-2xl font-bold text-emerald-600 mt-1">{{ summary.complete_records }}</p>
+        </div>
+    </div>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="academic_year" value="{{ selected_filters.academic_year }}">
+        <input type="hidden" name="district" value="{{ selected_filters.district }}">
+        {{ formset.management_form }}
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="px-4 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/60">
+                <p class="text-sm font-semibold text-slate-800">
+                    {% if selected_year and selected_district %}
+                        {{ selected_year.name }} | {{ selected_district.name }}
+                    {% endif %}
+                </p>
+                <p class="text-xs text-slate-500 mt-1">Secondary-only items and girls 12+ sanitary pads can be filled where applicable.</p>
+            </div>
+            <div class="p-4 sm:hidden space-y-4 bg-slate-50/30">
+                {% for row in table_rows %}
+                <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            {{ row.form.student_id }}
+                            <div class="font-bold text-slate-900 text-sm">{{ row.student.full_name }}</div>
+                            <div class="text-[11px] text-slate-500 mt-1">{{ row.student.class_level }} | {{ row.district_name }}</div>
+                        </div>
+                        <div class="flex flex-wrap justify-end gap-1">
+                            {% if row.requires_secondary_materials %}
+                            <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase">Secondary</span>
+                            {% endif %}
+                            {% if row.requires_sanitary_pads %}
+                            <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold uppercase">Pads</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mt-4 space-y-4">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Core Package</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.bag_received }} <span>Bag</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.books_received }} <span>Books</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.pens_pencils_received }} <span>Pens</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.rulers_erasers_received }} <span>Rulers</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.drawing_books_received }} <span>Drawing</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.register_files_received }} <span>Registers</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700 col-span-2">{{ row.form.mathematical_sets_received }} <span>Math Set</span></label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Additional Items</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.scientific_calculators_received }} <span>Calculator</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.periodic_tables_received }} <span>Periodic</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.duplicating_papers_received }} <span>Dup Papers</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.sanitary_pads_received }} <span>Pads</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.shoes_received }} <span>Shoes</span></label>
+                                <label class="flex items-center gap-2 text-xs text-slate-700">{{ row.form.uniforms_received }} <span>Uniform</span></label>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Received Date</label>
+                                {{ row.form.received_date }}
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Notes</label>
+                                {{ row.form.notes }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="rounded-2xl border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500">
+                    No sponsored students found for this district and academic year.
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="hidden sm:block overflow-x-auto">
+                <div class="px-4 py-3 border-b border-slate-100 bg-amber-50 text-[11px] text-amber-800">
+                    Scroll horizontally to see all material columns.
+                </div>
+                <table class="min-w-[1680px] w-full divide-y divide-slate-100">
+                    <thead class="bg-slate-50/50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Bag</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Books</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pens</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Rulers</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Drawing</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Registers</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Math Set</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Calculator</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Periodic</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Dup Papers</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pads</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Shoes</th>
+                            <th class="px-3 py-3 text-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">Uniform</th>
+                            <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Received</th>
+                            <th class="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-50">
+                        {% for row in table_rows %}
+                        <tr class="hover:bg-slate-50/50">
+                            <td class="px-4 py-3 align-top">
+                                {{ row.form.student_id }}
+                                <div class="font-bold text-slate-900 text-sm">{{ row.student.full_name }}</div>
+                                <div class="text-[11px] text-slate-500 mt-1">{{ row.student.class_level }} | {{ row.district_name }}</div>
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    {% if row.requires_secondary_materials %}
+                                    <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase">Secondary</span>
+                                    {% endif %}
+                                    {% if row.requires_sanitary_pads %}
+                                    <span class="px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold uppercase">Pads Required</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-3 py-3 text-center">{{ row.form.bag_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.books_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.pens_pencils_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.rulers_erasers_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.drawing_books_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.register_files_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.mathematical_sets_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.scientific_calculators_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.periodic_tables_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.duplicating_papers_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.sanitary_pads_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.shoes_received }}</td>
+                            <td class="px-3 py-3 text-center">{{ row.form.uniforms_received }}</td>
+                            <td class="px-4 py-3 min-w-[150px]">{{ row.form.received_date }}</td>
+                            <td class="px-4 py-3 min-w-[220px]">{{ row.form.notes }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="16" class="px-6 py-12 text-center text-sm text-slate-500">No sponsored students found for this district and academic year.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if table_rows %}
+        <div class="sticky bottom-3 sm:static">
+            <div class="flex justify-stretch sm:justify-end">
+            <button type="submit" class="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 active:scale-95 shadow-lg sm:shadow-sm">
+                Save Bulk Materials
+            </button>
+            </div>
+        </div>
+        {% endif %}
+    </form>
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 text-center text-slate-500">
+        Choose an academic year and district to begin bulk material entry.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

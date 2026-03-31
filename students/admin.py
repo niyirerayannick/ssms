@@ -26,6 +26,25 @@ class AcademicRecordAdmin(admin.ModelAdmin):
 
 @admin.register(StudentMaterial)
 class StudentMaterialAdmin(admin.ModelAdmin):
-    list_display = ['student', 'academic_year', 'books_received', 'bag_received', 'shoes_received', 'uniforms_received', 'received_date']
-    list_filter = ['academic_year', 'books_received', 'bag_received', 'shoes_received', 'uniforms_received']
+    list_display = [
+        'student',
+        'academic_year',
+        'books_received',
+        'bag_received',
+        'pens_pencils_received',
+        'mathematical_sets_received',
+        'scientific_calculators_received',
+        'sanitary_pads_received',
+        'received_date',
+    ]
+    list_filter = [
+        'academic_year',
+        'books_received',
+        'bag_received',
+        'pens_pencils_received',
+        'scientific_calculators_received',
+        'sanitary_pads_received',
+        'shoes_received',
+        'uniforms_received',
+    ]
     search_fields = ['student__first_name', 'student__last_name', 'student__family__family_code']

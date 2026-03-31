@@ -344,3 +344,35 @@ class FamilyInsuranceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         apply_default_academic_year_field(self, 'insurance_year')
+
+
+class SchoolFeeDisbursementMarkPaidForm(forms.Form):
+    """Capture payout metadata when finance confirms payment."""
+
+    payment_date = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm'
+        })
+    )
+    payment_reference = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm',
+            'placeholder': 'Bank payment reference'
+        })
+    )
+    notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm',
+            'rows': 2,
+            'placeholder': 'Optional finance note'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.data:
+            self.fields['payment_date'].initial = timezone.now().date()
