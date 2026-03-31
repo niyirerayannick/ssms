@@ -8,7 +8,32 @@ def backfill_fee_snapshots_and_payments(apps, schema_editor):
     SchoolFee = apps.get_model('finance', 'SchoolFee')
     SchoolFeePayment = apps.get_model('finance', 'SchoolFeePayment')
 
-    for fee in SchoolFee.objects.select_related('student__school').all():
+    fee_queryset = (
+        SchoolFee.objects.select_related('student__school')
+        .only(
+            'id',
+            'student',
+            'school_name',
+            'class_level',
+            'bank_name',
+            'bank_account_name',
+            'bank_account_number',
+            'amount_paid',
+            'payment_date',
+            'recorded_by',
+            'comments',
+            'student__id',
+            'student__class_level',
+            'student__school_name',
+            'student__school__id',
+            'student__school__name',
+            'student__school__bank_name',
+            'student__school__bank_account_name',
+            'student__school__bank_account_number',
+        )
+    )
+
+    for fee in fee_queryset.iterator():
         student = fee.student
         school = student.school if student else None
 
