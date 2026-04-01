@@ -2,7 +2,7 @@ from django import forms
 from django.utils import timezone
 from .models import SchoolFee, SchoolFeePayment
 from insurance.models import FamilyInsurance
-from core.models import School, AcademicYear, Partner
+from core.models import School, AcademicYear, Partner, District
 from core.academic_years import apply_default_academic_year_field
 
 
@@ -142,10 +142,10 @@ class BulkFeeFilterForm(forms.Form):
             'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
         })
     )
-    school = forms.ModelChoiceField(
-        queryset=School.objects.none(),
+    district = forms.ModelChoiceField(
+        queryset=District.objects.none(),
         required=False,
-        empty_label="Select school",
+        empty_label="Select district",
         widget=forms.Select(attrs={
             'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
         })
@@ -153,7 +153,7 @@ class BulkFeeFilterForm(forms.Form):
     partner = forms.ModelChoiceField(
         queryset=Partner.objects.none(),
         required=False,
-        empty_label="Select partner (optional)",
+        empty_label="Select partner",
         widget=forms.Select(attrs={
             'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
         })
@@ -182,8 +182,7 @@ class BulkFeeFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        schools = School.objects.order_by('name')
-        self.fields['school'].queryset = schools
+        self.fields['district'].queryset = District.objects.order_by('name')
         self.fields['partner'].queryset = Partner.objects.order_by('name')
         apply_default_academic_year_field(self, 'academic_year')
 
@@ -192,10 +191,10 @@ class BulkFeeFilterForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
+        district = cleaned.get('district')
         partner = cleaned.get('partner')
-        school = cleaned.get('school')
-        if not partner and not school:
-            raise forms.ValidationError('Select a school or choose a partner.')
+        if not district and not partner:
+            raise forms.ValidationError('Select a district or choose a partner.')
         return cleaned
 
 

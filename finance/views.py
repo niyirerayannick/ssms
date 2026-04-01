@@ -391,7 +391,7 @@ def export_fee_disbursement_excel(request):
     headers = [
         'Student Name',
         'Academic Year',
-        'Term',
+        'School Term',
         'District',
         'School',
         'Class Level',
@@ -504,6 +504,19 @@ def export_fee_disbursement_pdf(request):
         alignment=1,
         spaceAfter=10,
     )
+    cell_style = ParagraphStyle(
+        'DisbursementCell',
+        parent=styles['BodyText'],
+        fontSize=6.4,
+        leading=7.4,
+        textColor=colors.HexColor('#0f172a'),
+    )
+    amount_style = ParagraphStyle(
+        'DisbursementAmount',
+        parent=cell_style,
+        alignment=2,
+        fontName='Helvetica-Bold',
+    )
     elements = []
     logo_path = _resolve_logo_path()
     if logo_path:
@@ -525,16 +538,19 @@ def export_fee_disbursement_pdf(request):
 
     summary_data = [
         ['Total Records', str(totals['listed_count']), 'Pending', str(totals['pending_count']), 'Exported', str(totals['exported_count']), 'Paid', str(totals['paid_count'])],
-        ['Total Amount To Pay', f"FRW {totals['total_amount_to_pay']:,.2f}", '', '', '', '', '', ''],
+        ['Total Amount', f"FRW {totals['total_amount_to_pay']:,.2f}", '', '', '', '', '', ''],
     ]
-    summary_table = Table(summary_data, colWidths=[75, 110, 55, 50, 60, 50, 40, 45])
+    summary_table = Table(summary_data, colWidths=[78, 70, 58, 55, 60, 55, 42, 42])
     summary_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8fafc')),
         ('BACKGROUND', (0, 1), (1, 1), colors.HexColor('#fef2f2')),
+        ('SPAN', (1, 1), (-1, 1)),
         ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
         ('TEXTCOLOR', (0, 1), (1, 1), colors.HexColor('#dc2626')),
         ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#cbd5e1')),
         ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#94a3b8')),
+        ('ALIGN', (1, 1), (-1, 1), 'LEFT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('PADDING', (0, 0), (-1, -1), 6),
     ]))
     elements.append(summary_table)
@@ -544,6 +560,8 @@ def export_fee_disbursement_pdf(request):
         'No.',
         'Student',
         'District',
+        'Academic Year',
+        'School Term',
         'School',
         'Bank',
         'Account Name',
@@ -559,27 +577,31 @@ def export_fee_disbursement_pdf(request):
             )
         )
         table_data.append([
-            str(index),
-            item.student_name,
-            district_name,
-            item.school_name or 'N/A',
-            item.bank_name or 'N/A',
-            item.bank_account_name or 'N/A',
-            item.bank_account_number or 'N/A',
-            f"{item.amount_to_pay:,.2f}",
+            Paragraph(str(index), cell_style),
+            Paragraph(item.student_name or 'N/A', cell_style),
+            Paragraph(district_name, cell_style),
+            Paragraph(fee.academic_year.name if fee.academic_year else 'N/A', cell_style),
+            Paragraph(fee.get_term_display(), cell_style),
+            Paragraph(item.school_name or 'N/A', cell_style),
+            Paragraph(item.bank_name or 'N/A', cell_style),
+            Paragraph(item.bank_account_name or 'N/A', cell_style),
+            Paragraph(item.bank_account_number or 'N/A', cell_style),
+            Paragraph(f"{item.amount_to_pay:,.2f}", amount_style),
         ])
 
     table_data.append([
         '',
-        'TOTAL',
+        Paragraph('TOTAL', amount_style),
         '',
         '',
         '',
         '',
         '',
-        f"{totals['total_amount_to_pay']:,.2f}",
+        '',
+        '',
+        Paragraph(f"{totals['total_amount_to_pay']:,.2f}", amount_style),
     ])
-    table = Table(table_data, colWidths=[28, 120, 70, 110, 90, 100, 95, 70], repeatRows=1)
+    table = Table(table_data, colWidths=[24, 96, 58, 64, 52, 102, 60, 88, 80, 64], repeatRows=1)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f766e')),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
@@ -587,16 +609,18 @@ def export_fee_disbursement_pdf(request):
         ('FONTSIZE', (0, 0), (-1, 0), 8),
         ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#fef3c7')),
         ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('TEXTCOLOR', (7, -1), (7, -1), colors.HexColor('#b45309')),
-        ('FONTSIZE', (0, 1), (-1, -1), 7),
+        ('TEXTCOLOR', (9, -1), (9, -1), colors.HexColor('#b45309')),
+        ('FONTSIZE', (0, 1), (-1, -1), 6.5),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (0, 0), (0, -1), 'CENTER'),
+        ('ALIGN', (9, 1), (9, -1), 'RIGHT'),
         ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f8fafc')]),
         ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#cbd5e1')),
         ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#94a3b8')),
-        ('LEFTPADDING', (0, 0), (-1, -1), 5),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
     ]))
     elements.append(table)
     elements.append(Spacer(1, 24))
@@ -846,6 +870,8 @@ def bulk_fee_entry(request):
     students_loaded = False
     selected_filters = {}
     selected_school = None
+    selected_district = None
+    selected_partner = None
     selected_year = None
     term_display = None
     category_label = None
@@ -858,30 +884,37 @@ def bulk_fee_entry(request):
     if filter_form.is_valid():
         students_loaded = True
         academic_year = filter_form.cleaned_data['academic_year']
-        school = filter_form.cleaned_data.get('school')
+        district = filter_form.cleaned_data['district']
         partner = filter_form.cleaned_data.get('partner')
         term = filter_form.cleaned_data['term']
         category = filter_form.cleaned_data['category']
         payment_date = filter_form.cleaned_data.get('payment_date') or timezone.now().date()
 
-        selected_school = school
+        selected_district = district
         selected_partner = partner
         selected_year = academic_year
         term_display = dict(SchoolFee.TERM_CHOICES).get(term, term)
         category_label = dict(filter_form.fields['category'].choices).get(category, category)
 
-        # If partner selected, load students for partner; otherwise load by school
         if partner:
             student_qs = (
-                Student.objects.filter(partner=partner, is_active=True)
-                .select_related('school', 'partner')
+                Student.objects.filter(is_active=True, partner=partner)
+                .select_related('school', 'partner', 'family__district')
                 .order_by('first_name', 'last_name')
             )
         else:
             student_qs = (
-                Student.objects.filter(school=school, is_active=True)
-                .select_related('school', 'partner')
+                Student.objects.filter(
+                    is_active=True,
+                )
+                .filter(
+                    Q(family__district=district) |
+                    Q(partner__district=district) |
+                    Q(school__district=district)
+                )
+                .select_related('school', 'partner', 'family__district')
                 .order_by('first_name', 'last_name')
+                .distinct()
             )
         if category in ['primary', 'secondary']:
             student_qs = student_qs.filter(school_level=category)
@@ -972,7 +1005,7 @@ def bulk_fee_entry(request):
 
                 messages.success(
                     request,
-                    f"Bulk fees saved{f' for {partner.name}' if partner else f' for {school.name}'}: {created_count} new, {updated_count} updated.",
+                    f"Bulk fees saved for {partner.name if partner else district.name}: {created_count} new, {updated_count} updated.",
                 )
                 params_dict = {
                     'academic_year': academic_year.id,
@@ -982,9 +1015,8 @@ def bulk_fee_entry(request):
                 }
                 if partner:
                     params_dict['partner'] = partner.id
-                else:
-                    if school:
-                        params_dict['school'] = school.id
+                elif district:
+                    params_dict['district'] = district.id
                 params = urlencode(params_dict)
                 return redirect(f"{reverse('finance:bulk_fee_entry')}?{params}")
         else:
@@ -1013,9 +1045,8 @@ def bulk_fee_entry(request):
         }
         if partner:
             selected_filters['partner'] = partner.id
-        else:
-            if school:
-                selected_filters['school'] = school.id
+        elif district:
+            selected_filters['district'] = district.id
 
     context = {
         'filter_form': filter_form,
@@ -1024,6 +1055,8 @@ def bulk_fee_entry(request):
         'students_loaded': students_loaded,
         'selected_filters': selected_filters,
         'selected_school': selected_school,
+        'selected_district': selected_district,
+        'selected_partner': selected_partner,
         'selected_year': selected_year,
         'term_display': term_display,
         'category_label': category_label,

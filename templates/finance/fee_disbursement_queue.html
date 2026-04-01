@@ -122,7 +122,8 @@
                             <th class="px-4 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Select</th>
                             <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Student</th>
                             <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">School / Account</th>
-                            <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Year / Term</th>
+                            <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Academic Year</th>
+                            <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">School Term</th>
                             <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Amount</th>
                             <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Queue Status</th>
                         </tr>
@@ -149,12 +150,8 @@
                                     <span class="text-[10px] text-slate-500 mt-1">{{ item.bank_name|default:"N/A" }} | {{ item.bank_account_name|default:"N/A" }} | {{ item.bank_account_number|default:"N/A" }}</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-medium text-slate-900">{{ item.school_fee.academic_year.name|default:"N/A" }}</span>
-                                    <span class="text-[10px] text-slate-500">{{ item.school_fee.get_term_display }}</span>
-                                </div>
-                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm font-medium text-slate-900">{{ item.school_fee.academic_year.name|default:"N/A" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm text-slate-600">{{ item.school_fee.get_term_display }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="text-sm font-bold {% if item.amount_to_pay > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">FRW {{ item.amount_to_pay|compact_number }}</span>
                             </td>
@@ -170,13 +167,13 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-500">No payout queue records found yet. Sync outstanding fees to populate this list.</td>
+                            <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-500">No payout queue records found yet. Sync outstanding fees to populate this list.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                     <tfoot class="bg-slate-50/70 border-t border-slate-100">
                         <tr>
-                            <td colspan="4" class="px-6 py-4 text-sm font-bold text-slate-900">Totals</td>
+                            <td colspan="5" class="px-6 py-4 text-sm font-bold text-slate-900">Totals</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-rose-600">FRW {{ total_amount_to_pay|compact_number }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-slate-600">
                                 {{ listed_count|compact_number }} records

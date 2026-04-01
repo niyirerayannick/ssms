@@ -18,17 +18,17 @@
     </div>
 
     <form method="get" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
             <div>
                 <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Academic Year</label>
                 {{ filter_form.academic_year }}
             </div>
             <div>
-                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">School</label>
-                {{ filter_form.school }}
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">District</label>
+                {{ filter_form.district }}
             </div>
             <div>
-                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partner (optional)</label>
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partner</label>
                 {{ filter_form.partner }}
             </div>
             <div>
@@ -61,11 +61,10 @@
             <div class="bg-white rounded-2xl border border-emerald-100 p-5">
                 <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Students Loaded</p>
                 <p class="text-3xl font-bold text-slate-900 mt-1">{{ summary.student_count }}</p>
-                {% if selected_school %}
-                    <p class="text-xs text-slate-500 mt-1">{{ selected_school.name }} · {{ term_display }}</p>
-                {% endif %}
                 {% if selected_partner %}
-                    <p class="text-xs text-slate-500 mt-1">Partner: {{ selected_partner.name }} · {{ term_display }}</p>
+                    <p class="text-xs text-slate-500 mt-1">Partner: {{ selected_partner.name }} - {{ term_display }}</p>
+                {% elif selected_district %}
+                    <p class="text-xs text-slate-500 mt-1">{{ selected_district.name }} - {{ term_display }}</p>
                 {% endif %}
             </div>
             <div class="bg-white rounded-2xl border border-emerald-100 p-5">
@@ -151,63 +150,15 @@
             </form>
         {% else %}
             <div class="bg-white border border-dashed border-slate-300 rounded-2xl p-10 text-center text-slate-500">
-                No students matched the selected filters. Adjust your category or confirm the school assignment.
+                No students matched the selected filters. Adjust your category or confirm the district or partner assignment.
             </div>
         {% endif %}
     {% elif filter_form.is_bound %}
         <div class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-xl">Could not load students. Please check filter selections.</div>
     {% else %}
         <div class="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-10 text-center text-slate-500">
-            Select an academic year, school, and term to begin bulk recording.
+            Select an academic year, term, and either a district or a partner to begin bulk recording.
         </div>
     {% endif %}
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        if (window.TomSelect) {
-            const schoolSelect = document.getElementById('id_school');
-            if (schoolSelect) {
-                new TomSelect(schoolSelect, {
-                    create: false,
-                    sortField: { field: 'text', direction: 'asc' },
-                    placeholder: 'Search schools…',
-                    plugins: ['clear_button']
-                });
-            }
-            const partnerSelect = document.getElementById('id_partner');
-            if (partnerSelect) {
-                new TomSelect(partnerSelect, {
-                    create: false,
-                    sortField: { field: 'text', direction: 'asc' },
-                    placeholder: 'Search partners…',
-                    plugins: ['clear_button']
-                });
-            }
-            // Toggle school field when partner selected
-            function toggleSchoolByPartner() {
-                if (!partnerSelect) return;
-                const school = document.getElementById('id_school');
-                if (!school) return;
-                const parent = school.closest('div');
-                if (partnerSelect.value) {
-                    school.value = '';
-                    school.disabled = true;
-                    school.removeAttribute('required');
-                    if (parent) parent.classList.add('opacity-50','pointer-events-none');
-                } else {
-                    school.disabled = false;
-                    school.setAttribute('required', 'true');
-                    if (parent) parent.classList.remove('opacity-50','pointer-events-none');
-                }
-            }
-            if (partnerSelect) {
-                partnerSelect.addEventListener('change', toggleSchoolByPartner);
-                toggleSchoolByPartner();
-            }
-        }
-    });
-</script>
 {% endblock %}
