@@ -424,10 +424,10 @@ class BulkPerformanceFilterForm(forms.Form):
             'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
         })
     )
-    school = forms.ModelChoiceField(
-        queryset=School.objects.none(),
-        required=False,
-        empty_label="Select school",
+    district = forms.ModelChoiceField(
+        queryset=District.objects.none(),
+        required=True,
+        empty_label="Select district",
         widget=forms.Select(attrs={
             'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
         })
@@ -456,7 +456,7 @@ class BulkPerformanceFilterForm(forms.Form):
     partner = forms.ModelChoiceField(
         queryset=Partner.objects.none(),
         required=False,
-        empty_label="Select partner (optional)",
+        empty_label="All partners",
         widget=forms.Select(attrs={
             'class': 'w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white/80 text-sm'
         })
@@ -464,20 +464,14 @@ class BulkPerformanceFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        schools = School.objects.order_by('name')
+        districts = District.objects.order_by('name')
         partners = Partner.objects.order_by('name')
-        self.fields['school'].queryset = schools
+        self.fields['district'].queryset = districts
         self.fields['partner'].queryset = partners
         apply_default_academic_year_field(self, 'academic_year')
 
     def clean(self):
-        cleaned = super().clean()
-        partner = cleaned.get('partner')
-        school = cleaned.get('school')
-        # If no partner is selected, school must be provided
-        if not partner and not school:
-            raise forms.ValidationError('Select a school or choose a partner.')
-        return cleaned
+        return super().clean()
 
 
 class BulkStudentMarkForm(forms.Form):
