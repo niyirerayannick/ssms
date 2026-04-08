@@ -2,7 +2,8 @@ from datetime import datetime
 import os
 
 from django.conf import settings
-from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.drawing.image import Image as OpenpyxlImage
+from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT
@@ -22,6 +23,10 @@ EXPORT_TOTAL_BG = colors.HexColor('#d1fae5')
 EXPORT_TOTAL_TEXT = colors.HexColor('#065f46')
 EXPORT_FONT = 'Helvetica'
 EXPORT_FONT_BOLD = 'Helvetica-Bold'
+EXCEL_BORDER_COLOR = 'CBD5E1'
+EXCEL_ALT_ROW_FILL = 'F8FAFC'
+EXCEL_TOTAL_FILL = 'D1FAE5'
+EXCEL_TOTAL_TEXT = '065F46'
 
 
 class ExportNumberedCanvas(canvas.Canvas):
@@ -197,17 +202,43 @@ def prepend_row_numbers(headers, rows, label='No.'):
     return [[label, *list(headers)], *numbered_rows]
 
 
-def write_excel_report_header(worksheet, title, subtitle, total_columns):
+def write_excel_report_header(worksheet, title, subtitle, total_columns, generated_label=None):
     end_column = get_column_letter(total_columns)
-    worksheet.merge_cells(f'A1:{end_column}1')
-    worksheet['A1'] = title
-    worksheet['A1'].font = Font(size=14, bold=True)
-    worksheet['A1'].alignment = Alignment(horizontal='center')
+    logo_path = resolve_logo_path()
+    title_start_column = 'B' if logo_path else 'A'
 
-    worksheet.merge_cells(f'A2:{end_column}2')
-    worksheet['A2'] = subtitle
-    worksheet['A2'].alignment = Alignment(horizontal='center')
-    worksheet['A2'].font = Font(size=10)
+    if logo_path:
+        logo = OpenpyxlImage(logo_path)
+        logo.width = 54
+        logo.height = 54
+        worksheet.add_image(logo, 'A1')
+        worksheet.column_dimensions['A'].width = 11
+
+    worksheet.merge_cells(f'{title_start_column}1:{end_column}1')
+    worksheet[f'{title_start_column}1'] = 'Solidact Foundation'
+    worksheet[f'{title_start_column}1'].font = Font(size=11, bold=True, color='0F766E')
+    worksheet[f'{title_start_column}1'].alignment = Alignment(horizontal='center', vertical='center')
+
+    worksheet.merge_cells(f'{title_start_column}2:{end_column}2')
+    worksheet[f'{title_start_column}2'] = title
+    worksheet[f'{title_start_column}2'].font = Font(size=16, bold=True, color='0F172A')
+    worksheet[f'{title_start_column}2'].alignment = Alignment(horizontal='center', vertical='center')
+
+    worksheet.merge_cells(f'{title_start_column}3:{end_column}3')
+    worksheet[f'{title_start_column}3'] = subtitle
+    worksheet[f'{title_start_column}3'].alignment = Alignment(horizontal='center', vertical='center')
+    worksheet[f'{title_start_column}3'].font = Font(size=10, color='475569')
+
+    worksheet.merge_cells(f'{title_start_column}4:{end_column}4')
+    worksheet[f'{title_start_column}4'] = generated_label or f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    worksheet[f'{title_start_column}4'].alignment = Alignment(horizontal='center', vertical='center')
+    worksheet[f'{title_start_column}4'].font = Font(size=9, italic=True, color='64748B')
+
+    worksheet.row_dimensions[1].height = 18
+    worksheet.row_dimensions[2].height = 24
+    worksheet.row_dimensions[3].height = 18
+    worksheet.row_dimensions[4].height = 16
+    return 6
 
 
 def style_excel_header(worksheet, row_idx, fill_color='0F766E'):
@@ -216,7 +247,52 @@ def style_excel_header(worksheet, row_idx, fill_color='0F766E'):
     for cell in worksheet[row_idx]:
         cell.fill = header_fill
         cell.font = header_font
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+
+def style_excel_table_rows(
+    worksheet,
+    header_row_idx,
+    data_start_row,
+    data_end_row,
+    max_col,
+    centered_columns=None,
+    right_aligned_columns=None,
+    total_row_indexes=None,
+):
+    centered_columns = centered_columns or []
+    right_aligned_columns = right_aligned_columns or []
+    total_row_indexes = set(total_row_indexes or [])
+    thin_border = Border(
+        left=Side(style='thin', color=EXCEL_BORDER_COLOR),
+        right=Side(style='thin', color=EXCEL_BORDER_COLOR),
+        top=Side(style='thin', color=EXCEL_BORDER_COLOR),
+        bottom=Side(style='thin', color=EXCEL_BORDER_COLOR),
+    )
+    alt_fill = PatternFill(start_color=EXCEL_ALT_ROW_FILL, end_color=EXCEL_ALT_ROW_FILL, fill_type='solid')
+    total_fill = PatternFill(start_color=EXCEL_TOTAL_FILL, end_color=EXCEL_TOTAL_FILL, fill_type='solid')
+
+    for row_idx in range(header_row_idx, data_end_row + 1):
+        worksheet.row_dimensions[row_idx].height = 22
+        for col_idx in range(1, max_col + 1):
+            cell = worksheet.cell(row=row_idx, column=col_idx)
+            cell.border = thin_border
+            if row_idx == header_row_idx:
+                continue
+            alignment = 'left'
+            if col_idx in centered_columns:
+                alignment = 'center'
+            elif col_idx in right_aligned_columns:
+                alignment = 'right'
+            cell.alignment = Alignment(horizontal=alignment, vertical='top', wrap_text=True)
+
+            if row_idx in total_row_indexes:
+                cell.fill = total_fill
+                cell.font = Font(bold=True, color=EXCEL_TOTAL_TEXT)
+            elif (row_idx - data_start_row) % 2 == 1:
+                cell.fill = alt_fill
+
+    worksheet.freeze_panes = worksheet.cell(row=data_start_row, column=1)
 
 
 def autosize_worksheet_columns(worksheet, max_width=32):

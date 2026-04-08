@@ -315,6 +315,100 @@
     </div>
     {% endif %}
 
+    {% if perms.families.view_family or perms.core.view_school %}
+    <div class="space-y-4">
+        <h2 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center px-1">
+            <span class="w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center mr-3">
+                <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l8-4 6 3v15M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/>
+                </svg>
+            </span>
+            Directory Exports
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {% if perms.families.view_family %}
+            <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-sky-600/5 to-cyan-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="p-6">
+                    <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-sky-100 transition-colors">
+                        <svg class="w-6 h-6 text-slate-400 group-hover:text-sky-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.856-1.857M9 20H4v-2a3 3 0 015.856-1.857M12 12a4 4 0 100-8 4 4 0 000 8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Families (PDF)</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6">Printable family directory with household and Mutuelle support details.</p>
+                    <a href="{% url 'reports:families_pdf' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-sky-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-sky-500/25">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-cyan-600/5 to-sky-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="p-6">
+                    <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-cyan-100 transition-colors">
+                        <svg class="w-6 h-6 text-slate-400 group-hover:text-cyan-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 11h16M4 15h16M4 19h16"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Families (Excel)</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6">Spreadsheet export of family directory records with district filtering.</p>
+                    <a href="{% url 'reports:families_excel' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-cyan-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-cyan-500/25">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Download Excel
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if perms.core.view_school %}
+            <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-indigo-600/5 to-violet-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="p-6">
+                    <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition-colors">
+                        <svg class="w-6 h-6 text-slate-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422A12.083 12.083 0 0112 20.055 12.083 12.083 0 015.84 10.578L12 14z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Schools (PDF)</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6">Printable school directory with headteacher, fee, and bank details.</p>
+                    <a href="{% url 'reports:schools_pdf' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-indigo-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-indigo-500/25">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-violet-600/5 to-indigo-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="p-6">
+                    <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-violet-100 transition-colors">
+                        <svg class="w-6 h-6 text-slate-400 group-hover:text-violet-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 11h16M4 15h16M4 19h16"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Schools (Excel)</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6">Spreadsheet export of the school directory with district filtering.</p>
+                    <a href="{% url 'reports:schools_excel' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-violet-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-violet-500/25">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Download Excel
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Insurance Reports Section -->
     {% if perms.insurance.view_familyinsurance %}
     <div class="space-y-4">
@@ -349,6 +443,35 @@
                         </div>
                     </div>
                     <a href="{% url 'reports:insurance_pdf' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-pink-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-pink-500/25">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-rose-600/5 to-fuchsia-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="p-6">
+                    <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-rose-100 transition-colors">
+                        <svg class="w-6 h-6 text-slate-400 group-hover:text-rose-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.856-1.857M9 20H4v-2a3 3 0 015.856-1.857M12 12a4 4 0 100-8 4 4 0 000 8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Supported Families</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6">Lists families who are unable to pay Mutuelle de SantÃ© and are supported by Solidact.</p>
+                    <div class="space-y-2 mb-8">
+                        <div class="flex items-center text-xs text-slate-600">
+                            <svg class="w-4 h-4 mr-2 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            Payment ability and support status
+                        </div>
+                        <div class="flex items-center text-xs text-slate-600">
+                            <svg class="w-4 h-4 mr-2 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            District filter supported
+                        </div>
+                    </div>
+                    <a href="{% url 'reports:supported_mutuelle_families_pdf' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-rose-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-rose-500/25">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>

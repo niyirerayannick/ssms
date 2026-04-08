@@ -27,6 +27,11 @@
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <form method="post" class="divide-y divide-slate-100" id="familyForm">
             {% csrf_token %}
+            {% if settings_form and settings_form.non_field_errors %}
+            <div class="mx-4 mt-4 sm:mx-8 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {{ settings_form.non_field_errors }}
+            </div>
+            {% endif %}
             
             <!-- Head of Family Information -->
             <div class="p-4 sm:p-8">
@@ -151,15 +156,21 @@
                         </div>
                         <div class="text-center sm:text-left sm:pl-6">
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Per Person</p>
-                            <p class="text-xl font-bold text-blue-400">3,000 <span class="text-xs">RWF</span></p>
+                            <p class="text-xl font-bold text-blue-400">
+                                <span id="perPersonAmount">{{ mutuelle_amount_per_person|floatformat:0 }}</span>
+                                <span class="text-xs">RWF</span>
+                            </p>
                         </div>
                         <div class="text-center sm:text-left sm:pl-6">
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Contribution</p>
                             <p class="text-3xl font-black text-white">
-                                <span id="totalContribution">3,000</span> <span class="text-sm font-normal text-slate-400">RWF</span>
+                                <span id="totalContribution">{{ mutuelle_amount_per_person|floatformat:0 }}</span> <span class="text-sm font-normal text-slate-400">RWF</span>
                             </p>
                         </div>
                     </div>
+                    <p class="mt-4 text-xs text-slate-400">
+                        Total contribution is calculated automatically from family size and the current Mutuelle amount per person.
+                    </p>
                 </div>
             </div>
 
@@ -195,6 +206,30 @@
                         <p class="text-[10px] text-slate-400 mt-1 ml-1">Only families marked as unable to pay should be marked as supported.</p>
                     </div>
                 </div>
+
+                {% if can_edit_mutuelle_amount and settings_form %}
+                <div class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 sm:p-5">
+                    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-emerald-900">Mutuelle Amount Setting</h3>
+                            <p class="text-xs text-emerald-700">Admins can update the per-person amount directly from this page.</p>
+                        </div>
+                        <div class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm">
+                            Current: {{ mutuelle_amount_per_person|floatformat:0 }} RWF
+                        </div>
+                    </div>
+                    <div class="mt-4 max-w-sm">
+                        <label for="{{ settings_form.amount_per_person.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">
+                            Amount Per Person *
+                        </label>
+                        {{ settings_form.amount_per_person }}
+                        {% if settings_form.amount_per_person.errors %}
+                            <p class="text-red-600 text-[10px] font-bold mt-1 uppercase ml-1">{{ settings_form.amount_per_person.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-[10px] text-slate-400 mt-1 ml-1">This value is reused anywhere Mutuelle totals are calculated in the system.</p>
+                    </div>
+                </div>
+                {% endif %}
             </div>
             
             <!-- Location Section -->
@@ -294,6 +329,20 @@
 <script>
     // Cascading dropdowns for Rwanda location
     document.addEventListener('DOMContentLoaded', function() {
+        const amountPerPersonInput = document.getElementById('{{ settings_form_amount_field_id }}');
+        const perPersonAmountDisplay = document.getElementById('perPersonAmount');
+        const defaultAmountPerPerson = Number('{{ mutuelle_amount_per_person|default_if_none:"3000"|floatformat:2 }}');
+
+        function getAmountPerPerson() {
+            if (amountPerPersonInput) {
+                const inputValue = parseFloat(amountPerPersonInput.value);
+                if (!Number.isNaN(inputValue) && inputValue > 0) {
+                    return inputValue;
+                }
+            }
+            return Number.isNaN(defaultAmountPerPerson) ? 3000 : defaultAmountPerPerson;
+        }
+
         const orphanCheckbox = document.getElementById('{{ form.is_orphan.id_for_label }}');
         const guardianFields = document.getElementById('guardian-fields');
 
@@ -425,8 +474,12 @@
         if (totalMembersInput) {
             function updateContribution() {
                 const members = parseInt(totalMembersInput.value) || 1;
-                const contribution = members * 3000;
+                const amountPerPerson = getAmountPerPerson();
+                const contribution = members * amountPerPerson;
                 document.getElementById('displayMembers').textContent = members.toString();
+                if (perPersonAmountDisplay) {
+                    perPersonAmountDisplay.textContent = formatCompact(amountPerPerson);
+                }
                 document.getElementById('totalContribution').textContent = formatCompact(contribution);
             }
             
@@ -434,6 +487,8 @@
             updateContribution();
             totalMembersInput.addEventListener('change', updateContribution);
             totalMembersInput.addEventListener('input', updateContribution);
+            amountPerPersonInput?.addEventListener('change', updateContribution);
+            amountPerPersonInput?.addEventListener('input', updateContribution);
         }
 
         const paymentAbilitySelect = document.getElementById('id_payment_ability');

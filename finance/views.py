@@ -21,6 +21,7 @@ from core.export_utils import (
     build_export_table,
     resolve_logo_path,
     style_excel_header,
+    style_excel_table_rows,
     write_excel_report_header,
 )
 from django.http import JsonResponse
@@ -277,12 +278,11 @@ def export_fees_excel(request):
         'Balance To Pay',
         'Status',
     ]
-    write_excel_report_header(worksheet, 'School Fees Export', 'Filtered school fee records', len(headers))
-    worksheet.append([])
+    header_row = write_excel_report_header(worksheet, 'School Fees Export', 'Filtered school fee records', len(headers))
     worksheet.append(headers)
+    style_excel_header(worksheet, header_row)
 
-    style_excel_header(worksheet, 4)
-
+    data_start_row = header_row + 1
     for index, fee in enumerate(fees, start=1):
         worksheet.append([
             index,
@@ -301,6 +301,15 @@ def export_fees_excel(request):
         ])
 
     autosize_worksheet_columns(worksheet, max_width=30)
+    style_excel_table_rows(
+        worksheet,
+        header_row_idx=header_row,
+        data_start_row=data_start_row,
+        data_end_row=worksheet.max_row,
+        max_col=len(headers),
+        centered_columns=[1, 3, 4, 13],
+        right_aligned_columns=[10, 11, 12],
+    )
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -385,14 +394,12 @@ def export_fee_disbursement_excel(request):
         'Amount To Pay',
         'Queue Status',
     ]
-    write_excel_report_header(worksheet, 'School Fee Disbursement Queue', subtitle, len(headers))
-
-    worksheet.append([])
+    header_row = write_excel_report_header(worksheet, 'School Fee Disbursement Queue', subtitle, len(headers))
     worksheet.append(headers)
-
-    style_excel_header(worksheet, 4)
+    style_excel_header(worksheet, header_row)
 
     export_ids = []
+    data_start_row = header_row + 1
     for index, item in enumerate(disbursements, start=1):
         fee = item.school_fee
         student = fee.student
@@ -432,6 +439,15 @@ def export_fee_disbursement_excel(request):
     worksheet.append(['PENDING', totals['pending_count']])
     worksheet.append(['EXPORTED', totals['exported_count']])
     worksheet.append(['PAID', totals['paid_count']])
+    style_excel_table_rows(
+        worksheet,
+        header_row_idx=header_row,
+        data_start_row=data_start_row,
+        data_end_row=data_start_row + max(disbursements.count(), 0) - 1 if hasattr(disbursements, 'count') else worksheet.max_row,
+        max_col=len(headers),
+        centered_columns=[1, 3, 4, 12],
+        right_aligned_columns=[11],
+    )
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

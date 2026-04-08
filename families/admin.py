@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Family, FamilyStudent
+from .models import Family, FamilyStudent, MutuelleContributionSettings
 
 
 @admin.register(Family)
@@ -22,3 +22,15 @@ class FamilyStudentAdmin(admin.ModelAdmin):
     list_display = ['family', 'student', 'relationship', 'created_at']
     search_fields = ['family__guardian_name', 'student__first_name', 'student__last_name']
     list_filter = ['relationship', 'created_at']
+
+
+@admin.register(MutuelleContributionSettings)
+class MutuelleContributionSettingsAdmin(admin.ModelAdmin):
+    list_display = ['amount_per_person', 'updated_at']
+    readonly_fields = ['updated_at']
+
+    def has_add_permission(self, request):
+        return not MutuelleContributionSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False

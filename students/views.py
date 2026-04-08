@@ -41,6 +41,7 @@ from core.export_utils import (
     prepend_row_numbers,
     resolve_logo_path,
     style_excel_header,
+    style_excel_table_rows,
     write_excel_report_header,
 )
 from django.utils import timezone
@@ -581,12 +582,11 @@ def _export_student_materials_excel(context):
         'Dup Papers',
         'Pads',
     ]
-    write_excel_report_header(worksheet, 'Student Materials Report', subtitle, len(headers))
-    worksheet.append([])
+    header_row_idx = write_excel_report_header(worksheet, 'Student Materials Report', subtitle, len(headers))
     worksheet.append(headers)
-    header_row_idx = worksheet.max_row
     style_excel_header(worksheet, header_row_idx, fill_color='0F172A')
 
+    data_start_row = header_row_idx + 1
     for index, row in enumerate(context['rows'], start=1):
         student = row['student']
         material = row['material']
@@ -620,6 +620,14 @@ def _export_student_materials_excel(context):
     column_widths = [8, 28, 18, 14, 10, 10, 10, 10, 12, 12, 12, 12, 12, 12, 10]
     for idx, width in enumerate(column_widths, start=1):
         worksheet.column_dimensions[chr(64 + idx)].width = width
+    style_excel_table_rows(
+        worksheet,
+        header_row_idx=header_row_idx,
+        data_start_row=data_start_row,
+        data_end_row=worksheet.max_row,
+        max_col=len(headers),
+        centered_columns=[1, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    )
 
     buffer = BytesIO()
     workbook.save(buffer)
@@ -1809,17 +1817,16 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
         worksheet.title = 'Performance'
 
         headers = ['No.', 'Student Name', 'Class', 'Total Terms Recorded', 'Average (%)', 'Status']
-        write_excel_report_header(
+        header_row_idx = write_excel_report_header(
             worksheet,
             'Student Performance Report',
             f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M')} | {self.describe_filters()}",
             len(headers),
         )
-        worksheet.append([])
         worksheet.append(headers)
-        header_row_idx = worksheet.max_row
         style_excel_header(worksheet, header_row_idx, fill_color='0F172A')
 
+        data_start_row = header_row_idx + 1
         for index, record in enumerate(rows, start=1):
             worksheet.append([
                 index,
@@ -1836,6 +1843,18 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
         column_widths = [8, 32, 18, 18, 18, 14]
         for idx, width in enumerate(column_widths, start=1):
             worksheet.column_dimensions[chr(64 + idx)].width = width
+        style_excel_table_rows(
+            worksheet,
+            header_row_idx=header_row_idx,
+            data_start_row=data_start_row,
+            data_end_row=worksheet.max_row,
+            max_col=len(headers),
+            centered_columns=[1, 4, 5, 6],
+        )
+        for row_index, record in enumerate(rows, start=data_start_row):
+            status_cell = worksheet.cell(row=row_index, column=6)
+            fill_color = 'D1FAE5' if record['status'] == 'Pass' else 'FEE2E2'
+            status_cell.fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type='solid')
 
         buffer = BytesIO()
         workbook.save(buffer)

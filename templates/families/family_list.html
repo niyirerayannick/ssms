@@ -10,7 +10,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">Families</h1>
-                <p class="text-sm text-slate-600 mt-1">Manage and track all families in the system.</p>
+                <p class="text-sm text-slate-600 mt-1">Manage households, location details, and Mutuelle support information in one place.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <!-- Import/Export Buttons (only for users who can add families) -->
@@ -32,6 +32,34 @@
                 </a>
                 {% endif %}
             </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Families</p>
+            <p class="text-3xl font-black text-slate-900 mt-1">{{ summary.total_families|compact_number }}</p>
+            <p class="text-xs text-slate-500 mt-1">Filtered view count</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-5">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Mutuelle Supported</p>
+            <p class="text-3xl font-black text-blue-700 mt-1">{{ summary.supported_count|compact_number }}</p>
+            <p class="text-xs text-slate-500 mt-1">Families currently supported</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-amber-100 p-5">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Unable To Pay</p>
+            <p class="text-3xl font-black text-amber-700 mt-1">{{ summary.unable_to_pay_count|compact_number }}</p>
+            <p class="text-xs text-slate-500 mt-1">Eligible support households</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 p-5">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Family Members</p>
+            <p class="text-3xl font-black text-emerald-700 mt-1">{{ summary.total_members|compact_number }}</p>
+            <p class="text-xs text-slate-500 mt-1">Total people recorded</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-indigo-100 p-5">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Districts Covered</p>
+            <p class="text-3xl font-black text-indigo-700 mt-1">{{ summary.district_count|compact_number }}</p>
+            <p class="text-xs text-slate-500 mt-1">Distinct districts in results</p>
         </div>
     </div>
 
@@ -117,7 +145,7 @@
 
     <!-- Results Summary -->
     <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
-        Found <span class="text-slate-900">{{ families.count|compact_number }}</span> famil{{ families.count|pluralize:"y,ies" }}
+        Found <span class="text-slate-900">{{ summary.total_families|compact_number }}</span> famil{{ summary.total_families|pluralize:"y,ies" }}
         {% if search_query %}
             matching "<span class="text-blue-600">{{ search_query }}</span>"
         {% endif %}
@@ -133,6 +161,7 @@
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Family Code</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Head of Family</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Phone</th>
+                        <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden xl:table-cell">Household</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Mutuelle Status</th>
                         <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider hidden md:table-cell">Location</th>
                         <th class="px-6 py-4 text-right text-[10px] font-bold text-slate-500 uppercase tracking-wider">Actions</th>
@@ -141,15 +170,24 @@
                 <tbody class="divide-y divide-slate-50">
                     {% for family in families %}
                     <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4 align-top">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 uppercase tracking-wide">
                                 {{ family.family_code }}
                             </span>
                         </td>
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4 align-top">
                             <div class="flex flex-col">
                                 <span class="text-sm text-slate-900 font-bold">{{ family.head_of_family }}</span>
                                 <span class="text-[10px] text-slate-500 sm:hidden mt-0.5">{{ family.phone_number }}</span>
+                                <span class="text-xs text-slate-500 mt-1">
+                                    {% if family.guardian_name %}
+                                        Guardian: {{ family.guardian_name }}
+                                    {% elif family.father_name or family.mother_name %}
+                                        Parent: {{ family.father_name|default:"-" }}{% if family.father_name and family.mother_name %} / {% endif %}{{ family.mother_name|default:"" }}
+                                    {% else %}
+                                        No guardian/parent details
+                                    {% endif %}
+                                </span>
                                 <div class="flex flex-wrap gap-1.5 mt-2 lg:hidden">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide {{ family.payment_ability_badge_classes }}">
                                         {{ family.get_payment_ability_display }}
@@ -160,8 +198,33 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell">{{ family.phone_number }}</td>
-                        <td class="px-6 py-4 hidden lg:table-cell">
+                        <td class="px-6 py-4 align-top hidden sm:table-cell">
+                            <div class="flex flex-col gap-1">
+                                <span class="text-sm font-medium text-slate-700">{{ family.phone_number }}</span>
+                                <span class="text-xs text-slate-400">
+                                    {% if family.alternative_phone %}
+                                        Alt: {{ family.alternative_phone }}
+                                    {% else %}
+                                        Primary contact
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 align-top hidden xl:table-cell">
+                            <div class="flex flex-col gap-1">
+                                <span class="text-sm font-semibold text-slate-900">{{ family.total_family_members }} member{{ family.total_family_members|pluralize }}</span>
+                                <span class="text-xs text-slate-500">
+                                    {% if family.guardian_phone %}
+                                        Guardian phone: {{ family.guardian_phone }}
+                                    {% elif family.alternative_phone %}
+                                        Alternative: {{ family.alternative_phone }}
+                                    {% else %}
+                                        No secondary contact
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 align-top hidden lg:table-cell">
                             <div class="flex flex-col gap-2">
                                 <span class="inline-flex w-fit items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide {{ family.payment_ability_badge_classes }}">
                                     {{ family.get_payment_ability_display }}
@@ -171,20 +234,25 @@
                                 </span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell">
+                        <td class="px-6 py-4 align-top text-sm text-slate-600 hidden md:table-cell">
                             {% if family.district %}
-                                <span class="inline-flex items-center text-slate-500">
-                                    <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    </svg>
-                                    {{ family.district.name }}
-                                </span>
+                                <div class="flex flex-col gap-1">
+                                    <span class="inline-flex items-center text-slate-700 font-medium">
+                                        <svg class="w-3.5 h-3.5 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                        {{ family.district.name }}
+                                    </span>
+                                    <span class="text-xs text-slate-400">
+                                        {{ family.sector.name|default:"No sector" }}{% if family.cell %}, {{ family.cell.name }}{% endif %}
+                                    </span>
+                                </div>
                             {% else %}
                                 <span class="text-slate-400 italic text-xs">Not set</span>
                             {% endif %}
                         </td>
-                        <td class="px-6 py-4 text-right">
+                        <td class="px-6 py-4 align-top text-right">
                             <div class="flex justify-end gap-1">
                                 <a href="{% url 'families:family_detail' family.pk %}" class="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all active:scale-90" title="View">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -6,7 +6,8 @@ from django.db.models import Sum, Count, Avg, Q
 from students.models import Student, StudentMark, StudentMaterial
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
-from core.models import AcademicYear, Partner, District
+from families.models import Family
+from core.models import AcademicYear, Partner, District, School
 from core.export_utils import (
     ExportNumberedCanvas,
     add_export_header,
@@ -16,6 +17,7 @@ from core.export_utils import (
     prepend_row_numbers,
     resolve_logo_path,
     style_excel_header,
+    style_excel_table_rows,
     write_excel_report_header,
 )
 from reportlab.lib import colors
@@ -181,6 +183,17 @@ def _apply_student_report_filters(request, queryset=None):
         'age_from': parsed_age_from,
         'age_to': parsed_age_to,
     }
+
+
+def _apply_directory_district_filter(request, queryset, base_label="All Records"):
+    """Apply the shared district filter to family and school directory reports."""
+    district_id = request.GET.get('district')
+    subtitle = base_label
+    if district_id:
+        district = get_object_or_404(District, id=district_id)
+        queryset = queryset.filter(district_id=district_id)
+        subtitle = f"{base_label} - {district.name}"
+    return queryset, subtitle
 
 
 def _student_guardian_parent_label(student):
@@ -387,13 +400,11 @@ def students_excel(request):
         'Phone',
         'Sponsorship Status',
     ]
-    write_excel_report_header(ws, 'Students List Report', subtitle, len(headers))
-    ws.append([])
+    header_row = write_excel_report_header(ws, 'Students List Report', subtitle, len(headers))
     ws.append(headers)
-
-    header_row = 4
     style_excel_header(ws, header_row)
 
+    data_start_row = header_row + 1
     for index, student in enumerate(students, start=1):
         ws.append([index, *_student_export_row(student)])
         for cell in ws[ws.max_row]:
@@ -402,6 +413,14 @@ def students_excel(request):
     preferred_widths = [8, 24, 12, 8, 16, 14, 24, 16, 14, 22, 16, 18]
     for column_index, width in enumerate(preferred_widths, start=1):
         ws.column_dimensions[chr(64 + column_index)].width = width
+    style_excel_table_rows(
+        ws,
+        header_row_idx=header_row,
+        data_start_row=data_start_row,
+        data_end_row=ws.max_row,
+        max_col=len(headers),
+        centered_columns=[1, 3, 4, 5, 6, 8, 11, 12],
+    )
 
     filename_parts = ["students_list"]
     if filters['age_from'] is not None or filters['age_to'] is not None:
@@ -595,16 +614,16 @@ def fees_excel(request):
     ws.title = "Fees Summary"
     
     headers = ['No.', 'Student Name', 'Term', 'Required Fees', 'Amount Paid', 'Balance', 'Status']
-    write_excel_report_header(ws, 'School Fees Summary Report', 'Filtered fee records export', len(headers))
-    ws.append([])
+    header_row = write_excel_report_header(ws, 'School Fees Summary Report', 'Filtered fee records export', len(headers))
     ws.append(headers)
-    style_excel_header(ws, 4)
+    style_excel_header(ws, header_row)
     
     # Data rows
     total_required = 0
     total_paid = 0
     total_balance = 0
     
+    data_start_row = header_row + 1
     for index, fee in enumerate(fees.order_by('student__last_name', 'student__first_name', 'term'), start=1):
         ws.append([
             index,
@@ -623,6 +642,16 @@ def fees_excel(request):
     ws.append([])
     ws.append(['', 'TOTAL', '', total_required, total_paid, total_balance, ''])
     autosize_worksheet_columns(ws, max_width=50)
+    style_excel_table_rows(
+        ws,
+        header_row_idx=header_row,
+        data_start_row=data_start_row,
+        data_end_row=ws.max_row,
+        max_col=len(headers),
+        centered_columns=[1, 3, 7],
+        right_aligned_columns=[4, 5, 6],
+        total_row_indexes=[ws.max_row],
+    )
     
     # Save to response
     response = HttpResponse(
@@ -738,6 +767,269 @@ def insurance_pdf(request):
     buffer.seek(0)
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="mutuelle_coverage_report.pdf"'
+    return response
+
+
+@login_required
+@permission_required('families.view_family', raise_exception=True)
+def supported_mutuelle_families_pdf(request):
+    """Export families unable to pay and supported in Mutuelle de Sante."""
+    families = (
+        Family.objects.select_related('province', 'district', 'sector')
+        .filter(
+            payment_ability=Family.PAYMENT_ABILITY_UNABLE,
+            mutuelle_support_status=Family.MUTUELLE_SUPPORT_STATUS_SUPPORTED,
+        )
+        .order_by('head_of_family')
+    )
+    families, subtitle = _apply_directory_district_filter(
+        request,
+        families,
+        base_label="Families Unable to Pay and Supported by Solidact",
+    )
+
+    buffer = io.BytesIO()
+    doc = build_export_pdf_document(
+        buffer,
+        "Supported Mutuelle Families Report",
+        pagesize=landscape(A4),
+    )
+    elements = []
+    create_letterhead(
+        elements,
+        "Supported Mutuelle Families Report",
+        f"{subtitle} (Total: {families.count()})"
+    )
+
+    rows = []
+    for family in families:
+        rows.append([
+            family.family_code,
+            family.head_of_family,
+            family.phone_number or 'N/A',
+            str(family.total_family_members or 0),
+            family.district.name if family.district else 'N/A',
+            family.sector.name if family.sector else 'N/A',
+            family.get_payment_ability_display(),
+            family.get_mutuelle_support_status_display(),
+        ])
+
+    data = prepend_row_numbers(
+        ['Family Code', 'Head of Family', 'Phone', 'Members', 'District', 'Sector', 'Payment Ability', 'Mutuelle Support'],
+        rows,
+    )
+    table = build_export_table(
+        data,
+        col_widths=[26, 95, 120, 80, 45, 72, 60, 74, 82],
+        body_font_size=7,
+        centered_columns=[0, 4, 5, 6, 7, 8],
+    )
+    elements.append(table)
+    doc.build(elements, canvasmaker=NumberedCanvas)
+
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="supported_mutuelle_families_report.pdf"'
+    return response
+
+
+@login_required
+@permission_required('families.view_family', raise_exception=True)
+def families_pdf(request):
+    """Export family directory as PDF."""
+    families = Family.objects.select_related('province', 'district', 'sector').all().order_by('head_of_family')
+    families, subtitle = _apply_directory_district_filter(request, families, base_label="All Families")
+
+    buffer = io.BytesIO()
+    doc = build_export_pdf_document(
+        buffer,
+        "Families Directory Report",
+        pagesize=landscape(A4),
+    )
+    elements = []
+    create_letterhead(
+        elements,
+        "Families Directory Report",
+        f"{subtitle} (Total: {families.count()})"
+    )
+
+    rows = []
+    for family in families:
+        rows.append([
+            family.family_code,
+            family.head_of_family,
+            family.phone_number or 'N/A',
+            str(family.total_family_members or 0),
+            family.district.name if family.district else 'N/A',
+            family.sector.name if family.sector else 'N/A',
+            family.get_payment_ability_display(),
+            family.get_mutuelle_support_status_display(),
+        ])
+
+    data = prepend_row_numbers(
+        ['Family Code', 'Head of Family', 'Phone', 'Members', 'District', 'Sector', 'Payment Ability', 'Mutuelle Support'],
+        rows,
+    )
+    table = build_export_table(
+        data,
+        col_widths=[26, 95, 120, 80, 45, 72, 60, 74, 82],
+        body_font_size=7,
+        centered_columns=[0, 4, 5, 6, 7, 8],
+    )
+    elements.append(table)
+    doc.build(elements, canvasmaker=NumberedCanvas)
+
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="families_directory_report.pdf"'
+    return response
+
+
+@login_required
+@permission_required('families.view_family', raise_exception=True)
+def families_excel(request):
+    """Export family directory as Excel."""
+    families = Family.objects.select_related('province', 'district', 'sector').all().order_by('head_of_family')
+    families, subtitle = _apply_directory_district_filter(request, families, base_label="All Families")
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Families"
+
+    headers = ['No.', 'Family Code', 'Head of Family', 'Phone', 'Members', 'District', 'Sector', 'Payment Ability', 'Mutuelle Support']
+    header_row = write_excel_report_header(ws, 'Families Directory Report', subtitle, len(headers))
+    ws.append(headers)
+    style_excel_header(ws, header_row)
+    data_start_row = header_row + 1
+
+    for index, family in enumerate(families, start=1):
+        ws.append([
+            index,
+            family.family_code,
+            family.head_of_family,
+            family.phone_number or 'N/A',
+            family.total_family_members or 0,
+            family.district.name if family.district else 'N/A',
+            family.sector.name if family.sector else 'N/A',
+            family.get_payment_ability_display(),
+            family.get_mutuelle_support_status_display(),
+        ])
+
+    autosize_worksheet_columns(ws, max_width=24)
+    style_excel_table_rows(
+        ws,
+        header_row_idx=header_row,
+        data_start_row=data_start_row,
+        data_end_row=ws.max_row,
+        max_col=len(headers),
+        centered_columns=[1, 5, 6, 7, 8, 9],
+    )
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="families_directory_report.xlsx"'
+    wb.save(response)
+    return response
+
+
+@login_required
+@permission_required('core.view_school', raise_exception=True)
+def schools_pdf(request):
+    """Export schools directory as PDF."""
+    schools = School.objects.select_related('province', 'district', 'sector').all().order_by('name')
+    schools, subtitle = _apply_directory_district_filter(request, schools, base_label="All Schools")
+
+    buffer = io.BytesIO()
+    doc = build_export_pdf_document(
+        buffer,
+        "Schools Directory Report",
+        pagesize=landscape(A4),
+    )
+    elements = []
+    create_letterhead(
+        elements,
+        "Schools Directory Report",
+        f"{subtitle} (Total: {schools.count()})"
+    )
+
+    rows = []
+    for school in schools:
+        rows.append([
+            school.name,
+            school.headteacher_name or 'N/A',
+            school.headteacher_mobile or 'N/A',
+            school.district.name if school.district else 'N/A',
+            school.sector.name if school.sector else 'N/A',
+            f"{school.fee_amount:,.2f}",
+            school.bank_name or 'N/A',
+        ])
+
+    data = prepend_row_numbers(
+        ['School Name', 'Headteacher', 'Phone', 'District', 'Sector', 'Fee Amount', 'Bank'],
+        rows,
+    )
+    table = build_export_table(
+        data,
+        col_widths=[26, 132, 100, 92, 60, 56, 66, 100],
+        body_font_size=7,
+        centered_columns=[0, 4, 5, 6],
+        right_aligned_columns=[6],
+    )
+    elements.append(table)
+    doc.build(elements, canvasmaker=NumberedCanvas)
+
+    buffer.seek(0)
+    response = HttpResponse(buffer.read(), content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="schools_directory_report.pdf"'
+    return response
+
+
+@login_required
+@permission_required('core.view_school', raise_exception=True)
+def schools_excel(request):
+    """Export schools directory as Excel."""
+    schools = School.objects.select_related('province', 'district', 'sector').all().order_by('name')
+    schools, subtitle = _apply_directory_district_filter(request, schools, base_label="All Schools")
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Schools"
+
+    headers = ['No.', 'School Name', 'Headteacher', 'Phone', 'District', 'Sector', 'Fee Amount', 'Bank']
+    header_row = write_excel_report_header(ws, 'Schools Directory Report', subtitle, len(headers))
+    ws.append(headers)
+    style_excel_header(ws, header_row)
+    data_start_row = header_row + 1
+
+    for index, school in enumerate(schools, start=1):
+        ws.append([
+            index,
+            school.name,
+            school.headteacher_name or 'N/A',
+            school.headteacher_mobile or 'N/A',
+            school.district.name if school.district else 'N/A',
+            school.sector.name if school.sector else 'N/A',
+            float(school.fee_amount or 0),
+            school.bank_name or 'N/A',
+        ])
+
+    autosize_worksheet_columns(ws, max_width=24)
+    style_excel_table_rows(
+        ws,
+        header_row_idx=header_row,
+        data_start_row=data_start_row,
+        data_end_row=ws.max_row,
+        max_col=len(headers),
+        centered_columns=[1, 5, 6],
+        right_aligned_columns=[7],
+    )
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="schools_directory_report.xlsx"'
+    wb.save(response)
     return response
 
 

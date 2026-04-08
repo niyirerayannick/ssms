@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from core.models import District, AcademicYear
 from .models import FamilyInsurance
 from .forms import InsuranceForm
-from families.models import Family, FamilyStudent
+from families.models import Family, FamilyStudent, MutuelleContributionSettings
 
 
 @login_required
@@ -19,7 +19,8 @@ def mutuelle_dashboard(request):
     families_not_covered = FamilyInsurance.objects.filter(coverage_status='not_covered').count()
 
     total_members_all = Family.objects.aggregate(Sum('total_family_members'))['total_family_members__sum'] or 0
-    total_insurance_required = total_members_all * 3000
+    amount_per_person = MutuelleContributionSettings.current_amount()
+    total_insurance_required = total_members_all * amount_per_person
     total_insurance_collected = FamilyInsurance.objects.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0
     total_insurance_outstanding = total_insurance_required - total_insurance_collected
     insurance_collection_percentage = round((total_insurance_collected / total_insurance_required * 100) if total_insurance_required > 0 else 0, 1)
@@ -43,6 +44,7 @@ def mutuelle_dashboard(request):
         'families_with_insurance': families_with_insurance,
         'families_partially_covered': families_partially_covered,
         'families_not_covered': families_not_covered,
+        'amount_per_person': amount_per_person,
         'total_insurance_required': total_insurance_required,
         'total_insurance_collected': total_insurance_collected,
         'total_insurance_outstanding': total_insurance_outstanding,

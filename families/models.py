@@ -3,6 +3,43 @@ from django.utils.text import gettext_lazy as _
 from django.core.validators import MinValueValidator
 from core.models import Province, District, Sector, Cell, Village
 import uuid
+from decimal import Decimal
+
+
+class MutuelleContributionSettings(models.Model):
+    """Singleton settings for Mutuelle contribution calculations."""
+
+    amount_per_person = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal('3000.00'),
+        validators=[MinValueValidator(Decimal('0.01'))],
+        help_text="Mutuelle contribution amount charged per family member.",
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Mutuelle Contribution Setting'
+        verbose_name_plural = 'Mutuelle Contribution Settings'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Mutuelle per person: {self.amount_per_person}"
+
+    @classmethod
+    def get_solo(cls):
+        settings_obj, _created = cls.objects.get_or_create(
+            pk=1,
+            defaults={'amount_per_person': Decimal('3000.00')},
+        )
+        return settings_obj
+
+    @classmethod
+    def current_amount(cls):
+        return cls.get_solo().amount_per_person
 
 
 class Family(models.Model):
@@ -121,8 +158,8 @@ class Family(models.Model):
     
     @property
     def total_contribution(self):
-        """Calculate total family contribution: total_members * 3000."""
-        return self.total_family_members * 3000
+        """Calculate total family contribution using the configured per-person amount."""
+        return Decimal(self.total_family_members or 0) * MutuelleContributionSettings.current_amount()
     
     @property
     def total_students(self):
