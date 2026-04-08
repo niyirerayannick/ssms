@@ -582,6 +582,12 @@ def build_filter_preview(report_key, cleaned_data):
 
 
 def send_report_email(*, recipients, subject, body, attachment_name, attachment_bytes, attachment_content_type):
-    email = EmailMessage(subject=subject, body=body, from_email=settings.DEFAULT_FROM_EMAIL, to=recipients)
+    sender_address = settings.EMAIL_HOST_USER or "noreply@sims.com"
+    from_email = getattr(
+        settings,
+        "REPORTS_FROM_EMAIL",
+        f"SAF-IMS Notifications <{sender_address}>",
+    )
+    email = EmailMessage(subject=subject, body=body, from_email=from_email, to=recipients)
     email.attach(attachment_name, attachment_bytes, attachment_content_type)
     email.send(fail_silently=False)
