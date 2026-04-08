@@ -2,7 +2,7 @@ from django import forms
 from .models import Family, MutuelleContributionSettings
 from core.models import Province, District, Sector, Cell, Village
 from core.forms import HashidModelChoiceField
-from core.utils import decode_id
+from core.utils import decode_id, normalize_identifier_value
 
 class FamilyForm(forms.ModelForm):
     """Form for creating and editing family information with Rwanda location."""
@@ -160,6 +160,15 @@ class FamilyForm(forms.ModelForm):
             )
 
         return cleaned_data
+
+    def clean_phone_number(self):
+        return normalize_identifier_value(self.cleaned_data.get('phone_number'))
+
+    def clean_alternative_phone(self):
+        return normalize_identifier_value(self.cleaned_data.get('alternative_phone'))
+
+    def clean_guardian_phone(self):
+        return normalize_identifier_value(self.cleaned_data.get('guardian_phone'))
 
 
 class MutuelleContributionSettingsForm(forms.ModelForm):

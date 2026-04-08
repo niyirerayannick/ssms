@@ -27,6 +27,7 @@ from core.export_utils import (
     write_excel_report_header,
 )
 from core.models import School
+from core.utils import normalize_identifier_value
 from families.models import Family
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
@@ -140,13 +141,13 @@ def _student_phone_label(student):
     family = student.family
     if family:
         if family.guardian_phone:
-            return family.guardian_phone
+            return normalize_identifier_value(family.guardian_phone, "N/A")
         if family.phone_number:
-            return family.phone_number
+            return normalize_identifier_value(family.phone_number, "N/A")
         if family.alternative_phone:
-            return family.alternative_phone
+            return normalize_identifier_value(family.alternative_phone, "N/A")
     if student.partner and student.partner.phone:
-        return student.partner.phone
+        return normalize_identifier_value(student.partner.phone, "N/A")
     return "N/A"
 
 
@@ -373,7 +374,7 @@ def _build_families_pdf(queryset, subtitle, title):
     doc = build_export_pdf_document(buffer, title, pagesize=landscape(A4))
     elements = []
     create_letterhead(elements, title, f"{subtitle} (Total: {queryset.count()})")
-    rows = [[family.family_code, family.head_of_family, family.phone_number or "N/A", str(family.total_family_members or 0), family.district.name if family.district else "N/A", family.sector.name if family.sector else "N/A", family.get_payment_ability_display(), family.get_mutuelle_support_status_display()] for family in queryset]
+    rows = [[family.family_code, family.head_of_family, normalize_identifier_value(family.phone_number, "N/A"), str(family.total_family_members or 0), family.district.name if family.district else "N/A", family.sector.name if family.sector else "N/A", family.get_payment_ability_display(), family.get_mutuelle_support_status_display()] for family in queryset]
     data = prepend_row_numbers(["Family Code", "Head of Family", "Phone", "Members", "District", "Sector", "Payment Ability", "Mutuelle Support"], rows)
     elements.append(build_export_table(data, col_widths=[26, 95, 120, 80, 45, 72, 60, 74, 82], body_font_size=7, centered_columns=[0, 4, 5, 6, 7, 8]))
     doc.build(elements, canvasmaker=ExportNumberedCanvas)
@@ -390,7 +391,7 @@ def _build_families_excel(queryset, subtitle, title, sheet_title):
     style_excel_header(ws, header_row)
     data_start_row = header_row + 1
     for index, family in enumerate(queryset, start=1):
-        ws.append([index, family.family_code, family.head_of_family, family.phone_number or "N/A", family.total_family_members or 0, family.district.name if family.district else "N/A", family.sector.name if family.sector else "N/A", family.get_payment_ability_display(), family.get_mutuelle_support_status_display()])
+        ws.append([index, family.family_code, family.head_of_family, normalize_identifier_value(family.phone_number, "N/A"), family.total_family_members or 0, family.district.name if family.district else "N/A", family.sector.name if family.sector else "N/A", family.get_payment_ability_display(), family.get_mutuelle_support_status_display()])
     autosize_worksheet_columns(ws, max_width=24)
     style_excel_table_rows(ws, header_row_idx=header_row, data_start_row=data_start_row, data_end_row=ws.max_row, max_col=len(headers), centered_columns=[1, 5, 6, 7, 8, 9])
     buffer = io.BytesIO()
@@ -405,7 +406,7 @@ def _build_schools_pdf(queryset, subtitle):
     doc = build_export_pdf_document(buffer, "Schools Directory Report", pagesize=landscape(A4))
     elements = []
     create_letterhead(elements, "Schools Directory Report", f"{subtitle} (Total: {queryset.count()})")
-    rows = [[school.name, school.headteacher_name or "N/A", school.headteacher_mobile or "N/A", school.district.name if school.district else "N/A", school.sector.name if school.sector else "N/A", f"{school.fee_amount:,.2f}", school.bank_name or "N/A"] for school in queryset]
+    rows = [[school.name, school.headteacher_name or "N/A", normalize_identifier_value(school.headteacher_mobile, "N/A"), school.district.name if school.district else "N/A", school.sector.name if school.sector else "N/A", f"{school.fee_amount:,.2f}", school.bank_name or "N/A"] for school in queryset]
     data = prepend_row_numbers(["School Name", "Headteacher", "Phone", "District", "Sector", "Fee Amount", "Bank"], rows)
     elements.append(build_export_table(data, col_widths=[26, 132, 100, 92, 60, 56, 66, 100], body_font_size=7, centered_columns=[0, 4, 5, 6], right_aligned_columns=[6]))
     doc.build(elements, canvasmaker=ExportNumberedCanvas)
@@ -422,7 +423,7 @@ def _build_schools_excel(queryset, subtitle):
     style_excel_header(ws, header_row)
     data_start_row = header_row + 1
     for index, school in enumerate(queryset, start=1):
-        ws.append([index, school.name, school.headteacher_name or "N/A", school.headteacher_mobile or "N/A", school.district.name if school.district else "N/A", school.sector.name if school.sector else "N/A", float(school.fee_amount or 0), school.bank_name or "N/A"])
+        ws.append([index, school.name, school.headteacher_name or "N/A", normalize_identifier_value(school.headteacher_mobile, "N/A"), school.district.name if school.district else "N/A", school.sector.name if school.sector else "N/A", float(school.fee_amount or 0), school.bank_name or "N/A"])
     autosize_worksheet_columns(ws, max_width=24)
     style_excel_table_rows(ws, header_row_idx=header_row, data_start_row=data_start_row, data_end_row=ws.max_row, max_col=len(headers), centered_columns=[1, 5, 6], right_aligned_columns=[7])
     buffer = io.BytesIO()

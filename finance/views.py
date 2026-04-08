@@ -24,6 +24,7 @@ from core.export_utils import (
     style_excel_table_rows,
     write_excel_report_header,
 )
+from core.utils import normalize_identifier_value
 from django.http import JsonResponse
 from django.http import HttpResponse
 from reportlab.lib import colors
@@ -196,7 +197,9 @@ def _build_fee_snapshot(student, total_fees=None):
         'class_level': getattr(student, 'class_level', ''),
         'bank_name': school.bank_name if school and school.bank_name else '',
         'bank_account_name': school.bank_account_name if school and school.bank_account_name else '',
-        'bank_account_number': school.bank_account_number if school and school.bank_account_number else '',
+        'bank_account_number': normalize_identifier_value(
+            school.bank_account_number if school and school.bank_account_number else ''
+        ),
     }
     if total_fees is not None:
         snapshot['total_fees'] = total_fees
@@ -293,7 +296,7 @@ def export_fees_excel(request):
             fee.school_name or (fee.student.school.name if fee.student and fee.student.school else 'N/A'),
             fee.bank_name or 'N/A',
             fee.bank_account_name or 'N/A',
-            fee.bank_account_number or 'N/A',
+            normalize_identifier_value(fee.bank_account_number, 'N/A'),
             float(fee.total_fees),
             float(fee.amount_paid),
             float(fee.balance),
@@ -418,7 +421,7 @@ def export_fee_disbursement_excel(request):
             item.class_level or 'N/A',
             item.bank_name or 'N/A',
             item.bank_account_name or 'N/A',
-            item.bank_account_number or 'N/A',
+            normalize_identifier_value(item.bank_account_number, 'N/A'),
             float(item.amount_to_pay),
             item.get_status_display(),
         ])
@@ -553,7 +556,7 @@ def export_fee_disbursement_pdf(request):
             Paragraph(item.school_name or 'N/A', cell_style),
             Paragraph(item.bank_name or 'N/A', cell_style),
             Paragraph(item.bank_account_name or 'N/A', cell_style),
-            Paragraph(item.bank_account_number or 'N/A', cell_style),
+            Paragraph(normalize_identifier_value(item.bank_account_number, 'N/A'), cell_style),
             Paragraph(f"{item.amount_to_pay:,.2f}", amount_style),
         ])
 
@@ -933,7 +936,9 @@ def bulk_fee_entry(request):
                             'class_level': student_instance.class_level,
                             'bank_name': student_instance.school.bank_name if student_instance.school and student_instance.school.bank_name else '',
                             'bank_account_name': student_instance.school.bank_account_name if student_instance.school and student_instance.school.bank_account_name else '',
-                            'bank_account_number': student_instance.school.bank_account_number if student_instance.school and student_instance.school.bank_account_number else '',
+                            'bank_account_number': normalize_identifier_value(
+                                student_instance.school.bank_account_number if student_instance.school and student_instance.school.bank_account_number else ''
+                            ),
                             'recorded_by': request.user,
                             'payment_date': payment_date,
                         }
@@ -1189,7 +1194,9 @@ def add_student_payment(request, student_id):
         'student_school_name': student.school.name if student.school else student.school_name,
         'student_bank_name': student.school.bank_name if student.school and student.school.bank_name else '',
         'student_bank_account_name': student.school.bank_account_name if student.school and student.school.bank_account_name else '',
-        'student_bank_account_number': student.school.bank_account_number if student.school and student.school.bank_account_number else '',
+        'student_bank_account_number': normalize_identifier_value(
+            student.school.bank_account_number if student.school and student.school.bank_account_number else ''
+        ),
     }
     return render(request, 'finance/student_fee_form.html', context)
 
@@ -1222,7 +1229,9 @@ def get_student_details(request, student_id):
             'payment_dates': payment_dates,
             'bank_name': student.school.bank_name if student.school and student.school.bank_name else '',
             'bank_account_name': student.school.bank_account_name if student.school and student.school.bank_account_name else '',
-            'bank_account_number': student.school.bank_account_number if student.school and student.school.bank_account_number else '',
+            'bank_account_number': normalize_identifier_value(
+                student.school.bank_account_number if student.school and student.school.bank_account_number else ''
+            ),
         }
         return JsonResponse(data)
     except Student.DoesNotExist:

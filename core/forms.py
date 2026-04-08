@@ -1,6 +1,6 @@
 from django import forms
 from .models import School, Province, District, Sector, Cell, Village, Partner
-from .utils import decode_id
+from .utils import decode_id, normalize_identifier_value
 
 class HashidModelChoiceField(forms.ModelChoiceField):
     """Custom ModelChoiceField that can handle both integer IDs and HashID strings."""
@@ -102,6 +102,9 @@ class PartnerForm(forms.ModelForm):
             self.fields['cell'].queryset = Cell.objects.filter(sector_id=sector_id)
         if cell_id:
             self.fields['village'].queryset = Village.objects.filter(cell_id=cell_id)
+
+    def clean_phone(self):
+        return normalize_identifier_value(self.cleaned_data.get('phone'))
 
 class SchoolForm(forms.ModelForm):
     """Form for creating and editing school information."""
@@ -214,3 +217,9 @@ class SchoolForm(forms.ModelForm):
         
         if district_id:
             self.fields['sector'].queryset = Sector.objects.filter(district_id=district_id)
+
+    def clean_headteacher_mobile(self):
+        return normalize_identifier_value(self.cleaned_data.get('headteacher_mobile'))
+
+    def clean_bank_account_number(self):
+        return normalize_identifier_value(self.cleaned_data.get('bank_account_number'))

@@ -4,6 +4,7 @@ from .models import SchoolFee, SchoolFeePayment
 from insurance.models import FamilyInsurance
 from core.models import School, AcademicYear, Partner, District
 from core.academic_years import apply_default_academic_year_field
+from core.utils import normalize_identifier_value
 
 
 class FeeForm(forms.ModelForm):
@@ -104,6 +105,9 @@ class FeeForm(forms.ModelForm):
                 )
 
         return cleaned_data
+
+    def clean_bank_account_number(self):
+        return normalize_identifier_value(self.cleaned_data.get('bank_account_number'))
 
     def save(self, commit=True):
         instance = super().save(commit=False)

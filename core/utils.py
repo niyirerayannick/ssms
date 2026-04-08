@@ -1,5 +1,6 @@
 from django.core.signing import Signer, BadSignature
 from django.conf import settings
+from decimal import Decimal, InvalidOperation
 
 signer = Signer(sep=':', salt='id-encryption')
 
@@ -25,3 +26,37 @@ def decode_id(e):
             return int(e)
         except (ValueError, TypeError):
             return None
+
+
+def normalize_identifier_value(value, empty_value=''):
+    """Normalize phone/account identifiers so numeric imports do not show trailing decimals."""
+    if value is None:
+        return empty_value
+
+    if isinstance(value, int):
+        return str(value)
+
+    if isinstance(value, float):
+        return str(int(value)) if value.is_integer() else format(value, 'f').rstrip('0').rstrip('.')
+
+    if isinstance(value, Decimal):
+        if value == value.to_integral_value():
+            return str(value.quantize(Decimal('1')))
+        return format(value.normalize(), 'f').rstrip('0').rstrip('.')
+
+    text = str(value).strip()
+    if not text:
+        return empty_value
+
+    if text.endswith('.0'):
+        candidate = text[:-2]
+        if candidate.replace('+', '', 1).isdigit():
+            return candidate
+        try:
+            parsed = Decimal(text)
+            if parsed == parsed.to_integral_value():
+                return str(parsed.quantize(Decimal('1')))
+        except (InvalidOperation, ValueError):
+            pass
+
+    return text
