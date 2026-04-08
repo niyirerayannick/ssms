@@ -28,6 +28,12 @@
                         {{ family.phone_number }}
                     </a>
                     {% endif %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide {{ family.payment_ability_badge_classes }}">
+                        {{ family.get_payment_ability_display }}
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide {{ family.mutuelle_support_badge_classes }}">
+                        {{ family.get_mutuelle_support_status_display }}
+                    </span>
                 </div>
             </div>
             <div class="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
@@ -77,6 +83,18 @@
                         <div class="space-y-1 border-t border-slate-50 pt-4 sm:border-0 sm:pt-0">
                             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mother Name</p>
                             <p class="font-bold text-slate-900">{{ family.mother_name|default:"---" }}</p>
+                        </div>
+                        <div class="space-y-1 border-t border-slate-50 pt-4">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Payment Ability</p>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide {{ family.payment_ability_badge_classes }}">
+                                {{ family.get_payment_ability_display }}
+                            </span>
+                        </div>
+                        <div class="space-y-1 border-t border-slate-50 pt-4">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mutuelle Support</p>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide {{ family.mutuelle_support_badge_classes }}">
+                                {{ family.get_mutuelle_support_status_display }}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -195,6 +213,10 @@
                     <div class="flex items-center justify-between p-3 bg-white/10 rounded-xl backdrop-blur-sm border border-white/10">
                         <span class="text-indigo-100 text-sm font-medium">Contribution</span>
                         <span class="text-xl font-black">{{ family.total_contribution|compact_number }} RWF</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-white/10 rounded-xl backdrop-blur-sm border border-white/10">
+                        <span class="text-indigo-100 text-sm font-medium">Mutuelle Support</span>
+                        <span class="text-sm font-black">{{ family.get_mutuelle_support_status_display }}</span>
                     </div>
                 </div>
             </div>

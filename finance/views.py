@@ -13,6 +13,16 @@ from django.forms import formset_factory
 from django.urls import reverse
 from django.utils import timezone
 from core.models import District, AcademicYear, School
+from core.export_utils import (
+    ExportNumberedCanvas,
+    add_export_header,
+    autosize_worksheet_columns,
+    build_export_pdf_document,
+    build_export_table,
+    resolve_logo_path,
+    style_excel_header,
+    write_excel_report_header,
+)
 from django.http import JsonResponse
 from django.http import HttpResponse
 from reportlab.lib import colors
@@ -33,7 +43,6 @@ from .forms import (
 from insurance.models import FamilyInsurance
 from families.models import Family, FamilyStudent
 from students.models import Student
-import os
 
 
 def _get_filtered_fees(request):
@@ -146,15 +155,7 @@ def _sync_fee_disbursement_queue(fees_queryset):
 
 def _resolve_logo_path():
     """Return the first existing local logo asset path."""
-
-    candidates = [
-        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.jpg'),
-        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.png'),
-    ]
-    for path in candidates:
-        if os.path.exists(path):
-            return path
-    return None
+    return resolve_logo_path()
 
 
 def _get_disbursement_totals(disbursements):
@@ -262,6 +263,7 @@ def export_fees_excel(request):
     worksheet.title = 'School Fees Export'
 
     headers = [
+        'No.',
         'Student Name',
         'Academic Year',
         'Term',
@@ -275,17 +277,15 @@ def export_fees_excel(request):
         'Balance To Pay',
         'Status',
     ]
+    write_excel_report_header(worksheet, 'School Fees Export', 'Filtered school fee records', len(headers))
+    worksheet.append([])
     worksheet.append(headers)
 
-    header_fill = PatternFill(start_color='0F766E', end_color='0F766E', fill_type='solid')
-    header_font = Font(bold=True, color='FFFFFF')
-    for cell in worksheet[1]:
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+    style_excel_header(worksheet, 4)
 
-    for fee in fees:
+    for index, fee in enumerate(fees, start=1):
         worksheet.append([
+            index,
             fee.student.full_name if fee.student else 'N/A',
             fee.academic_year.name if fee.academic_year else 'N/A',
             fee.get_term_display(),
@@ -300,14 +300,7 @@ def export_fees_excel(request):
             fee.get_payment_status_display(),
         ])
 
-    for column_cells in worksheet.columns:
-        max_length = 0
-        column_letter = column_cells[0].column_letter
-        for cell in column_cells:
-            value = '' if cell.value is None else str(cell.value)
-            if len(value) > max_length:
-                max_length = len(value)
-        worksheet.column_dimensions[column_letter].width = min(max_length + 2, 30)
+    autosize_worksheet_columns(worksheet, max_width=30)
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -373,22 +366,13 @@ def export_fee_disbursement_excel(request):
     worksheet = workbook.active
     worksheet.title = 'Fee Disbursements'
 
-    worksheet.merge_cells('A1:K1')
-    worksheet['A1'] = 'School Fee Disbursement Queue'
-    worksheet['A1'].font = Font(size=14, bold=True)
-    worksheet['A1'].alignment = Alignment(horizontal='center')
-
-    worksheet.merge_cells('A2:K2')
-    worksheet['A2'] = (
+    subtitle = (
         f"Academic Year: {labels['academic_year_label']} | "
         f"District: {labels['district_label']} | "
         f"Status: {filters.get('status_filter') or 'All Statuses'}"
     )
-    worksheet['A2'].alignment = Alignment(horizontal='center')
-
-    worksheet.append([])
-
     headers = [
+        'No.',
         'Student Name',
         'Academic Year',
         'School Term',
@@ -401,17 +385,15 @@ def export_fee_disbursement_excel(request):
         'Amount To Pay',
         'Queue Status',
     ]
+    write_excel_report_header(worksheet, 'School Fee Disbursement Queue', subtitle, len(headers))
+
+    worksheet.append([])
     worksheet.append(headers)
 
-    header_fill = PatternFill(start_color='0F766E', end_color='0F766E', fill_type='solid')
-    header_font = Font(bold=True, color='FFFFFF')
-    for cell in worksheet[1]:
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+    style_excel_header(worksheet, 4)
 
     export_ids = []
-    for item in disbursements:
+    for index, item in enumerate(disbursements, start=1):
         fee = item.school_fee
         student = fee.student
         district_name = student.partner.district.name if student and student.partner and student.partner.district else (
@@ -420,6 +402,7 @@ def export_fee_disbursement_excel(request):
             )
         )
         worksheet.append([
+            index,
             item.student_name,
             fee.academic_year.name if fee.academic_year else 'N/A',
             fee.get_term_display(),
@@ -435,14 +418,7 @@ def export_fee_disbursement_excel(request):
         if item.status == 'pending':
             export_ids.append(item.id)
 
-    for column_cells in worksheet.columns:
-        max_length = 0
-        column_letter = column_cells[0].column_letter
-        for cell in column_cells:
-            value = '' if cell.value is None else str(cell.value)
-            if len(value) > max_length:
-                max_length = len(value)
-        worksheet.column_dimensions[column_letter].width = min(max_length + 2, 32)
+    autosize_worksheet_columns(worksheet, max_width=32)
 
     if export_ids:
         SchoolFeeDisbursement.objects.filter(id__in=export_ids).update(
@@ -478,32 +454,16 @@ def export_fee_disbursement_pdf(request):
     buffer = HttpResponse(content_type='application/pdf')
     buffer['Content-Disposition'] = 'attachment; filename="school_fee_disbursement_queue.pdf"'
 
-    doc = SimpleDocTemplate(
+    doc = build_export_pdf_document(
         buffer,
+        'School Fee Disbursement Queue',
         pagesize=landscape(A4),
-        leftMargin=20,
-        rightMargin=20,
-        topMargin=20,
-        bottomMargin=20,
-        title='School Fee Disbursement Queue',
+        left_margin=20,
+        right_margin=20,
+        top_margin=20,
+        bottom_margin=20,
     )
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(
-        'DisbursementTitle',
-        parent=styles['Title'],
-        fontSize=18,
-        textColor=colors.HexColor('#0f172a'),
-        alignment=1,
-        spaceAfter=6,
-    )
-    meta_style = ParagraphStyle(
-        'DisbursementMeta',
-        parent=styles['BodyText'],
-        fontSize=9,
-        textColor=colors.HexColor('#475569'),
-        alignment=1,
-        spaceAfter=10,
-    )
     cell_style = ParagraphStyle(
         'DisbursementCell',
         parent=styles['BodyText'],
@@ -518,40 +478,32 @@ def export_fee_disbursement_pdf(request):
         fontName='Helvetica-Bold',
     )
     elements = []
-    logo_path = _resolve_logo_path()
-    if logo_path:
-        logo = Image(logo_path, width=54, height=54)
-        logo.hAlign = 'CENTER'
-        elements.append(logo)
-        elements.append(Spacer(1, 6))
-
-    elements.append(Paragraph('School Fee Disbursement Queue', title_style))
-    elements.append(Paragraph(
+    add_export_header(
+        elements,
+        'School Fee Disbursement Queue',
         (
             f"Academic Year: {labels['academic_year_label']} | "
             f"District: {labels['district_label']} | "
-            f"Status: {filters.get('status_filter') or 'All Statuses'} | "
-            f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}"
+            f"Status: {filters.get('status_filter') or 'All Statuses'}"
         ),
-        meta_style,
-    ))
+        generated_label=f"Generated on: {timezone.now().strftime('%B %d, %Y at %I:%M %p')}",
+    )
 
     summary_data = [
         ['Total Records', str(totals['listed_count']), 'Pending', str(totals['pending_count']), 'Exported', str(totals['exported_count']), 'Paid', str(totals['paid_count'])],
         ['Total Amount', f"FRW {totals['total_amount_to_pay']:,.2f}", '', '', '', '', '', ''],
     ]
-    summary_table = Table(summary_data, colWidths=[78, 70, 58, 55, 60, 55, 42, 42])
+    summary_table = build_export_table(
+        summary_data,
+        col_widths=[78, 70, 58, 55, 60, 55, 42, 42],
+        body_font_size=8,
+        centered_columns=[1, 3, 5, 7],
+    )
     summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f8fafc')),
-        ('BACKGROUND', (0, 1), (1, 1), colors.HexColor('#fef2f2')),
         ('SPAN', (1, 1), (-1, 1)),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('TEXTCOLOR', (0, 1), (1, 1), colors.HexColor('#dc2626')),
-        ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#cbd5e1')),
-        ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#94a3b8')),
         ('ALIGN', (1, 1), (-1, 1), 'LEFT'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('PADDING', (0, 0), (-1, -1), 6),
+        ('TEXTCOLOR', (0, 1), (1, 1), colors.HexColor('#dc2626')),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
     ]))
     elements.append(summary_table)
     elements.append(Spacer(1, 12))
@@ -601,26 +553,18 @@ def export_fee_disbursement_pdf(request):
         '',
         Paragraph(f"{totals['total_amount_to_pay']:,.2f}", amount_style),
     ])
-    table = Table(table_data, colWidths=[24, 96, 58, 64, 52, 102, 60, 88, 80, 64], repeatRows=1)
+    table = build_export_table(
+        table_data,
+        col_widths=[24, 96, 58, 64, 52, 102, 60, 88, 80, 64],
+        body_font_size=6.5,
+        centered_columns=[0],
+        right_aligned_columns=[9],
+        total_row_indexes=[len(table_data) - 1],
+    )
     table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f766e')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 8),
-        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#fef3c7')),
-        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
         ('TEXTCOLOR', (9, -1), (9, -1), colors.HexColor('#b45309')),
-        ('FONTSIZE', (0, 1), (-1, -1), 6.5),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('ALIGN', (0, 0), (0, -1), 'CENTER'),
-        ('ALIGN', (9, 1), (9, -1), 'RIGHT'),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f8fafc')]),
-        ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#cbd5e1')),
-        ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#94a3b8')),
         ('LEFTPADDING', (0, 0), (-1, -1), 4),
         ('RIGHTPADDING', (0, 0), (-1, -1), 4),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
     ]))
     elements.append(table)
     elements.append(Spacer(1, 24))
@@ -639,7 +583,7 @@ def export_fee_disbursement_pdf(request):
     ]))
     elements.append(signature_table)
 
-    doc.build(elements)
+    doc.build(elements, canvasmaker=ExportNumberedCanvas)
     export_ids = [item.id for item in disbursements if item.status == 'pending']
     if export_ids:
         SchoolFeeDisbursement.objects.filter(id__in=export_ids).update(
@@ -1293,6 +1237,10 @@ def get_family_insurance_details(request, family_id):
             'family_code': family.family_code,
             'family_name': (family.head_of_family or '').strip(),
             'total_members': family.total_family_members or 0,
+            'payment_ability': family.payment_ability,
+            'payment_ability_display': family.get_payment_ability_display(),
+            'mutuelle_support_status': family.mutuelle_support_status,
+            'mutuelle_support_status_display': family.get_mutuelle_support_status_display(),
             'total_contribution': str(total_contribution),
             'total_required_all_years': str(total_required_all_years),
         }

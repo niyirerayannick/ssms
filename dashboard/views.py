@@ -40,6 +40,9 @@ def index(request):
     total_families = Family.objects.count()
     total_family_members = Family.objects.aggregate(Sum('total_family_members'))['total_family_members__sum'] or 0
     total_family_contribution = Family.objects.count() * 3000  # Each family contributes member_count * 3000
+    total_families_supported_mutuelle = Family.objects.filter(
+        mutuelle_support_status=Family.MUTUELLE_SUPPORT_STATUS_SUPPORTED
+    ).count()
     
     # ===== SCHOOL STATISTICS =====
     total_schools = School.objects.count()
@@ -146,6 +149,7 @@ def index(request):
         'total_families': total_families,
         'total_family_members': total_family_members,
         'total_family_contribution': total_family_contribution,
+        'total_families_supported_mutuelle': total_families_supported_mutuelle,
         
         # School Stats
         'total_schools': total_schools,

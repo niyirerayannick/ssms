@@ -156,7 +156,8 @@ def download_family_template(request):
     headers = [
         'Head of Family Name*', 'National ID*', 'Phone Number*', 'Alternative Phone',
         'Province*', 'District*', 'Sector', 'Cell', 'Village',
-        'Total Family Members*', 'Address Description', 'Notes'
+        'Total Family Members*', 'Payment Ability', 'Mutuelle Support Status',
+        'Address Description', 'Notes'
     ]
     
     # Write headers
@@ -170,7 +171,7 @@ def download_family_template(request):
     example_data = [
         'Jean Pierre Mukasa', '1198012345678901', '+250788123456', '+250722654321',
         'Kigali City', 'Gasabo', 'Remera', 'Rukiri I', 'Amahoro',
-        '5', 'Near the main road, blue gate', 'Family needs support'
+        '5', 'unable_to_pay', 'supported', 'Near the main road, blue gate', 'Family needs support'
     ]
     
     for col_num, value in enumerate(example_data, 1):
@@ -193,6 +194,8 @@ def download_family_template(request):
         ("Optional Fields:", ""),
         ("- Alternative Phone", "Secondary contact number"),
         ("- Sector/Cell/Village", "Additional location details"),
+        ("- Payment Ability", "Options: able_to_pay or unable_to_pay"),
+        ("- Mutuelle Support Status", "Options: supported or not_supported"),
         ("- Address Description", "Detailed address or landmarks"),
         ("- Notes", "Additional comments"),
         ("", ""),
@@ -495,7 +498,7 @@ def import_families(request):
     """Handle family Excel file import."""
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
-        expected_columns = 12
+        expected_columns = 14
         expected_headers = [
             ('head of family name', True),
             ('national id', True),
@@ -507,6 +510,8 @@ def import_families(request):
             ('cell', False),
             ('village', False),
             ('total family members', True),
+            ('payment ability', False),
+            ('mutuelle support status', False),
             ('address description', False),
             ('notes', False),
         ]
@@ -548,6 +553,8 @@ def import_families(request):
                     cell_name = get_value('cell')
                     village_name = get_value('village')
                     total_family_members = get_value('total family members')
+                    payment_ability = get_value('payment ability') or Family.PAYMENT_ABILITY_ABLE
+                    mutuelle_support_status = get_value('mutuelle support status') or Family.MUTUELLE_SUPPORT_STATUS_NOT_SUPPORTED
                     address_description = get_value('address description')
                     notes = get_value('notes')
                     
@@ -579,6 +586,24 @@ def import_families(request):
                         error_count += 1
                         continue
                     
+                    valid_payment_abilities = {choice[0] for choice in Family.PAYMENT_ABILITY_CHOICES}
+                    valid_support_statuses = {choice[0] for choice in Family.MUTUELLE_SUPPORT_STATUS_CHOICES}
+                    if payment_ability not in valid_payment_abilities:
+                        errors.append(f"Row {row_num}: Invalid payment ability '{payment_ability}'")
+                        error_count += 1
+                        continue
+                    if mutuelle_support_status not in valid_support_statuses:
+                        errors.append(f"Row {row_num}: Invalid Mutuelle support status '{mutuelle_support_status}'")
+                        error_count += 1
+                        continue
+                    if (
+                        payment_ability == Family.PAYMENT_ABILITY_ABLE
+                        and mutuelle_support_status == Family.MUTUELLE_SUPPORT_STATUS_SUPPORTED
+                    ):
+                        errors.append(f"Row {row_num}: Supported families must be marked as unable_to_pay")
+                        error_count += 1
+                        continue
+
                     # Create family
                     family = Family.objects.create(
                         head_of_family=head_of_family,
@@ -591,6 +616,8 @@ def import_families(request):
                         cell=cell,
                         village=village,
                         total_family_members=int(total_family_members),
+                        payment_ability=payment_ability,
+                        mutuelle_support_status=mutuelle_support_status,
                         address_description=address_description or '',
                         notes=notes or ''
                     )

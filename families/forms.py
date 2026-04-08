@@ -53,7 +53,7 @@ class FamilyForm(forms.ModelForm):
         fields = [
             'head_of_family', 'national_id', 'phone_number', 'alternative_phone',
             'father_name', 'mother_name', 'is_orphan', 'guardian_name', 'guardian_phone',
-            'total_family_members',
+            'total_family_members', 'payment_ability', 'mutuelle_support_status',
             'province', 'district', 'sector', 'cell', 'village',
             'address_description', 'notes'
         ]
@@ -96,6 +96,12 @@ class FamilyForm(forms.ModelForm):
                 'placeholder': 'Total number of family members',
                 'type': 'number'
             }),
+            'payment_ability': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+            }),
+            'mutuelle_support_status': forms.Select(attrs={
+                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+            }),
             'address_description': forms.Textarea(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent',
                 'rows': 3,
@@ -135,11 +141,22 @@ class FamilyForm(forms.ModelForm):
         is_orphan = cleaned_data.get('is_orphan')
         guardian_name = cleaned_data.get('guardian_name')
         guardian_phone = cleaned_data.get('guardian_phone')
+        payment_ability = cleaned_data.get('payment_ability')
+        mutuelle_support_status = cleaned_data.get('mutuelle_support_status')
 
         if is_orphan:
             if not guardian_name:
                 self.add_error('guardian_name', 'Guardian name is required if the student is orphan.')
             if not guardian_phone:
                 self.add_error('guardian_phone', 'Guardian phone is required if the student is orphan.')
+
+        if (
+            payment_ability == Family.PAYMENT_ABILITY_ABLE
+            and mutuelle_support_status == Family.MUTUELLE_SUPPORT_STATUS_SUPPORTED
+        ):
+            self.add_error(
+                'mutuelle_support_status',
+                'Only families marked as unable to pay can be marked as supported.',
+            )
 
         return cleaned_data

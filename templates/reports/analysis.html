@@ -156,6 +156,51 @@
         </div>
     </div>
 
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-4 border border-violet-500 shadow-lg group relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-3 opacity-10">
+                <span class="material-symbols-rounded text-6xl text-white">account_balance</span>
+            </div>
+            <p class="text-[10px] font-bold text-violet-100 uppercase tracking-wider relative z-10">University Students</p>
+            <div class="flex items-end justify-between mt-1 relative z-10">
+                <div>
+                    <p class="text-xl sm:text-2xl font-black text-white">{{ university_students|compact_number }}</p>
+                    <p class="text-[10px] font-bold text-violet-200 uppercase tracking-tighter">Current filtered students</p>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                    <span class="material-symbols-rounded text-xl text-white">school</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Students With DOB</p>
+            <div class="flex items-end justify-between mt-1">
+                <p class="text-xl sm:text-2xl font-black text-slate-900">{{ students_with_dob|compact_number }}</p>
+                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                    <span class="material-symbols-rounded text-lg text-blue-600">event</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Missing DOB</p>
+            <div class="flex items-end justify-between mt-1">
+                <p class="text-xl sm:text-2xl font-black text-amber-600">{{ students_missing_dob|compact_number }}</p>
+                <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center group-hover:bg-amber-100 transition-colors">
+                    <span class="material-symbols-rounded text-lg text-amber-600">warning</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">University With DOB</p>
+            <div class="flex items-end justify-between mt-1">
+                <p class="text-xl sm:text-2xl font-black text-violet-600">{{ university_with_dob|compact_number }}</p>
+                <div class="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center group-hover:bg-violet-100 transition-colors">
+                    <span class="material-symbols-rounded text-lg text-violet-600">query_stats</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Category Distribution Grid -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <!-- Lower Primary -->
@@ -321,6 +366,98 @@
                 <canvas id="materialsChart"></canvas>
             </div>
         </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all">
+            <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                <span class="w-2 h-6 bg-amber-500 rounded-full mr-3"></span>
+                Students by Age Range
+            </h3>
+            <div class="h-64 sm:h-72">
+                <canvas id="ageChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all">
+            <h3 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                <span class="w-2 h-6 bg-violet-500 rounded-full mr-3"></span>
+                University Breakdown
+            </h3>
+            <div class="h-64 sm:h-72">
+                <canvas id="universityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                <h3 class="text-lg font-bold text-slate-800">Age Range Breakdown</h3>
+                <p class="text-sm text-slate-500 mt-1">Students grouped by calculated age from date of birth.</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-100">
+                    <thead class="bg-slate-50/50">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Age Range</th>
+                            <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Students</th>
+                            <th class="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">Percentage</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        {% for row in age_range_rows %}
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4 text-sm font-bold text-slate-900">{{ row.label }}</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">{{ row.count }}</td>
+                            <td class="px-6 py-4 text-sm text-slate-700">{{ row.percentage }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-6 border border-violet-500 shadow-lg text-white">
+                <p class="text-[10px] font-bold text-violet-100 uppercase tracking-wider">University Summary</p>
+                <p class="text-3xl font-black mt-2">{{ university_students|compact_number }}</p>
+                <p class="text-sm text-violet-100 mt-1">Students classified as university in the filtered set.</p>
+                <div class="grid grid-cols-2 gap-3 mt-6">
+                    <div class="bg-white/10 rounded-xl p-3 border border-white/10">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-violet-100">Male</p>
+                        <p class="text-xl font-bold mt-1">{{ university_breakdown.male }}</p>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-3 border border-white/10">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-violet-100">Female</p>
+                        <p class="text-xl font-bold mt-1">{{ university_breakdown.female }}</p>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-3 border border-white/10">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-violet-100">Active</p>
+                        <p class="text-xl font-bold mt-1">{{ university_breakdown.active }}</p>
+                    </div>
+                    <div class="bg-white/10 rounded-xl p-3 border border-white/10">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-violet-100">Missing DOB</p>
+                        <p class="text-xl font-bold mt-1">{{ university_missing_dob }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                    <h3 class="text-lg font-bold text-slate-800">School Level Summary</h3>
+                </div>
+                <div class="divide-y divide-slate-50">
+                    {% for row in school_level_rows %}
+                    <div class="px-6 py-4 flex items-center justify-between {% if row.is_university %}bg-violet-50/50{% endif %}">
+                        <div>
+                            <p class="text-sm font-bold {% if row.is_university %}text-violet-700{% else %}text-slate-900{% endif %}">{{ row.label }}</p>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-wider">{{ row.percentage }}% of total</p>
+                        </div>
+                        <span class="text-lg font-black {% if row.is_university %}text-violet-700{% else %}text-slate-900{% endif %}">{{ row.count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -465,6 +602,64 @@
                 label: 'Amount (RWF)',
                 data: [{{ total_fees_expected }}, {{ total_fees_paid }}, {{ total_balance }}],
                 backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            ...commonOptions,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('ageChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ age_labels|safe }},
+            datasets: [{
+                label: 'Students',
+                data: {{ age_counts|safe }},
+                backgroundColor: '#f59e0b',
+                borderRadius: 6
+            }]
+        },
+        options: {
+            ...commonOptions,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        display: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('universityChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ university_chart_labels|safe }},
+            datasets: [{
+                label: 'University Students',
+                data: {{ university_chart_counts|safe }},
+                backgroundColor: ['#6366f1', '#a855f7', '#10b981', '#f59e0b', '#94a3b8'],
                 borderRadius: 6
             }]
         },

@@ -32,13 +32,23 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
 from core.models import District, School, Partner
+from core.export_utils import (
+    ExportNumberedCanvas,
+    add_export_header,
+    autosize_worksheet_columns,
+    build_export_pdf_document,
+    build_export_table,
+    prepend_row_numbers,
+    resolve_logo_path,
+    style_excel_header,
+    write_excel_report_header,
+)
 from django.utils import timezone
 from django.core import signing
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from django.forms import formset_factory
 from urllib.parse import urlencode
-import os
 from .models import (
     Student,
     StudentPhoto,
@@ -69,7 +79,9 @@ from students.services.promotion import promote_students_to_academic_year
 @permission_required('students.view_student', raise_exception=True)
 def student_list(request):
     """List all students with search and filters."""
-    students = Student.objects.all()
+    students = Student.objects.select_related(
+        'school', 'family__district', 'partner__district'
+    ).all()
     
     # Search functionality
     search_query = request.GET.get('search', '')
@@ -108,11 +120,18 @@ def student_list(request):
     if school_level_filter:
         students = students.filter(school_level=school_level_filter)
 
-    boarding_counts = {item['boarding_status']: item['total'] for item in students.values('boarding_status').annotate(total=Count('id'))}
-    level_counts = {item['school_level']: item['total'] for item in students.values('school_level').annotate(total=Count('id'))}
+    summary_queryset = students.distinct()
+    boarding_counts = {
+        item['boarding_status']: item['total']
+        for item in summary_queryset.values('boarding_status').annotate(total=Count('id'))
+    }
+    level_counts = {
+        item['school_level']: item['total']
+        for item in summary_queryset.values('school_level').annotate(total=Count('id'))
+    }
     
     # Pagination
-    paginator = Paginator(students.order_by('first_name', 'last_name'), 20)
+    paginator = Paginator(summary_queryset.order_by('first_name', 'last_name'), 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -207,26 +226,12 @@ def _can_approve_student(user):
 
 def _build_pdf_table(data, col_widths=None, header_background='#0f766e', body_font_size=8):
     """Create a consistently styled PDF table."""
-
-    table = Table(data, colWidths=col_widths, repeatRows=1)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor(header_background)),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), body_font_size + 1),
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), body_font_size),
-        ('TOPPADDING', (0, 0), (-1, -1), 5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-        ('LEFTPADDING', (0, 0), (-1, -1), 6),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8fafc')]),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#cbd5e1')),
-        ('BOX', (0, 0), (-1, -1), 0.8, colors.HexColor('#94a3b8')),
-    ]))
-    return table
+    return build_export_table(
+        data,
+        col_widths=col_widths,
+        header_background=colors.HexColor(header_background),
+        body_font_size=body_font_size,
+    )
 
 
 def _build_pdf_image(field_file, width=60, height=60):
@@ -251,15 +256,7 @@ def _build_pdf_image(field_file, width=60, height=60):
 
 def _resolve_logo_path():
     """Return the first existing local logo asset path."""
-
-    candidates = [
-        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.jpg'),
-        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.png'),
-    ]
-    for path in candidates:
-        if os.path.exists(path):
-            return path
-    return None
+    return resolve_logo_path()
 
 
 def _pdf_text(value, fallback='N/A'):
@@ -471,38 +468,26 @@ def _build_student_materials_context(request):
 
 def _export_student_materials_pdf(context):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(
+    doc = build_export_pdf_document(
         buffer,
+        'Student Materials Report',
         pagesize=landscape(A4),
-        title='Student Materials Report',
-        leftMargin=24,
-        rightMargin=24,
-        topMargin=24,
-        bottomMargin=24,
+        left_margin=24,
+        right_margin=24,
+        top_margin=24,
+        bottom_margin=24,
     )
-    styles = getSampleStyleSheet()
     elements = []
-    logo_path = _resolve_logo_path()
-    if logo_path:
-        logo = Image(logo_path, width=56, height=56)
-        logo.hAlign = 'CENTER'
-        elements.append(logo)
-        elements.append(Spacer(1, 8))
-
-    elements.extend([
-        Paragraph('Student Materials Report', styles['Title']),
-        Spacer(1, 12),
-        Paragraph(
-            (
-                f"Academic Year: {context['academic_year_label']} | "
-                f"District: {context['district_label']} | "
-                f"Status: {context['status_filter'] or 'all'} | "
-                f"Generated: {timezone.now().strftime('%Y-%m-%d %H:%M')}"
-            ),
-            styles['BodyText']
+    add_export_header(
+        elements,
+        'Student Materials Report',
+        (
+            f"Academic Year: {context['academic_year_label']} | "
+            f"District: {context['district_label']} | "
+            f"Status: {context['status_filter'] or 'all'}"
         ),
-        Spacer(1, 18),
-    ])
+        generated_label=f"Generated on: {timezone.now().strftime('%B %d, %Y at %I:%M %p')}",
+    )
     table_data = [[
         'No.',
         'Name',
@@ -559,7 +544,7 @@ def _export_student_materials_pdf(context):
     elements.append(
         table
     )
-    doc.build(elements)
+    doc.build(elements, canvasmaker=ExportNumberedCanvas)
     pdf = buffer.getvalue()
     buffer.close()
 
@@ -574,20 +559,11 @@ def _export_student_materials_excel(context):
     worksheet = workbook.active
     worksheet.title = 'Materials'
 
-    worksheet.merge_cells('A1:O1')
-    worksheet['A1'] = 'Student Materials Report'
-    worksheet['A1'].font = Font(size=14, bold=True)
-    worksheet['A1'].alignment = Alignment(horizontal='center')
-
-    worksheet.merge_cells('A2:O2')
-    worksheet['A2'] = (
+    subtitle = (
         f"Academic Year: {context['academic_year_label']} | "
         f"District: {context['district_label']} | "
         f"Status: {context['status_filter'] or 'all'}"
     )
-    worksheet['A2'].alignment = Alignment(horizontal='center')
-
-    worksheet.append([])
     headers = [
         'No.',
         'Name',
@@ -605,13 +581,11 @@ def _export_student_materials_excel(context):
         'Dup Papers',
         'Pads',
     ]
+    write_excel_report_header(worksheet, 'Student Materials Report', subtitle, len(headers))
+    worksheet.append([])
     worksheet.append(headers)
     header_row_idx = worksheet.max_row
-    for col_idx, header in enumerate(headers, start=1):
-        cell = worksheet.cell(row=header_row_idx, column=col_idx)
-        cell.font = Font(bold=True, color='FFFFFF')
-        cell.fill = PatternFill(start_color='0F172A', end_color='0F172A', fill_type='solid')
-        cell.alignment = Alignment(horizontal='center')
+    style_excel_header(worksheet, header_row_idx, fill_color='0F172A')
 
     for index, row in enumerate(context['rows'], start=1):
         student = row['student']
@@ -974,13 +948,14 @@ def student_full_report_pdf(request, pk):
     total_fees_balance = sum((fee.balance for fee in fees), 0)
 
     buffer = BytesIO()
-    doc = SimpleDocTemplate(
+    doc = build_export_pdf_document(
         buffer,
+        'Student Comprehensive Report',
         pagesize=A4,
-        leftMargin=36,
-        rightMargin=36,
-        topMargin=36,
-        bottomMargin=36,
+        left_margin=36,
+        right_margin=36,
+        top_margin=36,
+        bottom_margin=36,
     )
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
@@ -1025,15 +1000,13 @@ def student_full_report_pdf(request, pk):
         alignment=1,
     )
 
-    elements = [
-        Paragraph('Student Comprehensive Report', title_style),
-        Paragraph(student.full_name, subtitle_style),
-        Paragraph(
-            f'Generated on {timezone.now().strftime("%Y-%m-%d %H:%M")} | Student ID {student.pk}',
-            subtitle_style,
-        ),
-        Spacer(1, 8),
-    ]
+    elements = []
+    add_export_header(
+        elements,
+        'Student Comprehensive Report',
+        student.full_name,
+        generated_label=f"Generated on: {timezone.now().strftime('%B %d, %Y at %I:%M %p')} | Student ID {student.pk}",
+    )
 
     photo_entries = []
     if getattr(student, 'profile_picture', None):
@@ -1221,7 +1194,7 @@ def student_full_report_pdf(request, pk):
     elements.append(Paragraph('Family Insurance Records', section_style))
     elements.append(_build_pdf_table(insurance_data, [80, 65, 65, 65, 90, 155], body_font_size=7))
 
-    doc.build(elements)
+    doc.build(elements, canvasmaker=ExportNumberedCanvas)
     pdf = buffer.getvalue()
     buffer.close()
 
@@ -1780,55 +1753,52 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
 
     def generate_pdf(self, rows):
         buffer = BytesIO()
-        doc = SimpleDocTemplate(
+        doc = build_export_pdf_document(
             buffer,
+            'Student Performance Report',
             pagesize=landscape(A4),
-            title='Student Performance Report',
-            leftMargin=24,
-            rightMargin=24,
-            topMargin=24,
-            bottomMargin=24,
+            left_margin=24,
+            right_margin=24,
+            top_margin=24,
+            bottom_margin=24,
         )
-        styles = getSampleStyleSheet()
-        elements = [
-            Paragraph('Student Performance Report', styles['Title']),
-            Spacer(1, 12),
-            Paragraph(
-                f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M')} | {self.describe_filters()}",
-                styles['BodyText']
-            ),
-            Spacer(1, 18),
-        ]
+        elements = []
+        add_export_header(
+            elements,
+            'Student Performance Report',
+            self.describe_filters(),
+            generated_label=f"Generated on: {timezone.now().strftime('%B %d, %Y at %I:%M %p')}",
+        )
 
-        table_data = [['Student Name', 'Class', 'Total Terms Recorded', 'Average (%)', 'Status']]
+        rows_data = []
         for row in rows:
-            table_data.append([
+            rows_data.append([
                 row['name'],
                 row['class_level'],
                 str(row['terms_count']),
                 f"{row['avg_marks']:.1f}",
                 row['status'],
             ])
-
-        table = Table(table_data, repeatRows=1, colWidths=[220, 120, 120, 120, 100])
-        style = TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 11),
-            ('ALIGN', (2, 1), (3, -1), 'RIGHT'),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('GRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#cbd5f5')),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.HexColor('#f8fafc'), colors.white]),
-        ])
+        table_data = prepend_row_numbers(
+            ['Student Name', 'Class', 'Total Terms Recorded', 'Average (%)', 'Status'],
+            rows_data,
+        )
+        table = build_export_table(
+            table_data,
+            col_widths=[36, 190, 110, 110, 95, 85],
+            body_font_size=8,
+            header_background=colors.HexColor('#0f172a'),
+            centered_columns=[0, 3, 4],
+        )
 
         for idx, row in enumerate(rows, start=1):
             bg_color = colors.HexColor('#d1fae5') if row['status'] == 'Pass' else colors.HexColor('#fee2e2')
-            style.add('BACKGROUND', (0, idx), (-1, idx), bg_color)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, idx), (-1, idx), bg_color),
+            ]))
 
-        table.setStyle(style)
         elements.append(table)
-        doc.build(elements)
+        doc.build(elements, canvasmaker=ExportNumberedCanvas)
         pdf = buffer.getvalue()
         buffer.close()
         response = HttpResponse(content_type='application/pdf')
@@ -1842,38 +1812,32 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
         worksheet = workbook.active
         worksheet.title = 'Performance'
 
-        worksheet.merge_cells('A1:E1')
-        worksheet['A1'] = 'Student Performance Report'
-        worksheet['A1'].font = Font(size=14, bold=True)
-        worksheet['A1'].alignment = Alignment(horizontal='center')
-
-        worksheet.merge_cells('A2:E2')
-        worksheet['A2'] = f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M')} | {self.describe_filters()}"
-        worksheet['A2'].alignment = Alignment(horizontal='center')
-
+        headers = ['No.', 'Student Name', 'Class', 'Total Terms Recorded', 'Average (%)', 'Status']
+        write_excel_report_header(
+            worksheet,
+            'Student Performance Report',
+            f"Generated on {timezone.now().strftime('%Y-%m-%d %H:%M')} | {self.describe_filters()}",
+            len(headers),
+        )
         worksheet.append([])
-        headers = ['Student Name', 'Class', 'Total Terms Recorded', 'Average (%)', 'Status']
         worksheet.append(headers)
         header_row_idx = worksheet.max_row
-        for col_idx, header in enumerate(headers, start=1):
-            cell = worksheet.cell(row=header_row_idx, column=col_idx)
-            cell.font = Font(bold=True, color='FFFFFF')
-            cell.fill = PatternFill(start_color='0F172A', end_color='0F172A', fill_type='solid')
-            cell.alignment = Alignment(horizontal='center')
+        style_excel_header(worksheet, header_row_idx, fill_color='0F172A')
 
-        for record in rows:
+        for index, record in enumerate(rows, start=1):
             worksheet.append([
+                index,
                 record['name'],
                 record['class_level'],
                 record['terms_count'],
                 round(record['avg_marks'], 1),
                 record['status'],
             ])
-            status_cell = worksheet.cell(row=worksheet.max_row, column=5)
+            status_cell = worksheet.cell(row=worksheet.max_row, column=6)
             fill_color = 'D1FAE5' if record['status'] == 'Pass' else 'FEE2E2'
             status_cell.fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type='solid')
 
-        column_widths = [32, 18, 18, 18, 14]
+        column_widths = [8, 32, 18, 18, 18, 14]
         for idx, width in enumerate(column_widths, start=1):
             worksheet.column_dimensions[chr(64 + idx)].width = width
 

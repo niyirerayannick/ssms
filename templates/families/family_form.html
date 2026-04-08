@@ -162,6 +162,40 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Mutuelle de Sante Section -->
+            <div class="p-4 sm:p-8">
+                <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                    <div class="p-2 bg-emerald-50 rounded-xl mr-3">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    Mutuelle de Sante Tracking
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div>
+                        <label for="{{ form.payment_ability.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">
+                            Family Payment Ability *
+                        </label>
+                        {{ form.payment_ability }}
+                        {% if form.payment_ability.errors %}
+                            <p class="text-red-600 text-[10px] font-bold mt-1 uppercase ml-1">{{ form.payment_ability.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-[10px] text-slate-400 mt-1 ml-1">Choose whether the family can pay Mutuelle de Sante on their own.</p>
+                    </div>
+                    <div>
+                        <label for="{{ form.mutuelle_support_status.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">
+                            Mutuelle Support Status *
+                        </label>
+                        {{ form.mutuelle_support_status }}
+                        {% if form.mutuelle_support_status.errors %}
+                            <p class="text-red-600 text-[10px] font-bold mt-1 uppercase ml-1">{{ form.mutuelle_support_status.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-[10px] text-slate-400 mt-1 ml-1">Only families marked as unable to pay should be marked as supported.</p>
+                    </div>
+                </div>
+            </div>
             
             <!-- Location Section -->
             <div class="p-4 sm:p-8">
@@ -401,6 +435,28 @@
             totalMembersInput.addEventListener('change', updateContribution);
             totalMembersInput.addEventListener('input', updateContribution);
         }
+
+        const paymentAbilitySelect = document.getElementById('id_payment_ability');
+        const mutuelleSupportStatusSelect = document.getElementById('id_mutuelle_support_status');
+
+        function syncMutuelleSupportEligibility() {
+            if (!paymentAbilitySelect || !mutuelleSupportStatusSelect) return;
+            const canSelfPay = paymentAbilitySelect.value === 'able_to_pay';
+            const supportedOption = Array.from(mutuelleSupportStatusSelect.options).find(
+                option => option.value === 'supported'
+            );
+
+            if (supportedOption) {
+                supportedOption.disabled = canSelfPay;
+            }
+
+            if (canSelfPay && mutuelleSupportStatusSelect.value === 'supported') {
+                mutuelleSupportStatusSelect.value = 'not_supported';
+            }
+        }
+
+        paymentAbilitySelect?.addEventListener('change', syncMutuelleSupportEligibility);
+        syncMutuelleSupportEligibility();
     });
 </script>
 {% endblock %}

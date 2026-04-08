@@ -1,122 +1,100 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
+from django.db.models import Prefetch
 from django.db.models import Sum, Count, Avg, Q
 from students.models import Student, StudentMark, StudentMaterial
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
 from core.models import AcademicYear, Partner, District
+from core.export_utils import (
+    ExportNumberedCanvas,
+    add_export_header,
+    autosize_worksheet_columns,
+    build_export_pdf_document,
+    build_export_table,
+    prepend_row_numbers,
+    resolve_logo_path,
+    style_excel_header,
+    write_excel_report_header,
+)
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
-from reportlab.pdfgen import canvas
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
 from datetime import datetime, date
 import io
-import os
-from django.conf import settings
 
 
-class NumberedCanvas(canvas.Canvas):
-    """Custom canvas for adding page numbers and headers/footers"""
-    def __init__(self, *args, **kwargs):
-        canvas.Canvas.__init__(self, *args, **kwargs)
-        self._saved_page_states = []
-
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
-
-    def save(self):
-        num_pages = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self.draw_page_number(num_pages)
-            canvas.Canvas.showPage(self)
-        canvas.Canvas.save(self)
-
-    def draw_page_number(self, page_count):
-        self.setFont("Helvetica", 9)
-        self.setFillColor(colors.grey)
-        self.drawRightString(
-            letter[0] - 0.5*inch,
-            0.5*inch,
-            f"Page {self._pageNumber} of {page_count}"
-        )
-        # Add footer line
-        self.setStrokeColor(colors.HexColor("#047857"))
-        self.setLineWidth(1)
-        self.line(0.75*inch, 0.65*inch, letter[0] - 0.75*inch, 0.65*inch)
+NumberedCanvas = ExportNumberedCanvas
 
 
 def _resolve_logo_path():
-    candidates = [
-        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.jpg'),
-        os.path.join(settings.BASE_DIR, 'static', 'image', 'logo.png'),
+    return resolve_logo_path()
+
+
+def _build_age_band_analysis(students_queryset):
+    """Return age-band rows and chart data from student DOB values."""
+
+    today = date.today()
+    age_bands = [
+        {'label': 'Under 6', 'min': None, 'max': 5, 'count': 0},
+        {'label': '6-10', 'min': 6, 'max': 10, 'count': 0},
+        {'label': '11-15', 'min': 11, 'max': 15, 'count': 0},
+        {'label': '16-20', 'min': 16, 'max': 20, 'count': 0},
+        {'label': '21-25', 'min': 21, 'max': 25, 'count': 0},
+        {'label': '26+', 'min': 26, 'max': None, 'count': 0},
     ]
-    for path in candidates:
-        if path and os.path.exists(path):
-            return path
-    return None
+
+    students_with_dob = 0
+    students_missing_dob = 0
+    university_with_dob = 0
+    university_missing_dob = 0
+
+    total_students = students_queryset.count()
+    for school_level, date_of_birth in students_queryset.values_list('school_level', 'date_of_birth'):
+        if not date_of_birth:
+            students_missing_dob += 1
+            if school_level == 'university':
+                university_missing_dob += 1
+            continue
+
+        students_with_dob += 1
+        if school_level == 'university':
+            university_with_dob += 1
+
+        age_years = today.year - date_of_birth.year - (
+            (today.month, today.day) < (date_of_birth.month, date_of_birth.day)
+        )
+
+        for band in age_bands:
+            lower_ok = band['min'] is None or age_years >= band['min']
+            upper_ok = band['max'] is None or age_years <= band['max']
+            if lower_ok and upper_ok:
+                band['count'] += 1
+                break
+
+    for band in age_bands:
+        band['percentage'] = round((band['count'] / total_students * 100) if total_students else 0, 1)
+
+    return {
+        'rows': age_bands,
+        'labels': [band['label'] for band in age_bands],
+        'counts': [band['count'] for band in age_bands],
+        'students_with_dob': students_with_dob,
+        'students_missing_dob': students_missing_dob,
+        'university_with_dob': university_with_dob,
+        'university_missing_dob': university_missing_dob,
+    }
 
 
 def create_letterhead(elements, report_title, report_subtitle=None):
     """Create professional letterhead for reports"""
-    styles = getSampleStyleSheet()
-    
-    # Custom styles
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=24,
-        textColor=colors.HexColor('#047857'),
-        spaceAfter=6,
-        alignment=TA_CENTER,
-        fontName='Helvetica-Bold'
-    )
-    
-    subtitle_style = ParagraphStyle(
-        'Subtitle',
-        parent=styles['Normal'],
-        fontSize=10,
-        textColor=colors.grey,
-        spaceAfter=12,
-        alignment=TA_CENTER,
-        fontName='Helvetica'
-    )
-    
-    meta_style = ParagraphStyle(
-        'MetaInfo',
-        parent=styles['Normal'],
-        fontSize=9,
-        textColor=colors.grey,
-        alignment=TA_RIGHT,
-        spaceAfter=6
-    )
-    
-    logo_path = _resolve_logo_path()
-    if logo_path:
-        logo = Image(logo_path, width=1.1 * inch, height=1.1 * inch)
-        logo.hAlign = 'CENTER'
-        elements.append(logo)
-        elements.append(Spacer(1, 8))
-    elements.append(Paragraph("Solidact Foundation", subtitle_style))
-    elements.append(Spacer(1, 6))
-    
-    # Report title
-    elements.append(Paragraph(report_title, title_style))
-    if report_subtitle:
-        elements.append(Paragraph(report_subtitle, subtitle_style))
-    elements.append(Spacer(1, 6))
-    
-    # Report metadata
-    current_date = datetime.now().strftime("%B %d, %Y at %I:%M %p")
-    elements.append(Paragraph(f"Generated on: {current_date}", meta_style))
-    elements.append(Spacer(1, 20))
+    add_export_header(elements, report_title, report_subtitle)
 
 
 def _safe_year_shift(years_ago):
@@ -205,78 +183,166 @@ def _apply_student_report_filters(request, queryset=None):
     }
 
 
+def _student_guardian_parent_label(student):
+    family = student.family
+    if family:
+        if family.guardian_name:
+            return family.guardian_name
+        parent_names = [name for name in [family.father_name, family.mother_name] if name]
+        if parent_names:
+            return " / ".join(parent_names)
+        return family.head_of_family or 'N/A'
+    if student.partner and student.partner.contact_person:
+        return student.partner.contact_person
+    return 'N/A'
+
+
+def _student_phone_label(student):
+    family = student.family
+    if family:
+        if family.guardian_phone:
+            return family.guardian_phone
+        if family.phone_number:
+            return family.phone_number
+        if family.alternative_phone:
+            return family.alternative_phone
+    if student.partner and student.partner.phone:
+        return student.partner.phone
+    return 'N/A'
+
+
+def _student_sector_label(student):
+    if student.partner and student.partner.sector:
+        return student.partner.sector.name
+    if student.family and student.family.sector:
+        return student.family.sector.name
+    if student.school and student.school.sector:
+        return student.school.sector.name
+    return 'N/A'
+
+
+def _student_mutuelle_support_label(student):
+    if student.family:
+        return student.family.get_mutuelle_support_status_display()
+    return 'N/A'
+
+
+def _student_latest_fee_status(student):
+    fee_records = getattr(student, 'prefetched_fees', None)
+    if fee_records:
+        return fee_records[0].get_payment_status_display()
+    return 'No Fee Record'
+
+
+def _student_export_row(student):
+    return [
+        student.full_name,
+        student.get_gender_display(),
+        str(student.age if student.age is not None else 'N/A'),
+        student.get_school_level_display() if student.school_level else 'N/A',
+        student.class_level or 'N/A',
+        student.school.name if student.school else (student.school_name or 'N/A'),
+        student.family_district_name,
+        _student_sector_label(student),
+        _student_guardian_parent_label(student),
+        _student_phone_label(student),
+        student.get_sponsorship_status_display(),
+    ]
+
+
 @login_required
 @permission_required('students.view_student', raise_exception=True)
 def students_pdf(request):
     """Export students list as PDF."""
-    students, subtitle, _filters = _apply_student_report_filters(request)
-    
-    # Create PDF with custom canvas for page numbers
+    base_queryset = Student.objects.select_related(
+        'school',
+        'family__district',
+        'family__sector',
+        'partner__district',
+        'partner__sector',
+    ).prefetch_related(
+        Prefetch(
+            'fees',
+            queryset=SchoolFee.objects.select_related('academic_year').order_by('-academic_year__name', '-created_at'),
+            to_attr='prefetched_fees',
+        )
+    )
+    students, subtitle, _filters = _apply_student_report_filters(request, queryset=base_queryset)
+
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
+    doc = build_export_pdf_document(
         buffer,
-        pagesize=letter,
-        rightMargin=0.75*inch,
-        leftMargin=0.75*inch,
-        topMargin=0.75*inch,
-        bottomMargin=1*inch
+        "Students List Report",
+        pagesize=landscape(A4),
+        left_margin=36,
+        right_margin=36,
+        top_margin=40,
+        bottom_margin=48,
     )
     elements = []
-    
-    # Add letterhead
+
     create_letterhead(
         elements,
         "Students List Report",
         f"{subtitle} (Total: {students.count()})"
     )
-    
-    # Table data with better styling
-    data = [['Full Name', 'Gender', 'Age', 'School', 'Location', 'Status']]
-    for student in students:
-        data.append([
-            student.full_name,
-            student.get_gender_display(),
-            str(student.age),
-            student.school.name if student.school else 'N/A',
-            student.family_district_name,
-            student.get_sponsorship_status_display(),
+
+    styles = getSampleStyleSheet()
+    cell_style = ParagraphStyle(
+        'StudentExportCell',
+        parent=styles['BodyText'],
+        fontSize=6.2,
+        leading=7.2,
+        wordWrap='CJK',
+    )
+    centered_cell_style = ParagraphStyle(
+        'StudentExportCellCentered',
+        parent=cell_style,
+        alignment=TA_CENTER,
+    )
+
+    rows = []
+    for student in students.order_by('last_name', 'first_name'):
+        row = _student_export_row(student)
+        rows.append([
+            Paragraph(row[0], cell_style),
+            Paragraph(row[1], centered_cell_style),
+            Paragraph(row[2], centered_cell_style),
+            Paragraph(row[3], centered_cell_style),
+            Paragraph(row[4], centered_cell_style),
+            Paragraph(row[5], cell_style),
+            Paragraph(row[6], centered_cell_style),
+            Paragraph(row[7], centered_cell_style),
+            Paragraph(row[8], cell_style),
+            Paragraph(row[9], centered_cell_style),
+            Paragraph(row[10], centered_cell_style),
         ])
-    
-    # Create table with improved styling
-    table = Table(data, colWidths=[1.8*inch, 0.7*inch, 0.5*inch, 1.5*inch, 1.5*inch, 1*inch])
-    table.setStyle(TableStyle([
-        # Header styling
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#047857')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-        ('TOPPADDING', (0, 0), (-1, 0), 10),
-        
-        # Data rows styling
-        ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
-        ('ALIGN', (1, 1), (2, -1), 'CENTER'),  # Gender and Age centered
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -1), 9),
-        ('TOPPADDING', (0, 1), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-        ('LEFTPADDING', (0, 0), (-1, -1), 8),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-        
-        # Alternating row colors
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0fdf4')]),
-        
-        # Grid
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
-    ]))
-    
+
+    data = prepend_row_numbers(
+        [
+            'Full Name',
+            'Gender',
+            'Age',
+            'Education Level',
+            'Class/Year',
+            'School',
+            'District',
+            'Sector',
+            'Guardian/Parent',
+            'Phone',
+            'Sponsorship Status',
+        ],
+        rows,
+    )
+    table = build_export_table(
+        data,
+        col_widths=[24, 92, 34, 26, 54, 50, 104, 54, 54, 126, 72, 70],
+        body_font_size=6.2,
+        centered_columns=[0, 2, 3, 4, 5, 7, 10, 11],
+    )
     elements.append(table)
-    
-    # Build PDF with custom canvas for page numbers
     doc.build(elements, canvasmaker=NumberedCanvas)
-    
+
     buffer.seek(0)
     response = HttpResponse(buffer.read(), content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="students_list_report.pdf"'
@@ -287,47 +353,55 @@ def students_pdf(request):
 @permission_required('students.view_student', raise_exception=True)
 def students_excel(request):
     """Export students list as Excel with optional age range filters."""
-    students, subtitle, filters = _apply_student_report_filters(request)
+    base_queryset = Student.objects.select_related(
+        'school',
+        'family__district',
+        'family__sector',
+        'partner__district',
+        'partner__sector',
+    ).prefetch_related(
+        Prefetch(
+            'fees',
+            queryset=SchoolFee.objects.select_related('academic_year').order_by('-academic_year__name', '-created_at'),
+            to_attr='prefetched_fees',
+        )
+    )
+    students, subtitle, filters = _apply_student_report_filters(request, queryset=base_queryset)
     students = students.order_by('last_name', 'first_name')
 
     wb = Workbook()
     ws = wb.active
     ws.title = "Students List"
 
-    ws.append(['Students List Report'])
-    ws.append([subtitle])
+    headers = [
+        'No.',
+        'Full Name',
+        'Gender',
+        'Age',
+        'Education Level',
+        'Class/Year',
+        'School',
+        'District',
+        'Sector',
+        'Guardian/Parent',
+        'Phone',
+        'Sponsorship Status',
+    ]
+    write_excel_report_header(ws, 'Students List Report', subtitle, len(headers))
     ws.append([])
-
-    headers = ['Full Name', 'Gender', 'Age', 'Date of Birth', 'School', 'Class', 'District', 'Status']
     ws.append(headers)
 
     header_row = 4
-    header_fill = PatternFill(start_color="047857", end_color="047857", fill_type="solid")
-    header_font = Font(bold=True, color="FFFFFF")
-    for cell in ws[header_row]:
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+    style_excel_header(ws, header_row)
 
-    for student in students:
-        ws.append([
-            student.full_name,
-            student.get_gender_display(),
-            student.age if student.age is not None else '',
-            student.date_of_birth.strftime('%Y-%m-%d') if student.date_of_birth else '',
-            student.school.name if student.school else (student.school_name or 'N/A'),
-            student.class_level or 'N/A',
-            student.family_district_name,
-            student.get_sponsorship_status_display(),
-        ])
+    for index, student in enumerate(students, start=1):
+        ws.append([index, *_student_export_row(student)])
+        for cell in ws[ws.max_row]:
+            cell.alignment = Alignment(vertical='top', wrap_text=True)
 
-    for column in ws.columns:
-        max_length = 0
-        column_letter = column[0].column_letter
-        for cell in column:
-            value = '' if cell.value is None else str(cell.value)
-            max_length = max(max_length, len(value))
-        ws.column_dimensions[column_letter].width = min(max_length + 2, 30)
+    preferred_widths = [8, 24, 12, 8, 16, 14, 24, 16, 14, 22, 16, 18]
+    for column_index, width in enumerate(preferred_widths, start=1):
+        ws.column_dimensions[chr(64 + column_index)].width = width
 
     filename_parts = ["students_list"]
     if filters['age_from'] is not None or filters['age_to'] is not None:
@@ -417,15 +491,10 @@ def fees_pdf(request):
     partial_count = fees.filter(payment_status='partial').count()
     pending_count = fees.filter(payment_status='pending').count()
     
-    # Create PDF with custom canvas
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
+    doc = build_export_pdf_document(
         buffer,
-        pagesize=letter,
-        rightMargin=0.75*inch,
-        leftMargin=0.75*inch,
-        topMargin=0.75*inch,
-        bottomMargin=1*inch
+        "School Fees Summary Report",
     )
     elements = []
     
@@ -453,22 +522,18 @@ def fees_pdf(request):
         Paragraph(f"<b>Pending:</b> {pending_count}", summary_style),
     ]]
     
-    summary_table = Table(summary_data, colWidths=[2.4*inch, 2.4*inch, 2.4*inch])
-    summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f0fdf4')),
-        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-    ]))
+    summary_table = build_export_table(
+        summary_data,
+        col_widths=[2.4 * inch, 2.4 * inch, 2.4 * inch],
+        body_font_size=9,
+        centered_columns=[0, 1, 2],
+    )
     elements.append(summary_table)
     elements.append(Spacer(1, 20))
-    
-    # Table data
-    data = [['Student Name', 'Term', 'School', 'Required (RWF)', 'Paid (RWF)', 'Balance (RWF)', 'Status']]
-    for fee in fees:
-        data.append([
+
+    rows = []
+    for fee in fees.order_by('student__last_name', 'student__first_name', 'term'):
+        rows.append([
             fee.student.full_name,
             f"Term {fee.term}",
             fee.student.school.name if fee.student.school else 'N/A',
@@ -477,9 +542,13 @@ def fees_pdf(request):
             f"{fee.balance:,.0f}",
             fee.get_payment_status_display(),
         ])
-    
-    # Add totals row
+
+    data = prepend_row_numbers(
+        ['Student Name', 'Term', 'School', 'Required (RWF)', 'Paid (RWF)', 'Balance (RWF)', 'Status'],
+        rows,
+    )
     data.append([
+        '',
         'TOTAL',
         '',
         '',
@@ -488,47 +557,14 @@ def fees_pdf(request):
         f"{total_balance:,.0f}",
         ''
     ])
-    
-    # Create table with improved styling
-    table = Table(data, colWidths=[1.5*inch, 0.6*inch, 1.2*inch, 1*inch, 1*inch, 1*inch, 0.9*inch])
-    table.setStyle(TableStyle([
-        # Header styling
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#047857')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-        ('TOPPADDING', (0, 0), (-1, 0), 10),
-        
-        # Data rows styling
-        ('ALIGN', (0, 1), (2, -2), 'LEFT'),  # Name, term, school left aligned
-        ('ALIGN', (3, 1), (-1, -2), 'CENTER'),  # Numbers and status centered
-        ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -2), 7),
-        ('TOPPADDING', (0, 1), (-1, -2), 5),
-        ('BOTTOMPADDING', (0, 1), (-1, -2), 5),
-        
-        # Totals row styling
-        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#d1fae5')),
-        ('TEXTCOLOR', (0, -1), (-1, -1), colors.HexColor('#047857')),
-        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, -1), (-1, -1), 8),
-        ('ALIGN', (0, -1), (-1, -1), 'CENTER'),
-        ('TOPPADDING', (0, -1), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, -1), (-1, -1), 8),
-        
-        # Alternating row colors
-        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f0fdf4')]),
-        
-        # Grid
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
-    ]))
-    
+    table = build_export_table(
+        data,
+        col_widths=[0.45 * inch, 1.7 * inch, 0.75 * inch, 1.45 * inch, 1.0 * inch, 1.0 * inch, 1.0 * inch, 0.95 * inch],
+        body_font_size=7,
+        centered_columns=[0, 2, 4, 5, 6, 7],
+        total_row_indexes=[len(data) - 1],
+    )
     elements.append(table)
-    
-    # Build PDF with custom canvas
     doc.build(elements, canvasmaker=NumberedCanvas)
     
     buffer.seek(0)
@@ -558,26 +594,20 @@ def fees_excel(request):
     ws = wb.active
     ws.title = "Fees Summary"
     
-    # Header row
-    headers = ['Student Name', 'Term', 'Required Fees', 'Amount Paid', 'Balance', 'Status']
+    headers = ['No.', 'Student Name', 'Term', 'Required Fees', 'Amount Paid', 'Balance', 'Status']
+    write_excel_report_header(ws, 'School Fees Summary Report', 'Filtered fee records export', len(headers))
+    ws.append([])
     ws.append(headers)
-    
-    # Style header
-    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
-    header_font = Font(bold=True, color="FFFFFF")
-    
-    for cell in ws[1]:
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal='center', vertical='center')
+    style_excel_header(ws, 4)
     
     # Data rows
     total_required = 0
     total_paid = 0
     total_balance = 0
     
-    for fee in fees:
+    for index, fee in enumerate(fees.order_by('student__last_name', 'student__first_name', 'term'), start=1):
         ws.append([
+            index,
             fee.student.full_name,
             fee.term,
             float(fee.total_fees),
@@ -591,20 +621,8 @@ def fees_excel(request):
     
     # Summary row
     ws.append([])
-    ws.append(['TOTAL', '', total_required, total_paid, total_balance, ''])
-    
-    # Auto-adjust column widths
-    for column in ws.columns:
-        max_length = 0
-        column_letter = column[0].column_letter
-        for cell in column:
-            try:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(str(cell.value))
-            except:
-                pass
-        adjusted_width = min(max_length + 2, 50)
-        ws.column_dimensions[column_letter].width = adjusted_width
+    ws.append(['', 'TOTAL', '', total_required, total_paid, total_balance, ''])
+    autosize_worksheet_columns(ws, max_width=50)
     
     # Save to response
     response = HttpResponse(
@@ -641,15 +659,10 @@ def insurance_pdf(request):
     total_required = sum(float(i.required_amount) for i in insurance_records)
     total_paid = sum(float(i.amount_paid) for i in insurance_records)
     
-    # Create PDF with custom canvas
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
+    doc = build_export_pdf_document(
         buffer,
-        pagesize=letter,
-        rightMargin=0.75*inch,
-        leftMargin=0.75*inch,
-        topMargin=0.75*inch,
-        bottomMargin=1*inch
+        "Mutuelle de Sante Coverage Report",
     )
     elements = []
     
@@ -677,23 +690,19 @@ def insurance_pdf(request):
         Paragraph(f"<b>Not Covered:</b> {not_covered}", summary_style),
     ]]
     
-    summary_table = Table(summary_data, colWidths=[2.4*inch, 2.4*inch, 2.4*inch])
-    summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f0fdf4')),
-        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-    ]))
+    summary_table = build_export_table(
+        summary_data,
+        col_widths=[2.4 * inch, 2.4 * inch, 2.4 * inch],
+        body_font_size=9,
+        centered_columns=[0, 1, 2],
+    )
     elements.append(summary_table)
     elements.append(Spacer(1, 20))
-    
-    # Table data
-    data = [['Family Head', 'Year', 'Required (RWF)', 'Paid (RWF)', 'Balance (RWF)', 'Status']]
-    for insurance in insurance_records:
+
+    rows = []
+    for insurance in insurance_records.order_by('family__head_of_family', 'insurance_year__name'):
         balance = float(insurance.required_amount) - float(insurance.amount_paid)
-        data.append([
+        rows.append([
             insurance.family.head_of_family,
             insurance.insurance_year.name if insurance.insurance_year else '',
             f"{insurance.required_amount:,.0f}",
@@ -701,10 +710,14 @@ def insurance_pdf(request):
             f"{balance:,.0f}",
             insurance.get_coverage_status_display(),
         ])
-    
-    # Add totals row
+
+    data = prepend_row_numbers(
+        ['Family Head', 'Year', 'Required (RWF)', 'Paid (RWF)', 'Balance (RWF)', 'Status'],
+        rows,
+    )
     total_balance = total_required - total_paid
     data.append([
+        '',
         'TOTAL',
         '',
         f"{total_required:,.0f}",
@@ -712,47 +725,14 @@ def insurance_pdf(request):
         f"{total_balance:,.0f}",
         ''
     ])
-    
-    # Create table with improved styling
-    table = Table(data, colWidths=[1.8*inch, 0.7*inch, 1.2*inch, 1.2*inch, 1.2*inch, 1.1*inch])
-    table.setStyle(TableStyle([
-        # Header styling
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#047857')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 9),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-        ('TOPPADDING', (0, 0), (-1, 0), 10),
-        
-        # Data rows styling
-        ('ALIGN', (0, 1), (0, -2), 'LEFT'),  # Family name left aligned
-        ('ALIGN', (1, 1), (-1, -2), 'CENTER'),  # Numbers and status centered
-        ('FONTNAME', (0, 1), (-1, -2), 'Helvetica'),
-        ('FONTSIZE', (0, 1), (-1, -2), 8),
-        ('TOPPADDING', (0, 1), (-1, -2), 6),
-        ('BOTTOMPADDING', (0, 1), (-1, -2), 6),
-        
-        # Totals row styling
-        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#d1fae5')),
-        ('TEXTCOLOR', (0, -1), (-1, -1), colors.HexColor('#047857')),
-        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, -1), (-1, -1), 9),
-        ('ALIGN', (0, -1), (-1, -1), 'CENTER'),
-        ('TOPPADDING', (0, -1), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, -1), (-1, -1), 8),
-        
-        # Alternating row colors
-        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f0fdf4')]),
-        
-        # Grid
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
-    ]))
-    
+    table = build_export_table(
+        data,
+        col_widths=[0.45 * inch, 2.1 * inch, 1.0 * inch, 1.25 * inch, 1.25 * inch, 1.25 * inch, 1.1 * inch],
+        body_font_size=8,
+        centered_columns=[0, 2, 3, 4, 5, 6],
+        total_row_indexes=[len(data) - 1],
+    )
     elements.append(table)
-    
-    # Build PDF with custom canvas
     doc.build(elements, canvasmaker=NumberedCanvas)
     
     buffer.seek(0)
@@ -836,13 +816,9 @@ def financial_report_pdf(request):
     
     # Create PDF
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
+    doc = build_export_pdf_document(
         buffer,
-        pagesize=letter,
-        rightMargin=0.75*inch,
-        leftMargin=0.75*inch,
-        topMargin=0.75*inch,
-        bottomMargin=1*inch
+        "Comprehensive Financial Report",
     )
     elements = []
     
@@ -871,26 +847,13 @@ def financial_report_pdf(request):
          f"{(grand_total_paid/grand_total_req*100 if grand_total_req else 0):.1f}%"]
     ]
     
-    summary_table = Table(summary_data, colWidths=[2*inch, 1.5*inch, 1.5*inch, 1.5*inch, 1*inch])
-    summary_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#047857')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-        ('TOPPADDING', (0, 0), (-1, 0), 10),
-        
-        ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),  # Numbers right aligned
-        ('ALIGN', (0, 1), (0, -1), 'LEFT'),
-        
-        # Total Row
-        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#d1fae5')),
-        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-        
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#047857')),
-    ]))
+    summary_table = build_export_table(
+        summary_data,
+        col_widths=[2 * inch, 1.5 * inch, 1.5 * inch, 1.5 * inch, 1 * inch],
+        body_font_size=9,
+        right_aligned_columns=[1, 2, 3, 4],
+        total_row_indexes=[len(summary_data) - 1],
+    )
     elements.append(summary_table)
     elements.append(Spacer(1, 20))
     
@@ -915,15 +878,12 @@ def financial_report_pdf(request):
                 f"{t[3]:,.0f}"
             ])
             
-        term_table = Table(term_data, colWidths=[2*inch, 1.8*inch, 1.8*inch, 1.8*inch])
-        term_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#065f46')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('ALIGN', (1, 1), (-1, -1), 'RIGHT'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ]))
+        term_table = build_export_table(
+            term_data,
+            col_widths=[2 * inch, 1.8 * inch, 1.8 * inch, 1.8 * inch],
+            body_font_size=8,
+            right_aligned_columns=[1, 2, 3],
+        )
         elements.append(term_table)
         elements.append(Spacer(1, 20))
 
@@ -941,15 +901,12 @@ def financial_report_pdf(request):
             ['Not Covered', str(not_covered), f"{(not_covered/insurance_qs.count()*100):.1f}%"],
         ]
         
-        ins_table = Table(ins_data, colWidths=[3*inch, 2*inch, 2*inch])
-        ins_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#065f46')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('ALIGN', (1, 1), (-1, -1), 'CENTER'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ]))
+        ins_table = build_export_table(
+            ins_data,
+            col_widths=[3 * inch, 2 * inch, 2 * inch],
+            body_font_size=8,
+            centered_columns=[1, 2],
+        )
         elements.append(ins_table)
 
     # Build PDF
@@ -1013,6 +970,7 @@ def analysis_dashboard(request):
 
     # Student Analysis
     total_students = students_qs.count()
+    university_students = students_qs.filter(school_level='university').count()
     
     # Gender Distribution
     gender_map = dict(Student.GENDER_CHOICES)
@@ -1025,6 +983,43 @@ def analysis_dashboard(request):
     level_data = students_qs.values('school_level').annotate(count=Count('id'))
     level_labels = [level_map.get(item['school_level'], item['school_level']) for item in level_data]
     level_counts = [item['count'] for item in level_data]
+    level_count_map = {item['school_level']: item['count'] for item in level_data}
+    school_level_rows = [
+        {
+            'label': label,
+            'count': level_count_map.get(value, 0),
+            'percentage': round(
+                (
+                    level_count_map.get(value, 0)
+                    / total_students * 100
+                ) if total_students else 0,
+                1,
+            ),
+            'is_university': value == 'university',
+        }
+        for value, label in Student.SCHOOL_LEVEL_CHOICES
+    ]
+
+    age_analysis = _build_age_band_analysis(students_qs)
+    age_range_rows = age_analysis['rows']
+    age_labels = age_analysis['labels']
+    age_counts = age_analysis['counts']
+
+    university_breakdown = {
+        'male': students_qs.filter(school_level='university', gender='M').count(),
+        'female': students_qs.filter(school_level='university', gender='F').count(),
+        'active': students_qs.filter(school_level='university', sponsorship_status='active').count(),
+        'pending': students_qs.filter(school_level='university', sponsorship_status='pending').count(),
+        'graduated': students_qs.filter(school_level='university', sponsorship_status='graduated').count(),
+    }
+    university_chart_labels = ['Male', 'Female', 'Active', 'Pending', 'Graduated']
+    university_chart_counts = [
+        university_breakdown['male'],
+        university_breakdown['female'],
+        university_breakdown['active'],
+        university_breakdown['pending'],
+        university_breakdown['graduated'],
+    ]
 
     # Finance Analysis
     total_fees_expected = fees_qs.aggregate(total=Sum('total_fees'))['total'] or 0
@@ -1100,10 +1095,22 @@ def analysis_dashboard(request):
     context = {
         'page_title': 'Analysis Dashboard',
         'total_students': total_students,
+        'university_students': university_students,
         'gender_labels': gender_labels,
         'gender_counts': gender_counts,
         'level_labels': level_labels,
         'level_counts': level_counts,
+        'school_level_rows': school_level_rows,
+        'age_range_rows': age_range_rows,
+        'age_labels': age_labels,
+        'age_counts': age_counts,
+        'students_with_dob': age_analysis['students_with_dob'],
+        'students_missing_dob': age_analysis['students_missing_dob'],
+        'university_with_dob': age_analysis['university_with_dob'],
+        'university_missing_dob': age_analysis['university_missing_dob'],
+        'university_breakdown': university_breakdown,
+        'university_chart_labels': university_chart_labels,
+        'university_chart_counts': university_chart_counts,
         'total_fees_expected': float(total_fees_expected),
         'total_fees_paid': float(total_fees_paid),
         'total_balance': float(total_balance),

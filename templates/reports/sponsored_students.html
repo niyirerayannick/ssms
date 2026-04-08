@@ -88,8 +88,32 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex flex-col">
-                                        <span class="text-sm text-slate-700">{{ student.family.district.name|default:"N/A" }}</span>
-                                        <span class="text-[11px] text-slate-400">{{ student.family.sector.name|default:"N/A" }}, {{ student.family.cell.name|default:"N/A" }}</span>
+                                        <span class="text-sm text-slate-700">
+                                            {% if student.family and student.family.district %}
+                                                {{ student.family.district.name }}
+                                            {% elif student.partner and student.partner.district %}
+                                                {{ student.partner.district.name }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </span>
+                                        <span class="text-[11px] text-slate-400">
+                                            {% if student.family and student.family.sector %}
+                                                {{ student.family.sector.name }}
+                                            {% elif student.partner and student.partner.sector %}
+                                                {{ student.partner.sector.name }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                            ,
+                                            {% if student.family and student.family.cell %}
+                                                {{ student.family.cell.name }}
+                                            {% elif student.partner and student.partner.cell %}
+                                                {{ student.partner.cell.name }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </span>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -99,7 +123,13 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-sm text-slate-600">{{ student.program_officer.get_full_name|default:student.program_officer.username|default:"Unassigned" }}</span>
+                                    <span class="text-sm text-slate-600">
+                                        {% if student.program_officer %}
+                                            {{ student.program_officer.get_full_name|default:student.program_officer.username }}
+                                        {% else %}
+                                            Unassigned
+                                        {% endif %}
+                                    </span>
                                 </td>
                             </tr>
                             {% empty %}

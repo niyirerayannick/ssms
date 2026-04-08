@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.db.models import Q
 from .models import Family, FamilyStudent
-from core.models import District
+from core.models import District, Province
 from .forms import FamilyForm
 from students.models import Student
 
@@ -69,18 +70,24 @@ def family_detail(request, pk):
 @login_required
 def family_list(request):
     """List all families."""
-    families = Family.objects.all()
+    families = Family.objects.select_related('province', 'district').all()
     
     # Search
     search_query = request.GET.get('search', '')
     if search_query:
         families = families.filter(
-            head_of_family__icontains=search_query
-        ) | families.filter(
-            family_code__icontains=search_query
-        ) | families.filter(
-            phone_number__icontains=search_query
+            Q(head_of_family__icontains=search_query) |
+            Q(family_code__icontains=search_query) |
+            Q(phone_number__icontains=search_query)
         )
+
+    payment_ability_filter = request.GET.get('payment_ability', '')
+    if payment_ability_filter:
+        families = families.filter(payment_ability=payment_ability_filter)
+
+    mutuelle_support_filter = request.GET.get('mutuelle_support_status', '')
+    if mutuelle_support_filter:
+        families = families.filter(mutuelle_support_status=mutuelle_support_filter)
     
     # Filter by province
     province_filter = request.GET.get('province', '')
@@ -91,6 +98,8 @@ def family_list(request):
     district_filter = request.GET.get('district', '')
     if district_filter:
         families = families.filter(district_id=district_filter)
+
+    families = families.distinct()
     
     # Pagination
     paginator = Paginator(families.order_by('-created_at'), 20)
@@ -103,6 +112,11 @@ def family_list(request):
         'search_query': search_query,
         'province_filter': province_filter,
         'district_filter': district_filter,
+        'payment_ability_filter': payment_ability_filter,
+        'mutuelle_support_filter': mutuelle_support_filter,
+        'payment_ability_choices': Family.PAYMENT_ABILITY_CHOICES,
+        'mutuelle_support_choices': Family.MUTUELLE_SUPPORT_STATUS_CHOICES,
+        'provinces': Province.objects.order_by('name'),
         'districts': District.objects.order_by('name'),
     }
     return render(request, 'families/family_list.html', context)
