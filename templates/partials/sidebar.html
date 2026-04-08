@@ -3,7 +3,7 @@
 <!-- Mobile Overlay -->
 <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
 
-<aside id="sidebar" class="fixed md:sticky top-0 left-0 z-50 md:z-auto w-64 h-screen bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 text-white shadow-2xl ring-1 ring-white/10 overflow-y-auto transition-all duration-300 -translate-x-full md:translate-x-0" style="font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;">
+<aside id="sidebar" class="fixed md:sticky top-0 left-0 z-50 md:z-auto w-64 h-screen bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 text-white shadow-2xl ring-1 ring-white/10 overflow-y-auto hide-scrollbar transition-all duration-300 -translate-x-full md:translate-x-0" style="font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;">
     <nav class="p-4 flex flex-col h-full">
         <!-- Close button for mobile (Better UI) -->
         <div class="md:hidden flex justify-end mb-4 flex-shrink-0">
@@ -23,7 +23,7 @@
         </div>
         
         <!-- Scrollable Navigation Area -->
-        <div class="flex-1 overflow-y-auto custom-scrollbar pr-1 -mr-1">
+        <div class="flex-1 overflow-y-auto custom-scrollbar hide-scrollbar pr-1 -mr-1">
             <!-- Main Navigation -->
             <div class="mb-6">
                 <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Main Menu</h3>
@@ -157,7 +157,7 @@
 
 
         <!-- Reports Section -->
-        {% if perms.finance.view_schoolfee or perms.insurance.view_familyinsurance or perms.students.view_student %}
+        {% if perms.finance.view_schoolfee or perms.insurance.view_familyinsurance or perms.students.view_student or perms.families.view_family or perms.core.view_school %}
         <div class="mb-6">
             <h3 class="text-xs font-bold text-emerald-300 uppercase tracking-wider mb-3 px-2">Reports & Analytics</h3>
             <ul class="space-y-2">
@@ -171,6 +171,12 @@
                     <a href="{% url 'reports:analysis' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.url_name == 'analysis' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
                         <span class="material-symbols-rounded text-[20px]">analytics</span>
                         <span class="font-medium">Analysis</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'reports:send_report' %}" class="flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 {% if request.resolver_match.url_name == 'send_report' %}bg-emerald-700/40 shadow-lg ring-1 ring-emerald-400/30{% else %}hover:bg-white/10{% endif %}">
+                        <span class="material-symbols-rounded text-[20px]">send</span>
+                        <span class="font-medium">Send Report</span>
                     </a>
                 </li>
             </ul>

@@ -115,6 +115,17 @@
         .animate-fade-in {
             animation: fadeIn 0.3s ease-out;
         }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
+        }
     </style>
 </head>
 <body class="min-h-screen">

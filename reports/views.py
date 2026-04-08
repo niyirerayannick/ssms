@@ -1,6 +1,10 @@
-from django.shortcuts import render, get_object_or_404
+import json
+
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
 from django.db.models import Sum, Count, Avg, Q
 from students.models import Student, StudentMark, StudentMaterial
@@ -31,8 +35,44 @@ from openpyxl.styles import Font, Alignment, PatternFill
 from datetime import datetime, date
 import io
 
+from .forms import SendReportForm
+from .services import (
+    build_filter_preview,
+    ensure_report_permission,
+    generate_report_attachment,
+    get_available_reports_for_user,
+    send_report_email,
+)
+
 
 NumberedCanvas = ExportNumberedCanvas
+
+
+def _build_send_report_context(*, request, form, available_reports, sent_summary=None):
+    report_definitions = {
+        report.key: {
+            "label": report.label,
+            "filters": list(report.filters),
+            "formats": list(report.formats),
+        }
+        for report in available_reports
+    }
+    selected_report_key = (
+        form["report_key"].value()
+        or (available_reports[0].key if available_reports else "")
+    )
+    filter_preview = []
+    if request.method == "POST" and form.is_valid():
+        filter_preview = build_filter_preview(form.cleaned_data["report_key"], form.cleaned_data)
+
+    return {
+        "form": form,
+        "report_definitions_json": json.dumps(report_definitions),
+        "selected_report_key": selected_report_key,
+        "filter_preview": filter_preview,
+        "available_reports": available_reports,
+        "sent_summary": sent_summary,
+    }
 
 
 def _resolve_logo_path():
@@ -1030,6 +1070,102 @@ def schools_excel(request):
     )
     response['Content-Disposition'] = 'attachment; filename="schools_directory_report.xlsx"'
     wb.save(response)
+    return response
+
+
+@login_required
+def send_report(request):
+    """Build and email filtered reports as PDF or Excel attachments."""
+    available_reports = get_available_reports_for_user(request.user)
+    if not available_reports:
+        raise PermissionDenied("You do not have permission to send reports.")
+
+    sent_summary = None
+    if request.method == "POST":
+        form = SendReportForm(request.POST, user=request.user)
+        if form.is_valid():
+            report_key = form.cleaned_data["report_key"]
+            ensure_report_permission(request.user, report_key)
+            try:
+                attachment = generate_report_attachment(
+                    report_key,
+                    form.cleaned_data["export_format"],
+                    form.cleaned_data,
+                )
+                report_label = attachment["report"].label
+                subject = form.cleaned_data["subject"] or f"{report_label} - {attachment['subtitle']}"
+                message_body = form.cleaned_data["message"] or (
+                    f"Please find attached the {report_label.lower()} generated from SIMS.\n\n"
+                    f"Filters: {attachment['subtitle']}\n"
+                    f"Records included: {attachment['record_count']}"
+                )
+                send_report_email(
+                    recipients=form.cleaned_data["recipients"],
+                    subject=subject,
+                    body=message_body,
+                    attachment_name=attachment["filename"],
+                    attachment_bytes=attachment["content"],
+                    attachment_content_type=attachment["content_type"],
+                )
+                sent_summary = {
+                    "report_label": report_label,
+                    "format": form.cleaned_data["export_format"].upper(),
+                    "recipients": form.cleaned_data["recipients"],
+                    "record_count": attachment["record_count"],
+                }
+                messages.success(
+                    request,
+                    f"{report_label} was sent to {', '.join(form.cleaned_data['recipients'])}.",
+                )
+                form = SendReportForm(user=request.user, initial={
+                    "report_key": report_key,
+                    "export_format": form.cleaned_data["export_format"],
+                    "subject": subject,
+                    "message": form.cleaned_data["message"],
+                })
+            except Exception as exc:
+                form.add_error(None, f"Unable to send the report email right now: {exc}")
+    else:
+        form = SendReportForm(user=request.user)
+
+    context = _build_send_report_context(
+        request=request,
+        form=form,
+        available_reports=available_reports,
+        sent_summary=sent_summary,
+    )
+    return render(request, "reports/send_report.html", context)
+
+
+@login_required
+def preview_report(request):
+    """Generate the selected filtered report for review before email delivery."""
+    available_reports = get_available_reports_for_user(request.user)
+    if not available_reports:
+        raise PermissionDenied("You do not have permission to preview reports.")
+
+    if request.method != "POST":
+        return redirect("reports:send_report")
+
+    form = SendReportForm(request.POST, user=request.user)
+    if not form.is_valid():
+        messages.error(request, "Please fix the form errors before previewing the report.")
+        context = _build_send_report_context(
+            request=request,
+            form=form,
+            available_reports=available_reports,
+        )
+        return render(request, "reports/send_report.html", context, status=400)
+
+    ensure_report_permission(request.user, form.cleaned_data["report_key"])
+    attachment = generate_report_attachment(
+        form.cleaned_data["report_key"],
+        form.cleaned_data["export_format"],
+        form.cleaned_data,
+    )
+    response = HttpResponse(attachment["content"], content_type=attachment["content_type"])
+    disposition = "inline" if form.cleaned_data["export_format"] == "pdf" else "attachment"
+    response["Content-Disposition"] = f'{disposition}; filename="{attachment["filename"]}"'
     return response
 
 

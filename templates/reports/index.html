@@ -12,10 +12,16 @@
                 <h1 class="text-2xl sm:text-4xl font-bold text-slate-900 tracking-tight">Reports & Analytics</h1>
                 <p class="text-sm sm:text-base text-slate-600 mt-1 sm:mt-2">Generate comprehensive reports with professional letterheads and detailed data analysis.</p>
             </div>
-            <div class="p-3 bg-white/50 rounded-2xl border border-emerald-100 hidden sm:block">
-                <svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'reports:send_report' %}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-md hover:bg-emerald-700 transition-all active:scale-95">
+                    <span class="material-symbols-rounded text-[18px]">send</span>
+                    Send Report
+                </a>
+                <div class="p-3 bg-white/50 rounded-2xl border border-emerald-100 hidden sm:block">
+                    <svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
