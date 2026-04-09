@@ -23,5 +23,7 @@ urlpatterns = [
     path('<hashid:pk>/photos/', views.student_photos, name='student_photos'),
     path('photos/shared/<str:token>/', views.student_photos_public, name='student_photos_public'),
     path('<hashid:pk>/add-academic-record/', views.add_academic_record, name='add_academic_record'),
+    path('<hashid:student_pk>/academic-records/<int:record_pk>/edit/', views.edit_academic_record, name='edit_academic_record'),
+    path('<hashid:student_pk>/academic-records/<int:record_pk>/delete/', views.delete_academic_record, name='delete_academic_record'),
     path('<hashid:pk>/report-cards/', views.student_report_cards, name='student_report_cards'),
 ]

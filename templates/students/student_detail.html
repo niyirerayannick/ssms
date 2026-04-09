@@ -9,18 +9,23 @@
     <div class="bg-gradient-to-b from-emerald-900 via-teal-900 to-emerald-800 rounded-xl shadow-lg p-4 sm:p-6 text-white">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div class="flex items-center space-x-3 sm:space-x-4">
-                {% if student.profile_picture %}
-                    <img src="{{ student.profile_picture.url }}" 
-                         alt="{{ student.full_name }}" 
-                         class="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-lg object-cover gallery-image"
-                         data-title="{{ student.full_name }}"
-                         data-subtitle="Profile Picture"
-                         data-caption="Student Profile Picture">
-                {% else %}
-                    <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-lg bg-white bg-opacity-20 flex items-center justify-center">
-                        <span class="text-2xl sm:text-3xl font-bold">{{ student.full_name|first|upper }}</span>
-                    </div>
-                {% endif %}
+                <a href="{% url 'students:add_photo' student.pk %}" class="group relative block" title="Change profile photo">
+                    {% if student.profile_picture %}
+                        <img src="{{ student.profile_picture.url }}" 
+                             alt="{{ student.full_name }}" 
+                             class="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-lg object-cover gallery-image"
+                             data-title="{{ student.full_name }}"
+                             data-subtitle="Profile Picture"
+                             data-caption="Student Profile Picture">
+                    {% else %}
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white shadow-lg bg-white bg-opacity-20 flex items-center justify-center">
+                            <span class="text-2xl sm:text-3xl font-bold">{{ student.full_name|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                    <span class="absolute -bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-slate-900/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        Change Photo
+                    </span>
+                </a>
                 <div>
                     <h1 class="text-xl sm:text-3xl font-bold leading-tight">{{ student.full_name }}</h1>
                     <p class="text-xs sm:text-emerald-100">{{ student.get_gender_display }} • Age {{ student.age }}</p>
@@ -276,17 +281,30 @@
                                 <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600 hidden sm:table-cell">{{ record.term }}</td>
                                 <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600 hidden md:table-cell">{{ record.academic_year.name|default:"N/A" }}</td>
                                 <td class="px-4 py-4 whitespace-nowrap text-right">
-                                    {% if record.report_card_image %}
-                                    <button class="text-blue-600 hover:text-blue-800 font-bold text-xs gallery-image"
-                                            data-title="{{ student.full_name }} - Report Card"
-                                            data-subtitle="{{ record.subject }} • {{ record.term }}"
-                                            data-caption="Year {{ record.academic_year.name|default:'N/A' }} • Marks {{ record.marks }}"
-                                            data-src="{{ record.report_card_image.url }}">
-                                        View
-                                    </button>
-                                    {% else %}
-                                    <span class="text-gray-300 text-xs">-</span>
-                                    {% endif %}
+                                    <div class="flex items-center justify-end gap-2">
+                                        {% if record.report_card_image %}
+                                        <button class="text-blue-600 hover:text-blue-800 font-bold text-xs gallery-image"
+                                                data-title="{{ student.full_name }} - Report Card"
+                                                data-subtitle="{{ record.subject }} • {{ record.term }}"
+                                                data-caption="Year {{ record.academic_year.name|default:'N/A' }} • Marks {{ record.marks }}"
+                                                data-src="{{ record.report_card_image.url }}">
+                                            View
+                                        </button>
+                                        {% endif %}
+                                        {% if perms.students.change_studentmark %}
+                                        <a href="{% url 'students:edit_academic_record' student.pk record.pk %}" class="text-emerald-600 hover:text-emerald-800 font-bold text-xs">
+                                            Edit
+                                        </a>
+                                        {% endif %}
+                                        {% if perms.students.delete_studentmark %}
+                                        <a href="{% url 'students:delete_academic_record' student.pk record.pk %}" class="text-rose-600 hover:text-rose-800 font-bold text-xs">
+                                            Delete
+                                        </a>
+                                        {% endif %}
+                                        {% if not record.report_card_image and not perms.students.change_studentmark and not perms.students.delete_studentmark %}
+                                        <span class="text-gray-300 text-xs">-</span>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}

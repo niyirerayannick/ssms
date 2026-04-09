@@ -1325,7 +1325,55 @@ def add_academic_record(request, pk):
     else:
         form = StudentMarkForm()
     
-    return render(request, 'students/add_academic_record.html', {'form': form, 'student': student})
+    return render(request, 'students/add_academic_record.html', {
+        'form': form,
+        'student': student,
+        'page_title': 'Add Academic Record',
+        'submit_label': 'Save Academic Record',
+    })
+
+
+@login_required
+@permission_required('students.change_studentmark', raise_exception=True)
+def edit_academic_record(request, student_pk, record_pk):
+    """Edit an academic record linked to a student."""
+    student = get_object_or_404(Student, pk=student_pk)
+    record = get_object_or_404(StudentMark, pk=record_pk, student=student)
+
+    if request.method == 'POST':
+        form = StudentMarkForm(request.POST, request.FILES, instance=record)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Academic record updated successfully!')
+            return redirect('students:student_detail', pk=student.pk)
+    else:
+        form = StudentMarkForm(instance=record)
+
+    return render(request, 'students/add_academic_record.html', {
+        'form': form,
+        'student': student,
+        'record': record,
+        'page_title': 'Edit Academic Record',
+        'submit_label': 'Update Academic Record',
+    })
+
+
+@login_required
+@permission_required('students.delete_studentmark', raise_exception=True)
+def delete_academic_record(request, student_pk, record_pk):
+    """Delete an academic record linked to a student."""
+    student = get_object_or_404(Student, pk=student_pk)
+    record = get_object_or_404(StudentMark, pk=record_pk, student=student)
+
+    if request.method == 'POST':
+        record.delete()
+        messages.success(request, 'Academic record deleted successfully!')
+        return redirect('students:student_detail', pk=student.pk)
+
+    return render(request, 'students/delete_academic_record.html', {
+        'student': student,
+        'record': record,
+    })
 
 
 @login_required

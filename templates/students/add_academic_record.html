@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Add Academic Record - SIMS{% endblock %}
+{% block title %}{{ page_title|default:"Add Academic Record" }} - SIMS{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto animate-fade-in py-8">
     <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">Add Academic Record</h1>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ page_title|default:"Add Academic Record" }}</h1>
             <p class="text-gray-600">
                 Recording marks for <strong>{{ student.full_name }}</strong>
             </p>
@@ -151,7 +151,7 @@
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
-                    Save Academic Record
+                    {{ submit_label|default:"Save Academic Record" }}
                 </button>
                 <a href="{% url 'students:student_detail' student.pk %}" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

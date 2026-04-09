@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Academic Record - SIMS{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto animate-fade-in py-8">
+    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Delete Academic Record</h1>
+            <p class="text-gray-600">You are about to remove a marks record for <strong>{{ student.full_name }}</strong>.</p>
+        </div>
+
+        <div class="bg-rose-50 border border-rose-200 rounded-xl p-5 mb-6">
+            <h2 class="text-lg font-semibold text-rose-900 mb-3">Record Details</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-rose-700/80">Subject</p>
+                    <p class="font-semibold text-slate-900">{{ record.subject }}</p>
+                </div>
+                <div>
+                    <p class="text-rose-700/80">Marks</p>
+                    <p class="font-semibold text-slate-900">{{ record.marks }}</p>
+                </div>
+                <div>
+                    <p class="text-rose-700/80">Term</p>
+                    <p class="font-semibold text-slate-900">{{ record.term }}</p>
+                </div>
+                <div>
+                    <p class="text-rose-700/80">Academic Year</p>
+                    <p class="font-semibold text-slate-900">{{ record.academic_year.name|default:"N/A" }}</p>
+                </div>
+            </div>
+            {% if record.teacher_remark %}
+            <div class="mt-4">
+                <p class="text-rose-700/80 text-sm">Teacher Remark</p>
+                <p class="text-slate-800 text-sm mt-1">{{ record.teacher_remark }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <form method="post" class="flex flex-col sm:flex-row gap-4">
+            {% csrf_token %}
+            <button type="submit" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                Delete Record
+            </button>
+            <a href="{% url 'students:student_detail' student.pk %}" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

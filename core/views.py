@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q, Count
 from django.db import models
+from django.core.paginator import Paginator
 from .models import District, Sector, Cell, Village, Province, School, Notification, Partner
 from students.models import Student
 from .forms import SchoolForm, PartnerForm
@@ -64,37 +65,57 @@ def get_villages(request):
 
 @login_required
 def school_list(request):
-    """List all schools with search and filter."""
-    schools = School.objects.select_related('province', 'district', 'sector').all()
-    
-    # Search
+    """List all schools with search and filters."""
+    schools = (
+        School.objects.select_related('province', 'district', 'sector')
+        .annotate(student_count=Count('students', distinct=True))
+        .all()
+    )
+
     search_query = request.GET.get('search', '')
     if search_query:
         schools = schools.filter(
             Q(name__icontains=search_query) |
             Q(headteacher_name__icontains=search_query) |
-            Q(headteacher_email__icontains=search_query)
+            Q(headteacher_email__icontains=search_query) |
+            Q(bank_name__icontains=search_query)
         )
-    
-    # Filter by district
+
+    province_filter = request.GET.get('province', '')
     district_filter = request.GET.get('district', '')
+    sector_filter = request.GET.get('sector', '')
+    bank_filter = request.GET.get('bank_status', '')
+
+    if province_filter:
+        schools = schools.filter(province_id=province_filter)
+
     if district_filter:
         schools = schools.filter(district_id=district_filter)
 
-    summary = schools.aggregate(total_students=Count('students'))
-    total_schools = schools.count()
-    with_bank = schools.exclude(bank_account_number__isnull=True).exclude(bank_account_number__exact='').count()
-    total_districts = schools.values('district_id').distinct().count()
-    
+    if sector_filter:
+        schools = schools.filter(sector_id=sector_filter)
+
+    if bank_filter == 'with_bank':
+        schools = schools.exclude(bank_account_number__isnull=True).exclude(bank_account_number__exact='')
+    elif bank_filter == 'without_bank':
+        schools = schools.filter(Q(bank_account_number__isnull=True) | Q(bank_account_number__exact=''))
+
+    paginator = Paginator(schools.order_by('name'), 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'schools': schools,
+        'schools': page_obj,
+        'page_obj': page_obj,
         'search_query': search_query,
+        'province_filter': province_filter,
         'district_filter': district_filter,
-        'total_schools': total_schools,
-        'total_students': summary.get('total_students', 0),
-        'with_bank': with_bank,
-        'without_bank': max(total_schools - with_bank, 0),
-        'total_districts': total_districts,
+        'sector_filter': sector_filter,
+        'bank_filter': bank_filter,
+        'provinces': Province.objects.order_by('name'),
+        'districts': District.objects.order_by('name'),
+        'sectors': Sector.objects.order_by('name'),
+        'filtered_count': paginator.count,
     }
     return render(request, 'core/school_list.html', context)
 
