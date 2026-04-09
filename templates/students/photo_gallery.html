@@ -1,107 +1,136 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
-{% block title %}Photo Gallery - SIMS{% endblock %}
+{% block title %}Student Photo Albums - SIMS{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-800">Photo Gallery</h1>
-            <p class="text-gray-600 mt-1">Browse student photos across the system.</p>
+<div class="space-y-6 sm:space-y-8">
+    <div class="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-8 shadow-sm">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+            <div>
+                <h1 class="text-2xl sm:text-4xl font-bold text-slate-900 tracking-tight">Student Photo Albums</h1>
+                <p class="text-sm sm:text-base text-slate-600 mt-2">Browse student photos in organized albums instead of one flat gallery.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-3 w-full sm:w-auto">
+                <div class="rounded-2xl border border-emerald-100 bg-white/80 px-4 py-3">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Student Albums</p>
+                    <p class="text-2xl font-black text-slate-900 mt-1">{{ album_count|compact_number }}</p>
+                </div>
+                <div class="rounded-2xl border border-emerald-100 bg-white/80 px-4 py-3">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Photos</p>
+                    <p class="text-2xl font-black text-emerald-700 mt-1">{{ photo_total|compact_number }}</p>
+                </div>
+            </div>
         </div>
-        <a href="{% url 'students:student_list' %}" class="mt-4 md:mt-0 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition duration-200">
-            Back to Students
-        </a>
     </div>
 
-    <!-- Filter Form -->
-    <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label for="district" class="block text-sm font-medium text-gray-700 mb-1">District</label>
-                <select name="district" id="district" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
-                    <option value="">All Districts</option>
-                    {% for district in districts %}
-                    <option value="{{ district.id }}" {% if selected_district == district.id %}selected{% endif %}>
-                        {{ district.name }}
-                    </option>
-                    {% endfor %}
-                </select>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6">
+        <form method="get" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-4">
+                <div class="xl:col-span-2">
+                    <label for="search" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Search Student</label>
+                    <input type="text" name="search" id="search" value="{{ search_query }}" placeholder="Student, school, class..." class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-sm">
+                </div>
+                <div>
+                    <label for="district" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">District</label>
+                    <select name="district" id="district" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                        <option value="">All Districts</option>
+                        {% for district in districts %}
+                        <option value="{{ district.id }}" {% if selected_district == district.id|stringformat:"s" %}selected{% endif %}>{{ district.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="school" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">School</label>
+                    <select name="school" id="school" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                        <option value="">All Schools</option>
+                        {% for school in schools %}
+                        <option value="{{ school.id }}" {% if selected_school == school.id|stringformat:"s" %}selected{% endif %}>{{ school.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="level" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Education Level</label>
+                    <select name="level" id="level" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                        <option value="">All Levels</option>
+                        {% for code, label in levels %}
+                        <option value="{{ code }}" {% if selected_level == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="class_level" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Class / Year</label>
+                    <input type="text" name="class_level" id="class_level" value="{{ class_level_filter }}" placeholder="e.g. S4 or Year 2" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                </div>
             </div>
-            
-            <div>
-                <label for="school" class="block text-sm font-medium text-gray-700 mb-1">School</label>
-                <select name="school" id="school" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
-                    <option value="">All Schools</option>
-                    {% for school in schools %}
-                    <option value="{{ school.id }}" {% if selected_school == school.id %}selected{% endif %}>
-                        {{ school.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div>
-                <label for="level" class="block text-sm font-medium text-gray-700 mb-1">School Level</label>
-                <select name="level" id="level" class="w-full rounded-lg border-gray-300 focus:border-emerald-500 focus:ring-emerald-500 text-sm">
-                    <option value="">All Levels</option>
-                    {% for code, label in levels %}
-                    <option value="{{ code }}" {% if selected_level == code %}selected{% endif %}>
-                        {{ label }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="flex items-end gap-2">
-                <button type="submit" class="flex-1 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition duration-200 text-sm font-medium">
-                    Apply Filters
-                </button>
-                <a href="{% url 'students:photo_gallery' %}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-200 text-sm font-medium">
-                    Clear
-                </a>
+            <div class="flex flex-col sm:flex-row gap-3 sm:justify-between sm:items-center">
+                <p class="text-sm text-slate-500">
+                    Found <span class="font-bold text-slate-900">{{ album_count|compact_number }}</span> student album{{ album_count|pluralize }}
+                    with <span class="font-bold text-emerald-700">{{ photo_total|compact_number }}</span> photo{{ photo_total|pluralize }}.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <a href="{% url 'students:photo_gallery' %}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 text-sm font-bold hover:bg-slate-50 transition-all">Clear Filters</a>
+                    <button type="submit" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-all">Apply Filters</button>
+                </div>
             </div>
         </form>
     </div>
 
-    <div class="bg-white rounded-lg shadow-md p-4">
-        {% if photos %}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {% for photo in photos %}
-            <div class="group rounded-lg overflow-hidden bg-gray-50 border border-gray-200">
-                <div class="aspect-[4/3] overflow-hidden">
-                    <img src="{{ photo.image.url }}" 
-                         alt="{{ photo.caption|default:photo.student.full_name }}" 
-                         class="w-full h-full object-cover group-hover:scale-105 transition duration-200 gallery-image"
-                         data-student="{{ photo.student.full_name }}"
-                         data-location="{{ photo.student.family.district.name|default:photo.student.school.name|default:'Unknown Location' }}"
-                         data-caption="{{ photo.caption|default:'' }}">
+    {% if students %}
+    <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5">
+        {% for student in students %}
+        <a href="{% url 'students:student_photo_album' student.pk %}" class="group bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <div class="relative aspect-[16/10] bg-slate-100 overflow-hidden">
+                {% with cover=student.album_photos.0 %}
+                    {% if cover %}
+                    <img src="{{ cover.image.url }}" alt="{{ student.full_name }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                    {% else %}
+                    <div class="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                        <span class="material-symbols-rounded text-5xl text-slate-400">photo_library</span>
+                    </div>
+                    {% endif %}
+                {% endwith %}
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/15 to-transparent"></div>
+                <div class="absolute top-4 right-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-800 shadow-sm">
+                    {{ student.photo_count }} photo{{ student.photo_count|pluralize }}
                 </div>
-                <div class="p-3">
-                    <p class="text-sm font-semibold text-gray-900">{{ photo.student.full_name }}</p>
-                    <p class="text-xs text-gray-500">{{ photo.caption|default:"No caption" }}</p>
-                    <a href="{% url 'students:student_detail' photo.student.pk %}" class="text-xs text-blue-600 hover:text-blue-800 mt-2 inline-block">
-                        View profile
-                    </a>
+                <div class="absolute bottom-4 left-4 right-4">
+                    <p class="text-white text-lg font-bold truncate">{{ student.full_name }}</p>
+                    <p class="text-emerald-100 text-xs mt-1 truncate">
+                        {{ student.school.name|default:student.school_name|default:"No school" }}
+                        {% if student.class_level %} | {{ student.class_level }}{% endif %}
+                    </p>
                 </div>
             </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-gray-500 text-center py-8">No photos uploaded yet.</p>
-        {% endif %}
+            <div class="p-4 space-y-3">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-sm font-semibold text-slate-900 truncate">{{ student.get_school_level_display|default:"Education level not set" }}</p>
+                        <p class="text-sm text-slate-500 truncate">{{ student.family.district.name|default:student.school.district.name|default:"Location not set" }}</p>
+                    </div>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-bold whitespace-nowrap">
+                        Open Album
+                        <span class="material-symbols-rounded text-[18px]">folder_open</span>
+                    </span>
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-500">
+                    <span>Last photo{% with cover=student.album_photos.0 %}{% if cover %}: {{ cover.created_at|date:"M d, Y" }}{% endif %}{% endwith %}</span>
+                    <span>{{ student.class_level|default:"Class not set" }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
     </div>
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-10 text-center">
+        <div class="max-w-md mx-auto">
+            <div class="w-16 h-16 mx-auto bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <span class="material-symbols-rounded text-4xl text-slate-400">photo_library</span>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900">No photo albums found</h3>
+            <p class="text-sm text-slate-500 mt-2">Try a different filter, or upload student photos to create albums automatically.</p>
+        </div>
+    </div>
+    {% endif %}
 </div>
-
-{% include 'partials/lightbox.html' %}
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.initLightbox) {
-            window.initLightbox();
-        }
-    });
-</script>
 {% endblock %}

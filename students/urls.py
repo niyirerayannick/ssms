@@ -5,6 +5,7 @@ app_name = 'students'
 
 urlpatterns = [
     path('photos/', views.photo_gallery, name='photo_gallery'),
+    path('photos/<hashid:pk>/', views.student_photos, name='student_photo_album'),
     path('', views.student_list, name='student_list'),
     path('add/', views.student_create, name='student_create'),
     path('promotion/', views.academic_year_promotion, name='academic_year_promotion'),
@@ -21,6 +22,8 @@ urlpatterns = [
     path('<hashid:pk>/edit/', views.student_edit, name='student_edit'),
     path('<hashid:pk>/add-photo/', views.add_photo, name='add_photo'),
     path('<hashid:pk>/photos/', views.student_photos, name='student_photos'),
+    path('<hashid:student_pk>/photos/<int:photo_pk>/edit/', views.edit_photo, name='edit_photo'),
+    path('<hashid:student_pk>/photos/<int:photo_pk>/delete/', views.delete_photo, name='delete_photo'),
     path('photos/shared/<str:token>/', views.student_photos_public, name='student_photos_public'),
     path('<hashid:pk>/add-academic-record/', views.add_academic_record, name='add_academic_record'),
     path('<hashid:student_pk>/academic-records/<int:record_pk>/edit/', views.edit_academic_record, name='edit_academic_record'),

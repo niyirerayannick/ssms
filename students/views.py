@@ -1275,11 +1275,61 @@ def add_photo(request, pk):
             photo.student = student
             photo.save()
             messages.success(request, 'Photo added successfully!')
-            return redirect('students:student_detail', pk=student.pk)
+            return redirect('students:student_photos', pk=student.pk)
     else:
         form = StudentPhotoForm()
     
-    return render(request, 'students/add_photo.html', {'form': form, 'student': student})
+    return render(request, 'students/add_photo.html', {
+        'form': form,
+        'student': student,
+        'page_title': 'Add Student Photo',
+        'submit_label': 'Upload Photo',
+    })
+
+
+@login_required
+@permission_required('students.change_studentphoto', raise_exception=True)
+def edit_photo(request, student_pk, photo_pk):
+    """Edit an existing student photo."""
+    student = get_object_or_404(Student, pk=student_pk)
+    photo = get_object_or_404(StudentPhoto, pk=photo_pk, student=student)
+
+    if request.method == 'POST':
+        form = StudentPhotoForm(request.POST, request.FILES, instance=photo)
+        if form.is_valid():
+            updated_photo = form.save(commit=False)
+            updated_photo.student = student
+            updated_photo.save()
+            messages.success(request, 'Photo updated successfully!')
+            return redirect('students:student_photos', pk=student.pk)
+    else:
+        form = StudentPhotoForm(instance=photo)
+
+    return render(request, 'students/add_photo.html', {
+        'form': form,
+        'student': student,
+        'photo': photo,
+        'page_title': 'Edit Student Photo',
+        'submit_label': 'Update Photo',
+    })
+
+
+@login_required
+@permission_required('students.delete_studentphoto', raise_exception=True)
+def delete_photo(request, student_pk, photo_pk):
+    """Delete a student photo."""
+    student = get_object_or_404(Student, pk=student_pk)
+    photo = get_object_or_404(StudentPhoto, pk=photo_pk, student=student)
+
+    if request.method == 'POST':
+        photo.delete()
+        messages.success(request, 'Photo deleted successfully!')
+        return redirect('students:student_photos', pk=student.pk)
+
+    return render(request, 'students/delete_photo.html', {
+        'student': student,
+        'photo': photo,
+    })
 
 
 @login_required
@@ -1292,7 +1342,12 @@ def student_photos(request, pk):
     share_url = request.build_absolute_uri(
         reverse('students:student_photos_public', kwargs={'token': token})
     )
-    return render(request, 'students/student_photos.html', {'student': student, 'photos': photos, 'share_url': share_url})
+    return render(request, 'students/student_photos.html', {
+        'student': student,
+        'photos': photos,
+        'share_url': share_url,
+        'photo_count': photos.count(),
+    })
 
 
 def student_photos_public(request, token):
@@ -1963,33 +2018,57 @@ class StudentPerformanceDetailView(LoginRequiredMixin, PermissionRequiredMixin, 
 @login_required
 @permission_required('students.view_student', raise_exception=True)
 def photo_gallery(request):
-    """
-    View all student photos with filtering options.
-    """
-    photos = StudentPhoto.objects.select_related('student', 'student__family__district', 'student__school').order_by('-created_at')
-    
-    # Filter by District
+    """View student photos grouped into student albums."""
+    search_query = request.GET.get('search', '').strip()
     district_id = request.GET.get('district')
-    if district_id:
-        photos = photos.filter(student__family__district_id=district_id)
-        
-    # Filter by School
     school_id = request.GET.get('school')
-    if school_id:
-        photos = photos.filter(student__school_id=school_id)
-        
-    # Filter by Level
     level = request.GET.get('level')
+    class_level = request.GET.get('class_level', '').strip()
+
+    students = (
+        Student.objects.select_related('family__district', 'school')
+        .prefetch_related(
+            Prefetch(
+                'photos',
+                queryset=StudentPhoto.objects.order_by('-created_at'),
+                to_attr='album_photos',
+            )
+        )
+        .annotate(photo_count=Count('photos'))
+        .filter(photo_count__gt=0)
+    )
+
+    if search_query:
+        students = students.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(class_level__icontains=search_query) |
+            Q(school__name__icontains=search_query)
+        )
+    if district_id:
+        students = students.filter(
+            Q(family__district_id=district_id) | Q(school__district_id=district_id)
+        )
+    if school_id:
+        students = students.filter(school_id=school_id)
     if level:
-        photos = photos.filter(student__school_level=level)
+        students = students.filter(school_level=level)
+    if class_level:
+        students = students.filter(class_level__icontains=class_level)
+
+    students = students.order_by('first_name', 'last_name')
 
     context = {
-        'photos': photos,
+        'students': students,
         'districts': District.objects.order_by('name'),
         'schools': School.objects.order_by('name'),
         'levels': Student.SCHOOL_LEVEL_CHOICES,
         'selected_district': int(district_id) if district_id and district_id.isdigit() else None,
         'selected_school': int(school_id) if school_id and school_id.isdigit() else None,
         'selected_level': level,
+        'search_query': search_query,
+        'class_level_filter': class_level,
+        'album_count': students.count(),
+        'photo_total': sum(student.photo_count for student in students),
     }
     return render(request, 'students/photo_gallery.html', context)
