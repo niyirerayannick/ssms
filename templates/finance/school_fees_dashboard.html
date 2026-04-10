@@ -57,6 +57,53 @@
         </div>
     </div>
 
+    <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200/60">
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">District</label>
+                <select name="district" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
+                    <option value="">All Districts</option>
+                    {% for district in districts %}
+                    <option value="{{ district.id }}" {% if district_filter|add:""|stringformat:"s" == district.id|stringformat:"s" %}selected{% endif %}>{{ district.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Academic Year</label>
+                <select name="academic_year" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
+                    <option value="">All Years</option>
+                    {% for year in academic_years %}
+                    <option value="{{ year.id }}" {% if academic_year_filter|add:""|stringformat:"s" == year.id|stringformat:"s" %}selected{% endif %}>{{ year.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">School</label>
+                <select name="school" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
+                    <option value="">All Schools</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if school_filter|add:""|stringformat:"s" == school.id|stringformat:"s" %}selected{% endif %}>{{ school.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Term</label>
+                <select name="term" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm">
+                    <option value="">All Terms</option>
+                    <option value="1" {% if term_filter == '1' %}selected{% endif %}>Term 1</option>
+                    <option value="2" {% if term_filter == '2' %}selected{% endif %}>Term 2</option>
+                    <option value="3" {% if term_filter == '3' %}selected{% endif %}>Term 3</option>
+                </select>
+            </div>
+            <div class="flex items-end gap-3">
+                <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md active:scale-95 text-sm">Filter</button>
+                <a href="{% url 'finance:school_fees_dashboard' %}" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95" title="Reset">
+                    <span class="material-symbols-rounded block text-[20px]">restart_alt</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-slate-200">

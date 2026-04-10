@@ -212,24 +212,6 @@
                             <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.student.errors.0 }}</p>
                         {% endif %}
                     </div>
-
-                    <!-- School Name -->
-                    <div>
-                        <label for="{{ form.school_name.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">School Name</label>
-                        {{ form.school_name }}
-                        {% if form.school_name.errors %}
-                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.school_name.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Class Level -->
-                    <div>
-                        <label for="{{ form.class_level.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Class Level</label>
-                        {{ form.class_level }}
-                        {% if form.class_level.errors %}
-                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.class_level.errors.0 }}</p>
-                        {% endif %}
-                    </div>
                 </div>
 
                 <div class="border-b border-slate-100 pb-3 pt-4 mb-6">
@@ -261,27 +243,6 @@
                             <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.total_fees.errors.0 }}</p>
                         {% endif %}
                     </div>
-                    <div>
-                        <label for="{{ form.bank_name.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Bank Name</label>
-                        {{ form.bank_name }}
-                        {% if form.bank_name.errors %}
-                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.bank_name.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.bank_account_name.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Account Name</label>
-                        {{ form.bank_account_name }}
-                        {% if form.bank_account_name.errors %}
-                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.bank_account_name.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                    <div>
-                        <label for="{{ form.bank_account_number.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Account Number</label>
-                        {{ form.bank_account_number }}
-                        {% if form.bank_account_number.errors %}
-                            <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.bank_account_number.errors.0 }}</p>
-                        {% endif %}
-                    </div>
                     <div class="md:col-span-2">
                         <label for="{{ form.comments.id_for_label }}" class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 ml-1">Comments</label>
                         {{ form.comments }}
@@ -289,6 +250,33 @@
                             <p class="text-rose-500 text-[10px] mt-1.5 ml-1 font-medium">{{ form.comments.errors.0 }}</p>
                         {% endif %}
                     </div>
+                </div>
+
+                <div class="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-5">
+                    <h4 class="text-[10px] font-bold text-emerald-700 uppercase tracking-[0.2em] mb-4">Historical Enrollment Preview</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">School</p>
+                            <p id="school-preview-name" class="text-sm font-bold text-slate-900 mt-1">Select student and year</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Class</p>
+                            <p id="school-preview-class" class="text-sm font-bold text-slate-900 mt-1">-</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bank</p>
+                            <p id="school-preview-bank" class="text-sm font-bold text-slate-900 mt-1">-</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Name</p>
+                            <p id="school-preview-account-name" class="text-sm font-bold text-slate-900 mt-1">-</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account Number</p>
+                            <p id="school-preview-account-number" class="text-sm font-bold text-slate-900 mt-1">-</p>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-4">School, class, and bank details are pulled from the selected academic year's enrollment history and saved automatically on the fee record.</p>
                 </div>
             </div>
             {% endif %}
@@ -308,21 +296,19 @@
 
 {% if payment_type != 'insurance' %}
 <script>
-    // Fetch student details and auto-populate school and class level
     document.addEventListener('DOMContentLoaded', function() {
         const districtSelect = document.getElementById('district_select');
         const studentSelect = document.getElementById('id_student');
-        const schoolNameInput = document.getElementById('id_school_name');
-        const classLevelInput = document.getElementById('id_class_level');
+        const academicYearSelect = document.getElementById('id_academic_year');
         const totalFeesInput = document.getElementById('id_total_fees');
-        const bankNameInput = document.getElementById('id_bank_name');
-        const bankAccountNameInput = document.getElementById('id_bank_account_name');
-        const bankAccountNumberInput = document.getElementById('id_bank_account_number');
+        const schoolPreviewName = document.getElementById('school-preview-name');
+        const schoolPreviewClass = document.getElementById('school-preview-class');
+        const schoolPreviewBank = document.getElementById('school-preview-bank');
+        const schoolPreviewAccountName = document.getElementById('school-preview-account-name');
+        const schoolPreviewAccountNumber = document.getElementById('school-preview-account-number');
         
         let studentTomSelect = null;
-        let schoolNameTomSelect = null;
 
-        // Initialize Tom Select for District
         if (districtSelect) {
             new TomSelect(districtSelect, {
                 create: false,
@@ -331,7 +317,6 @@
             });
         }
 
-        // Initialize Tom Select for Student
         if (studentSelect) {
             studentTomSelect = new TomSelect(studentSelect, {
                 create: false,
@@ -339,22 +324,11 @@
                 placeholder: "Select Student..."
             });
         }
-        
-        if (schoolNameInput && schoolNameInput.tagName === 'SELECT') {
-            schoolNameTomSelect = new TomSelect(schoolNameInput, {
-                create: false,
-                sortField: {field: "text", direction: "asc"},
-                placeholder: "Select School..."
-            });
-        }
-        
-        // Handle District Change
         if (districtSelect) {
             districtSelect.addEventListener('change', function() {
                 const districtId = this.value;
                 if (!districtId) return;
 
-                // Clear and disable student select while loading
                 if (studentTomSelect) {
                     studentTomSelect.disable();
                     studentTomSelect.clear();
@@ -386,24 +360,20 @@
 
         if (!studentSelect) return;
         
-        // Function to fetch and populate student data
         function fetchStudentDetails(studentId) {
+            const academicYearId = academicYearSelect ? academicYearSelect.value : '';
             if (!studentId) {
-                // Clear fields if no student selected
-                if (schoolNameInput) {
-                    if (schoolNameTomSelect) schoolNameTomSelect.clear();
-                    else schoolNameInput.value = '';
-                }
-                if (classLevelInput) classLevelInput.value = '';
+                schoolPreviewName.textContent = 'Select student and year';
+                schoolPreviewClass.textContent = '-';
+                schoolPreviewBank.textContent = '-';
+                schoolPreviewAccountName.textContent = '-';
+                schoolPreviewAccountNumber.textContent = '-';
                 if (totalFeesInput) totalFeesInput.value = '';
-                if (bankNameInput) bankNameInput.value = '';
-                if (bankAccountNameInput) bankAccountNameInput.value = '';
-                if (bankAccountNumberInput) bankAccountNumberInput.value = '';
                 return;
             }
             
-            // Fetch from API endpoint
-            fetch(`/finance/api/student/${studentId}/details/`)
+            const query = academicYearId ? `?academic_year=${academicYearId}` : '';
+            fetch(`/finance/api/student/${studentId}/details/${query}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Failed to fetch student details');
@@ -412,28 +382,14 @@
                 })
                 .then(data => {
                     if (data.success) {
-                        // Populate school name
-                        if (schoolNameInput && data.school_name) {
-                            if (schoolNameTomSelect) {
-                                schoolNameTomSelect.setValue(data.school_name);
-                            } else {
-                                schoolNameInput.value = data.school_name;
-                            }
-                        }
-                        
-                        // Populate class level
-                        if (classLevelInput && data.class_level) {
-                            classLevelInput.value = data.class_level;
-                        }
-
-                        // Populate total fees
+                        schoolPreviewName.textContent = data.school_name || 'N/A';
+                        schoolPreviewClass.textContent = data.class_level || 'N/A';
+                        schoolPreviewBank.textContent = data.bank_name || 'N/A';
+                        schoolPreviewAccountName.textContent = data.bank_account_name || 'N/A';
+                        schoolPreviewAccountNumber.textContent = data.bank_account_number || 'N/A';
                         if (totalFeesInput && data.total_fees) {
                             totalFeesInput.value = data.total_fees;
                         }
-
-                        if (bankNameInput) bankNameInput.value = data.bank_name || '';
-                        if (bankAccountNameInput) bankAccountNameInput.value = data.bank_account_name || '';
-                        if (bankAccountNumberInput) bankAccountNumberInput.value = data.bank_account_number || '';
                     }
                 })
                 .catch(error => {
@@ -441,12 +397,15 @@
                 });
         }
         
-        // Listen for student selection change
         studentSelect.addEventListener('change', function() {
             fetchStudentDetails(this.value);
         });
+        if (academicYearSelect) {
+            academicYearSelect.addEventListener('change', function() {
+                fetchStudentDetails(studentSelect.value);
+            });
+        }
         
-        // If student is already selected (edit mode), fetch their details
         if (studentSelect.value) {
             fetchStudentDetails(studentSelect.value);
         }

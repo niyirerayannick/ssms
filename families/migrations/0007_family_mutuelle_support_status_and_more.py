@@ -32,6 +32,7 @@ def reverse_backfill_mutuelle_statuses(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("families", "0006_family_parents_guardian"),
+        ("insurance", "0002_alter_healthinsurance_options_and_more"),
     ]
 
     operations = [

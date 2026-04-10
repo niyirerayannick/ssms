@@ -1,8 +1,13 @@
-from django.db import models
+from decimal import Decimal
+
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models import Q, Sum
 from django.utils import timezone
-from django.db.models import Sum
-from students.models import Student
+
+from core.utils import normalize_identifier_value
+from students.models import Student, StudentEnrollmentHistory
 from core.models import AcademicYear
 
 
@@ -26,16 +31,29 @@ class SchoolFee(models.Model):
         on_delete=models.CASCADE, 
         related_name='fees'
     )
-    academic_year = models.ForeignKey(
-        AcademicYear,
+    enrollment_history = models.ForeignKey(
+        StudentEnrollmentHistory,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name='school_fees',
+    )
+    academic_year = models.ForeignKey(
+        AcademicYear,
+        on_delete=models.PROTECT,
         related_name='school_fees'
     )
     term = models.CharField(max_length=1, choices=TERM_CHOICES, default='1')
+    school = models.ForeignKey(
+        'core.School',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='school_fees',
+    )
     school_name = models.CharField(max_length=200, blank=True, help_text="School name for this fee record")
     class_level = models.CharField(max_length=50, blank=True)
+    school_level = models.CharField(max_length=20, choices=Student.SCHOOL_LEVEL_CHOICES, blank=True)
     bank_name = models.CharField(max_length=200, blank=True, help_text="Bank name snapshot for this fee record")
     bank_account_name = models.CharField(max_length=200, blank=True, help_text="Bank account holder snapshot")
     bank_account_number = models.CharField(max_length=50, blank=True, help_text="Bank account number snapshot")
@@ -73,19 +91,57 @@ class SchoolFee(models.Model):
                 fields=['student', 'academic_year', 'term'],
                 name='unique_student_term_year_fee',
             ),
+            models.CheckConstraint(
+                check=Q(total_fees__gte=0),
+                name='school_fee_total_fees_gte_zero',
+            ),
+            models.CheckConstraint(
+                check=Q(amount_paid__gte=0),
+                name='school_fee_amount_paid_gte_zero',
+            ),
+            models.CheckConstraint(
+                check=Q(balance__gte=0),
+                name='school_fee_balance_gte_zero',
+            ),
         ]
 
-    def update_bank_snapshot(self):
-        """Copy current school bank details onto the fee record."""
-        school = self.student.school if self.student_id and self.student and self.student.school else None
+    def update_bank_snapshot(self, school=None):
+        """Copy school bank details onto the fee record."""
+        school = school or self.school or (
+            self.enrollment_history.school
+            if self.enrollment_history_id and self.enrollment_history and self.enrollment_history.school
+            else None
+        )
         if school:
             self.bank_name = school.bank_name or ''
             self.bank_account_name = school.bank_account_name or ''
-            self.bank_account_number = school.bank_account_number or ''
+            self.bank_account_number = normalize_identifier_value(school.bank_account_number).replace(' ', '')
+
+    def sync_from_enrollment_history(self, enrollment_history=None, overwrite=False):
+        """Apply historical school/class context from the selected academic year snapshot."""
+        enrollment_history = enrollment_history or self.enrollment_history
+        if not enrollment_history:
+            return
+
+        self.enrollment_history = enrollment_history
+        self.academic_year = enrollment_history.academic_year
+        school = enrollment_history.school
+        self.school = school
+
+        if overwrite or not self.school_name:
+            self.school_name = enrollment_history.display_school_name
+        if overwrite or not self.class_level:
+            self.class_level = enrollment_history.class_level or ''
+        if overwrite or not self.school_level:
+            self.school_level = enrollment_history.school_level or ''
+        if school and (
+            overwrite or not self.bank_name or not self.bank_account_name or not self.bank_account_number
+        ):
+            self.update_bank_snapshot(school=school)
 
     def refresh_payment_summary(self, commit=True):
         """Refresh cached totals from recorded payment transactions."""
-        total_paid = self.payments.aggregate(total=Sum('amount_paid'))['total'] or 0
+        total_paid = self.payments.aggregate(total=Sum('amount_paid'))['total'] or Decimal('0')
         self.amount_paid = total_paid
         if not self.payment_date:
             self.payment_date = timezone.now().date()
@@ -95,7 +151,7 @@ class SchoolFee(models.Model):
             .values_list('payment_date', flat=True)
         )
         self.payment_dates = ", ".join(date.isoformat() for date in payment_dates if date)
-        self.balance = self.total_fees - self.amount_paid
+        self.balance = max(self.total_fees - self.amount_paid, Decimal('0'))
 
         if self.balance <= 0:
             self.payment_status = 'paid'
@@ -117,15 +173,18 @@ class SchoolFee(models.Model):
 
     def save(self, *args, **kwargs):
         """Auto-calculate balance and update payment status."""
-        if self.student_id and (not self.school_name or not self.class_level):
-            self.school_name = self.school_name or (self.student.school.name if self.student.school else self.student.school_name)
-            self.class_level = self.class_level or self.student.class_level
-        if self.student_id and (not self.bank_name or not self.bank_account_name or not self.bank_account_number):
-            self.update_bank_snapshot()
+        if self.enrollment_history_id:
+            self.sync_from_enrollment_history(overwrite=False)
+        if self.student_id and self.academic_year_id and not self.enrollment_history_id:
+            history = StudentEnrollmentHistory.objects.filter(
+                student_id=self.student_id,
+                academic_year_id=self.academic_year_id,
+            ).select_related('school', 'academic_year').first()
+            if history:
+                self.sync_from_enrollment_history(history, overwrite=False)
 
-        self.balance = self.total_fees - self.amount_paid
-        if self.balance < 0:
-            self.balance = 0
+        self.bank_account_number = normalize_identifier_value(self.bank_account_number).replace(' ', '')
+        self.balance = max(self.total_fees - self.amount_paid, Decimal('0'))
         if not self.payment_date:
             self.payment_date = timezone.now().date()
 
@@ -138,6 +197,22 @@ class SchoolFee(models.Model):
                 self.payment_status = 'pending'
 
         super().save(*args, **kwargs)
+
+    def clean(self):
+        errors = {}
+        if self.enrollment_history_id:
+            if self.student_id and self.enrollment_history.student_id != self.student_id:
+                errors['enrollment_history'] = 'Enrollment history must belong to the selected student.'
+            if self.academic_year_id and self.enrollment_history.academic_year_id != self.academic_year_id:
+                errors['enrollment_history'] = 'Enrollment history must match the selected academic year.'
+        if self.total_fees is not None and self.total_fees < 0:
+            errors['total_fees'] = 'Total fees cannot be negative.'
+        if self.amount_paid is not None and self.amount_paid < 0:
+            errors['amount_paid'] = 'Amount paid cannot be negative.'
+        if self.balance is not None and self.balance < 0:
+            errors['balance'] = 'Balance cannot be negative.'
+        if errors:
+            raise ValidationError(errors)
 
     def __str__(self):
         year_display = self.academic_year.name if self.academic_year else "N/A"
@@ -163,6 +238,7 @@ class SchoolFeePayment(models.Model):
     payment_date = models.DateField(default=timezone.now)
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='bank')
     reference_number = models.CharField(max_length=100, blank=True)
+    idempotency_key = models.CharField(max_length=150, null=True, blank=True, unique=True)
     recorded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -177,8 +253,30 @@ class SchoolFeePayment(models.Model):
         ordering = ['-payment_date', '-created_at']
         verbose_name = 'School Fee Payment'
         verbose_name_plural = 'School Fee Payments'
+        constraints = [
+            models.CheckConstraint(
+                check=Q(amount_paid__gt=0),
+                name='school_fee_payment_amount_gt_zero',
+            ),
+        ]
+
+    def clean(self):
+        errors = {}
+        if self.amount_paid is not None and self.amount_paid <= 0:
+            errors['amount_paid'] = 'Payment amount must be greater than zero.'
+        if self.school_fee_id:
+            other_payments = self.school_fee.payments.exclude(pk=self.pk)
+            already_paid = other_payments.aggregate(total=Sum('amount_paid'))['total'] or Decimal('0')
+            remaining_balance = self.school_fee.total_fees - already_paid
+            if self.amount_paid is not None and self.amount_paid > remaining_balance:
+                errors['amount_paid'] = 'Payment amount cannot exceed the remaining balance.'
+        if self.reference_number:
+            self.reference_number = self.reference_number.strip()
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
+        self.full_clean()
         super().save(*args, **kwargs)
         self.school_fee.refresh_payment_summary()
 
@@ -237,10 +335,10 @@ class SchoolFeeDisbursement(models.Model):
     def sync_from_fee(self):
         fee = self.school_fee
         student = fee.student
-        school = student.school if student and student.school else None
+        school = fee.school or (fee.enrollment_history.school if fee.enrollment_history_id and fee.enrollment_history else None)
         self.student_name = student.full_name if student else ''
         self.school_name = fee.school_name or (school.name if school else '')
-        self.class_level = fee.class_level or (student.class_level if student else '')
+        self.class_level = fee.class_level
         self.bank_name = fee.bank_name or (school.bank_name if school and school.bank_name else '')
         self.bank_account_name = fee.bank_account_name or (
             school.bank_account_name if school and school.bank_account_name else ''

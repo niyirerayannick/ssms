@@ -10,7 +10,7 @@
             <div>
                 <p class="text-xs uppercase tracking-[0.28em] text-emerald-700 font-semibold">Bulk Finance Ops</p>
                 <h1 class="text-3xl font-bold mt-1 text-emerald-800">School Fee Recording</h1>
-               </div>
+            </div>
             <div class="flex flex-wrap gap-2 w-full sm:w-auto">
                 <a href="{% url 'finance:school_fees_dashboard' %}" class="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 border border-emerald-600 transition-all">Back to Dashboard</a>
             </div>
@@ -18,7 +18,7 @@
     </div>
 
     <form method="get" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-4">
             <div>
                 <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Academic Year</label>
                 {{ filter_form.academic_year }}
@@ -30,6 +30,10 @@
             <div>
                 <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Partner</label>
                 {{ filter_form.partner }}
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">School</label>
+                {{ filter_form.school }}
             </div>
             <div>
                 <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Term</label>
@@ -63,6 +67,8 @@
                 <p class="text-3xl font-bold text-slate-900 mt-1">{{ summary.student_count }}</p>
                 {% if selected_partner %}
                     <p class="text-xs text-slate-500 mt-1">Partner: {{ selected_partner.name }} - {{ term_display }}</p>
+                {% elif selected_scope_school %}
+                    <p class="text-xs text-slate-500 mt-1">School: {{ selected_scope_school.name }} - {{ term_display }}</p>
                 {% elif selected_district %}
                     <p class="text-xs text-slate-500 mt-1">{{ selected_district.name }} - {{ term_display }}</p>
                 {% endif %}
@@ -97,7 +103,7 @@
                                 <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Student</th>
                                 <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 hidden sm:table-cell">Class / Level</th>
                                 <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Required Amount</th>
-                                <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Amount Paid</th>
+                                <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Amount Paid To Date</th>
                                 <th class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 hidden md:table-cell">Existing Status</th>
                             </tr>
                         </thead>
@@ -106,11 +112,12 @@
                                 <tr class="hover:bg-slate-50 transition-colors">
                                     <td class="px-4 py-4 align-top">
                                         <div class="text-sm font-semibold text-slate-900">{{ row.student.full_name }}</div>
-                                        <p class="text-xs text-slate-500">ID: {{ row.student.id }} · {{ row.student.school_level|capfirst }}</p>
+                                        <p class="text-xs text-slate-500">ID: {{ row.student.id }} · {{ row.enrollment.school_level|capfirst }}</p>
+                                        <p class="text-xs text-slate-500 mt-1">{{ row.enrollment.display_school_name }}</p>
                                         {{ row.form.student_id }}
                                     </td>
                                     <td class="px-4 py-4 text-sm text-slate-600 hidden sm:table-cell">
-                                        {{ row.student.class_level }}
+                                        {{ row.enrollment.class_level|default:"N/A" }}
                                     </td>
                                     <td class="px-4 py-4">
                                         {{ row.form.total_fees }}
@@ -139,7 +146,7 @@
                 </div>
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/60 rounded-b-2xl">
                     <div class="text-sm text-slate-600">
-                        Review the amounts before saving. Updates run inside a single atomic transaction.
+                        Review the amounts before saving. Existing payments are preserved, and only new payment deltas are posted.
                     </div>
                     <div class="flex gap-2">
                         <button type="submit" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-sm hover:bg-emerald-500 active:scale-95">
@@ -150,14 +157,14 @@
             </form>
         {% else %}
             <div class="bg-white border border-dashed border-slate-300 rounded-2xl p-10 text-center text-slate-500">
-                No students matched the selected filters. Adjust your category or confirm the district or partner assignment.
+                No students matched the selected filters. Adjust the district, partner, school, or category for the selected academic year.
             </div>
         {% endif %}
     {% elif filter_form.is_bound %}
         <div class="bg-rose-50 border border-rose-200 text-rose-700 text-sm px-4 py-3 rounded-xl">Could not load students. Please check filter selections.</div>
     {% else %}
         <div class="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-10 text-center text-slate-500">
-            Select an academic year, term, and either a district or a partner to begin bulk recording.
+            Select an academic year, term, and either a district, school, or partner to begin bulk recording.
         </div>
     {% endif %}
 </div>

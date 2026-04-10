@@ -12,10 +12,10 @@
                 <p class="text-sm text-slate-600 mt-1">Keep all pending school fee amounts that finance still needs to pay to schools.</p>
             </div>
             <div class="flex flex-wrap gap-3">
-                <a href="{% url 'finance:sync_fee_disbursement_queue' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" class="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl border border-slate-200 transition-all shadow-sm active:scale-95 text-sm">
+                <button type="button" onclick="openReconcileModal()" class="inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-bold px-4 py-2.5 rounded-xl border border-slate-200 transition-all shadow-sm active:scale-95 text-sm">
                     <span class="material-symbols-rounded text-[18px]">sync</span>
                     Sync Outstanding Fees
-                </a>
+                </button>
                 <a href="{% url 'finance:export_fee_disbursement_pdf' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" class="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl border border-slate-200 transition-all shadow-sm active:scale-95 text-sm">
                     <span class="material-symbols-rounded text-[18px]">picture_as_pdf</span>
                     Export PDF
@@ -52,7 +52,7 @@
     </div>
 
     <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200/60">
-        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <div class="sm:col-span-2 lg:col-span-1">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Search</label>
                 <input type="text" name="search" value="{{ search_query }}" placeholder="Student, school, or account..." class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm">
@@ -82,10 +82,9 @@
                     <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
                     <option value="exported" {% if status_filter == 'exported' %}selected{% endif %}>Exported</option>
                     <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
-                    <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
                 </select>
             </div>
-            <div class="flex items-end gap-3">
+            <div class="flex items-end gap-3 lg:col-span-2">
                 <button type="submit" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md active:scale-95 text-sm">Filter</button>
                 <a href="{% url 'finance:fee_disbursement_queue' %}" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95" title="Reset">
                     <span class="material-symbols-rounded block text-[20px]">restart_alt</span>
@@ -129,45 +128,37 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-slate-50">
-                        {% for item in disbursements %}
+                        {% for fee in disbursements %}
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-4 py-4 align-top">
-                                {% if item.status == 'pending' or item.status == 'exported' %}
-                                <input type="checkbox" name="selected_disbursements" value="{{ item.id }}" class="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500">
-                                {% else %}
-                                <span class="text-xs text-slate-300">-</span>
-                                {% endif %}
+                                <input type="checkbox" name="selected_fees" value="{{ fee.id }}" class="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500">
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex flex-col">
-                                    <span class="text-sm font-bold text-slate-900">{{ item.student_name }}</span>
-                                    <span class="text-[10px] text-slate-500 mt-1">{{ item.class_level|default:"N/A" }}</span>
+                                    <span class="text-sm font-bold text-slate-900">{{ fee.student.full_name }}</span>
+                                    <span class="text-[10px] text-slate-500 mt-1">{{ fee.class_level|default:"N/A" }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 hidden md:table-cell">
                                 <div class="flex flex-col">
-                                    <span class="text-sm font-medium text-slate-900">{{ item.school_name|default:"N/A" }}</span>
-                                    <span class="text-[10px] text-slate-500 mt-1">{{ item.bank_name|default:"N/A" }} | {{ item.bank_account_name|default:"N/A" }} | {{ item.bank_account_number|default:"N/A" }}</span>
+                                    <span class="text-sm font-medium text-slate-900">{{ fee.school_name|default:"N/A" }}</span>
+                                    <span class="text-[10px] text-slate-500 mt-1">{{ fee.bank_name|default:"N/A" }} | {{ fee.bank_account_name|default:"N/A" }} | {{ fee.bank_account_number|default:"N/A" }}</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm font-medium text-slate-900">{{ item.school_fee.academic_year.name|default:"N/A" }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm text-slate-600">{{ item.school_fee.get_term_display }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm font-medium text-slate-900">{{ fee.academic_year.name|default:"N/A" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm text-slate-600">{{ fee.get_term_display }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-bold {% if item.amount_to_pay > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">FRW {{ item.amount_to_pay|compact_number }}</span>
+                                <span class="text-sm font-bold {% if fee.balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">FRW {{ fee.balance|compact_number }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide
-                                    {% if item.status == 'paid' %}bg-emerald-100 text-emerald-700
-                                    {% elif item.status == 'exported' %}bg-indigo-100 text-indigo-700
-                                    {% elif item.status == 'cancelled' %}bg-slate-100 text-slate-600
-                                    {% else %}bg-amber-100 text-amber-700{% endif %}">
-                                    {{ item.get_status_display }}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700">
+                                    Pending
                                 </span>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-500">No payout queue records found yet. Sync outstanding fees to populate this list.</td>
+                            <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-500">No payout queue records found yet. Reconcile the selected scope to refresh this list.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -192,4 +183,62 @@
         </div>
     </form>
 </div>
+
+<div id="reconcile-modal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-slate-900/40" onclick="closeReconcileModal()"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-5 border-b border-slate-100">
+                <h2 class="text-xl font-bold text-slate-900">Reconcile Disbursements</h2>
+                <p class="text-sm text-slate-600 mt-1">This action ignores the current page filters and reconciles all fee records in the selected scope.</p>
+            </div>
+            <form method="post" action="{% url 'finance:sync_fee_disbursement_queue' %}" class="p-6 space-y-6" onsubmit="return confirmReconciliation(this);">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Academic Year</label>
+                        {{ reconciliation_form.academic_year }}
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Term</label>
+                        {{ reconciliation_form.term }}
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">School</label>
+                        {{ reconciliation_form.school }}
+                    </div>
+                </div>
+                <div class="rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+                    You are about to reconcile disbursements for the selected academic year and term scope. This is safe to run multiple times and processes the full scope, not just the visible list.
+                </div>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeReconcileModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-semibold hover:bg-slate-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-sm">
+                        Reconcile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openReconcileModal() {
+    document.getElementById('reconcile-modal').classList.remove('hidden');
+}
+
+function closeReconcileModal() {
+    document.getElementById('reconcile-modal').classList.add('hidden');
+}
+
+function confirmReconciliation(form) {
+    const yearSelect = form.querySelector('[name="academic_year"]');
+    const termSelect = form.querySelector('[name="term"]');
+    const yearLabel = yearSelect && yearSelect.selectedIndex >= 0 ? yearSelect.options[yearSelect.selectedIndex].text : 'selected year';
+    const termLabel = termSelect && termSelect.selectedIndex >= 0 ? termSelect.options[termSelect.selectedIndex].text : 'selected term';
+    return window.confirm(`You are about to reconcile disbursements for ${yearLabel}, ${termLabel}.`);
+}
+</script>
 {% endblock %}
