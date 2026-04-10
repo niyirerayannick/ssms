@@ -191,3 +191,52 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.recipient.username} - {self.verb}"
+
+
+class SystemActivityLog(models.Model):
+    """Audit trail for authentication and important user actions."""
+
+    EVENT_AUTH = 'auth'
+    EVENT_ACTION = 'action'
+    EVENT_EXPORT = 'export'
+    EVENT_SECURITY = 'security'
+
+    EVENT_TYPE_CHOICES = [
+        (EVENT_AUTH, 'Authentication'),
+        (EVENT_ACTION, 'Action'),
+        (EVENT_EXPORT, 'Export'),
+        (EVENT_SECURITY, 'Security'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='activity_logs',
+    )
+    username = models.CharField(max_length=150, blank=True, default='')
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES, default=EVENT_ACTION)
+    action = models.CharField(max_length=150)
+    description = models.TextField(blank=True)
+    path = models.CharField(max_length=255, blank=True, default='')
+    method = models.CharField(max_length=10, blank=True, default='')
+    status_code = models.PositiveSmallIntegerField(null=True, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=255, blank=True, default='')
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['created_at']),
+            models.Index(fields=['event_type', 'created_at']),
+            models.Index(fields=['username', 'created_at']),
+        ]
+        verbose_name = 'System activity log'
+        verbose_name_plural = 'System activity logs'
+
+    def __str__(self):
+        actor = self.username or (self.user.username if self.user else 'Unknown user')
+        return f"{actor} - {self.action} @ {self.created_at:%Y-%m-%d %H:%M}"

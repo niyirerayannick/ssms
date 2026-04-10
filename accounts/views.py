@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
+from core.activity import set_audit_context
 from .forms import UserUpdateForm, ProfileUpdateForm
 from .models import Profile
 
@@ -158,6 +159,11 @@ def user_create(request):
                     fail_silently=True,
                 )
             messages.success(request, f'User "{username}" created successfully with role: {role}')
+            set_audit_context(
+                request,
+                action='Created user account',
+                description=f'Created user {username} with role {role}.',
+            )
             return redirect('accounts:user_list')
         except Group.DoesNotExist:
             messages.error(request, f'Role "{role}" does not exist. Please run setup_user_roles command.')
@@ -222,6 +228,11 @@ def user_edit(request, user_id):
             user_to_edit.save()
             
             messages.success(request, f'User "{user_to_edit.username}" updated successfully.')
+            set_audit_context(
+                request,
+                action='Updated user account',
+                description=f'Updated user {user_to_edit.username} and assigned role {role}.',
+            )
             return redirect('accounts:user_list')
         except Group.DoesNotExist:
             messages.error(request, f'Role "{role}" does not exist.')
@@ -257,6 +268,11 @@ def user_delete(request, user_id):
     if request.method == 'POST':
         username = user_to_delete.username
         user_to_delete.delete()
+        set_audit_context(
+            request,
+            action='Deleted user account',
+            description=f'Deleted user {username}.',
+        )
         messages.success(request, f'User "{username}" deleted successfully.')
         return redirect('accounts:user_list')
     
@@ -278,6 +294,11 @@ def profile_view(request):
         if u_form.is_valid() and p_form.is_valid():
             u_form.save()
             p_form.save()
+            set_audit_context(
+                request,
+                action='Updated profile',
+                description='Updated personal account profile details.',
+            )
             messages.success(request, 'Your account has been updated!')
             return redirect('accounts:profile')
     else:

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import School, District, Sector, Cell, Village, Notification, AcademicYear, Partner
+from .models import School, District, Sector, Cell, Village, Notification, AcademicYear, Partner, SystemActivityLog
 
 
 @admin.register(Partner)
@@ -59,3 +59,12 @@ class AcademicYearAdmin(admin.ModelAdmin):
     list_display = ['name', 'is_active', 'created_at']
     list_filter = ['is_active']
     search_fields = ['name']
+
+
+@admin.register(SystemActivityLog)
+class SystemActivityLogAdmin(admin.ModelAdmin):
+    list_display = ['created_at', 'username', 'event_type', 'action', 'method', 'status_code', 'ip_address']
+    list_filter = ['event_type', 'method', 'status_code', 'created_at']
+    search_fields = ['username', 'action', 'description', 'path', 'ip_address']
+    date_hierarchy = 'created_at'
+    ordering = ['-created_at']

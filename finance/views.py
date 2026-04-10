@@ -13,6 +13,7 @@ from django.core.paginator import Paginator
 from django.forms import formset_factory
 from django.urls import reverse
 from django.utils import timezone
+from core.activity import set_audit_context
 from core.models import District, AcademicYear, School
 from core.export_utils import (
     ExportNumberedCanvas,
@@ -291,6 +292,15 @@ def sync_fee_disbursement_queue(request):
             f'updated {results["updated_count"]} row(s), '
             f'cancelled {results["cancelled_count"]} row(s).'
         )
+    )
+    set_audit_context(
+        request,
+        action='Reconciled fee disbursements',
+        description=(
+            f'Reconciled {academic_year.name}, {term_label}, {school_label}. '
+            f'Processed {results["processed_count"]}, created {results["created_count"]}, '
+            f'updated {results["updated_count"]}, cancelled {results["cancelled_count"]}.'
+        ),
     )
     query = urlencode({
         'academic_year': academic_year.id,
@@ -584,6 +594,11 @@ def mark_fee_disbursements_paid(request):
             updated_count += 1
 
     messages.success(request, f'{updated_count} fee record(s) marked as paid and posted to school fee payments.')
+    set_audit_context(
+        request,
+        action='Marked school fee disbursements paid',
+        description=f'Marked {updated_count} payout queue record(s) as paid.',
+    )
     return redirect('finance:fee_disbursement_queue')
 
 
@@ -877,10 +892,21 @@ def bulk_fee_entry(request):
                         transaction.set_rollback(True)
 
                 if not bulk_has_errors:
+                    scope_label = partner.name if partner else (school.name if school else district.name)
+                    set_audit_context(
+                        request,
+                        action='Saved bulk school fees',
+                        description=(
+                            f'Saved bulk fees for {scope_label} in {academic_year.name} '
+                            f'{dict(SchoolFee.TERM_CHOICES).get(term, term)}: '
+                            f'{created_count} created, {updated_count} updated, '
+                            f'{payment_delta_count} payment adjustments.'
+                        ),
+                    )
                     messages.success(
                         request,
                         (
-                            f"Bulk fees saved for {partner.name if partner else (school.name if school else district.name)}: "
+                            f"Bulk fees saved for {scope_label}: "
                             f"{created_count} new, {updated_count} updated, {payment_delta_count} payment adjustment(s) posted."
                         ),
                     )
@@ -978,6 +1004,11 @@ def fee_create(request):
                     fee.payment_date = timezone.now().date()
                 fee.recorded_by = request.user
                 fee.save()
+                set_audit_context(
+                    request,
+                    action='Created school fee plan',
+                    description=f'Created school fee plan for {fee.student.full_name} in {fee.academic_year.name} {fee.get_term_display()}.',
+                )
                 messages.success(request, f'School fee plan recorded for {fee.student.full_name}.')
                 return redirect('finance:school_fees_dashboard')
     else:
@@ -1014,6 +1045,11 @@ def fee_edit(request, pk):
             if not fee.recorded_by:
                 fee.recorded_by = request.user
             fee.save()
+            set_audit_context(
+                request,
+                action='Updated school fee plan',
+                description=f'Updated school fee plan for {fee.student.full_name} in {fee.academic_year.name} {fee.get_term_display()}.',
+            )
             messages.success(request, f'Fee plan updated for {fee.student.full_name}.')
             return redirect('finance:fees_list')
     else:
@@ -1122,6 +1158,14 @@ def add_student_payment(request, student_id):
                 except ValidationError as exc:
                     form.add_error('amount_paid', '; '.join(exc.messages))
                 else:
+                    set_audit_context(
+                        request,
+                        action='Recorded school fee payment',
+                        description=(
+                            f'Recorded school fee payment for {student.full_name} in {academic_year.name} '
+                            f'{dict(SchoolFee.TERM_CHOICES).get(term, term)}.'
+                        ),
+                    )
                     messages.success(request, f'School fee payment recorded for {student.full_name}!')
                     return redirect('finance:student_payments', student_id=student.id)
     else:

@@ -1,12 +1,14 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.contrib import messages
 from django.db.models import Q, Count
 from django.db import models
+from django.utils import timezone
 from django.core.paginator import Paginator
-from .models import District, Sector, Cell, Village, Province, School, Notification, Partner
+from .activity import set_audit_context
+from .models import District, Sector, Cell, Village, Province, School, Notification, Partner, SystemActivityLog
 from students.models import Student
 from .forms import SchoolForm, PartnerForm
 
@@ -143,6 +145,11 @@ def school_create(request):
         form = SchoolForm(request.POST)
         if form.is_valid():
             school = form.save()
+            set_audit_context(
+                request,
+                action='Created school',
+                description=f'Created school {school.name}.',
+            )
             messages.success(request, f'School {school.name} created successfully!')
             return redirect('core:school_detail', pk=school.pk)
     else:
@@ -160,6 +167,11 @@ def school_edit(request, pk):
         form = SchoolForm(request.POST, instance=school)
         if form.is_valid():
             form.save()
+            set_audit_context(
+                request,
+                action='Updated school',
+                description=f'Updated school {school.name}.',
+            )
             messages.success(request, f'School {school.name} updated successfully!')
             return redirect('core:school_detail', pk=school.pk)
     else:
@@ -173,6 +185,11 @@ def school_edit(request, pk):
 def notifications_mark_all_read(request):
     """Mark all notifications as read for current user."""
     Notification.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    set_audit_context(
+        request,
+        action='Marked notifications as read',
+        description='Marked all notifications as read.',
+    )
     messages.success(request, 'All notifications marked as read.')
     return redirect(request.META.get('HTTP_REFERER', 'dashboard:index'))
 
@@ -233,6 +250,11 @@ def partner_create(request):
         form = PartnerForm(request.POST)
         if form.is_valid():
             partner = form.save()
+            set_audit_context(
+                request,
+                action='Created partner',
+                description=f'Created partner {partner.name}.',
+            )
             messages.success(request, f'Partner {partner.name} created successfully!')
             return redirect('core:partner_detail', pk=partner.pk)
     else:
@@ -250,9 +272,69 @@ def partner_edit(request, pk):
         form = PartnerForm(request.POST, instance=partner)
         if form.is_valid():
             form.save()
+            set_audit_context(
+                request,
+                action='Updated partner',
+                description=f'Updated partner {partner.name}.',
+            )
             messages.success(request, f'Partner {partner.name} updated successfully!')
             return redirect('core:partner_detail', pk=partner.pk)
     else:
         form = PartnerForm(instance=partner)
     
     return render(request, 'core/partner_form.html', {'form': form, 'partner': partner, 'title': 'Edit Partner'})
+
+
+def is_staff_user(user):
+    return user.is_staff or user.is_superuser
+
+
+@login_required
+@user_passes_test(is_staff_user)
+def system_activity_logs(request):
+    """Admin activity view for authentication and user actions."""
+    logs = SystemActivityLog.objects.select_related('user').all()
+
+    search_query = request.GET.get('search', '').strip()
+    event_filter = request.GET.get('event_type', '').strip()
+    user_filter = request.GET.get('user', '').strip()
+    date_from = request.GET.get('date_from', '').strip()
+    date_to = request.GET.get('date_to', '').strip()
+
+    if search_query:
+        logs = logs.filter(
+            Q(username__icontains=search_query) |
+            Q(action__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(path__icontains=search_query)
+        )
+    if event_filter:
+        logs = logs.filter(event_type=event_filter)
+    if user_filter:
+        logs = logs.filter(user_id=user_filter)
+    if date_from:
+        logs = logs.filter(created_at__date__gte=date_from)
+    if date_to:
+        logs = logs.filter(created_at__date__lte=date_to)
+
+    paginator = Paginator(logs, 30)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    today = timezone.localdate()
+    today_logs = SystemActivityLog.objects.filter(created_at__date=today)
+    context = {
+        'logs': page_obj,
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'event_filter': event_filter,
+        'user_filter': user_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'event_choices': SystemActivityLog.EVENT_TYPE_CHOICES,
+        'users': SystemActivityLog.objects.exclude(user__isnull=True).values('user_id', 'username').distinct().order_by('username'),
+        'total_logs': SystemActivityLog.objects.count(),
+        'today_logs_count': today_logs.count(),
+        'today_logins_count': today_logs.filter(event_type=SystemActivityLog.EVENT_AUTH).count(),
+        'today_exports_count': today_logs.filter(event_type=SystemActivityLog.EVENT_EXPORT).count(),
+    }
+    return render(request, 'core/system_activity_logs.html', context)

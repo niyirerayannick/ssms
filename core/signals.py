@@ -1,10 +1,12 @@
 from django.conf import settings
+from django.contrib.auth.signals import user_logged_in, user_logged_out, user_login_failed
 from django.core.mail import send_mail
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
+from .activity import log_system_activity
 from .models import Notification
 
 
@@ -52,4 +54,43 @@ def email_notification(sender, instance, created, **kwargs):
         recipient_list=[recipient.email],
         html_message=html_message,
         fail_silently=True,
+    )
+
+
+@receiver(user_logged_in)
+def log_user_logged_in(sender, request, user, **kwargs):
+    log_system_activity(
+        user=user,
+        event_type='auth',
+        action='User logged in',
+        description='Successful sign-in to the system.',
+        request=request,
+        status_code=200,
+    )
+
+
+@receiver(user_logged_out)
+def log_user_logged_out(sender, request, user, **kwargs):
+    if not user:
+        return
+    log_system_activity(
+        user=user,
+        event_type='auth',
+        action='User logged out',
+        description='Signed out of the system.',
+        request=request,
+        status_code=200,
+    )
+
+
+@receiver(user_login_failed)
+def log_user_login_failed(sender, credentials, request, **kwargs):
+    username = (credentials or {}).get('username', '')
+    log_system_activity(
+        username=username,
+        event_type='security',
+        action='Failed login attempt',
+        description='Authentication failed for supplied credentials.',
+        request=request,
+        status_code=401,
     )

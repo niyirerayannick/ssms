@@ -24,6 +24,7 @@ urlpatterns = [
     path('schools/add/', views.school_create, name='school_create'),
     path('schools/<hashid:pk>/', views.school_detail, name='school_detail'),
     path('schools/<hashid:pk>/edit/', views.school_edit, name='school_edit'),
+    path('system-logs/', views.system_activity_logs, name='system_activity_logs'),
     
     # Partner Management
     path('partners/', views.partner_list, name='partner_list'),
