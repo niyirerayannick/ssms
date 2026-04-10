@@ -26,7 +26,7 @@ from core.export_utils import (
     style_excel_table_rows,
     write_excel_report_header,
 )
-from core.utils import normalize_identifier_value
+from core.utils import normalize_identifier_value, format_money
 from django.http import JsonResponse
 from django.http import HttpResponse
 from reportlab.lib import colors
@@ -448,7 +448,7 @@ def export_fee_disbursement_pdf(request):
 
     summary_data = [
         ['Total Records', str(totals['listed_count']), 'Unpaid', str(totals['pending_count']), '', '', '', ''],
-        ['Total Amount', f"FRW {totals['total_amount_to_pay']:,.2f}", '', '', '', '', '', ''],
+        ['Total Amount', f"FRW {format_money(totals['total_amount_to_pay'])}", '', '', '', '', '', ''],
     ]
     summary_table = build_export_table(
         summary_data,
@@ -494,7 +494,7 @@ def export_fee_disbursement_pdf(request):
             Paragraph(fee.bank_name or 'N/A', cell_style),
             Paragraph(fee.bank_account_name or 'N/A', cell_style),
             Paragraph(normalize_identifier_value(fee.bank_account_number, 'N/A'), cell_style),
-            Paragraph(f"{fee.balance:,.2f}", amount_style),
+            Paragraph(format_money(fee.balance), amount_style),
         ])
 
     table_data.append([
@@ -507,7 +507,7 @@ def export_fee_disbursement_pdf(request):
         '',
         '',
         '',
-        Paragraph(f"{totals['total_amount_to_pay']:,.2f}", amount_style),
+        Paragraph(format_money(totals['total_amount_to_pay']), amount_style),
     ])
     table = build_export_table(
         table_data,

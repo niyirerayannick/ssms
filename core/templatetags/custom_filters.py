@@ -1,7 +1,7 @@
 from django import template
 import decimal
 
-from core.utils import encode_id
+from core.utils import encode_id, format_money
 
 register = template.Library()
 
@@ -45,6 +45,12 @@ def compact_number(value):
         return str(value)
     except (ValueError, TypeError):
         return value
+
+
+@register.filter
+def full_number(value):
+    """Format numbers without k/M/B compaction."""
+    return format_money(value)
 
 @register.filter
 def split(value, arg):

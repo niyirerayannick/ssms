@@ -103,21 +103,21 @@
             <!-- Required Amount -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-indigo-500">
                 <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Required Amount</h3>
-                <p class="text-3xl font-bold text-slate-900">FRW {{ total_fees_required|compact_number }}</p>
+                <p class="text-3xl font-bold text-slate-900">FRW {{ total_fees_required|full_number }}</p>
                 <p class="text-xs text-slate-500 mt-2">Total amount required from all students</p>
             </div>
 
             <!-- Collected Amount -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-emerald-500">
                 <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Collected Amount</h3>
-                <p class="text-3xl font-bold text-emerald-600">FRW {{ total_fees_collected|compact_number }}</p>
+                <p class="text-3xl font-bold text-emerald-600">FRW {{ total_fees_collected|full_number }}</p>
                 <p class="text-xs text-slate-500 mt-2">{{ fees_collection_percentage }}% collection rate</p>
             </div>
 
             <!-- Outstanding Amount -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-rose-500">
                 <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Outstanding Balance</h3>
-                <p class="text-3xl font-bold text-rose-600">FRW {{ total_fees_outstanding|compact_number }}</p>
+                <p class="text-3xl font-bold text-rose-600">FRW {{ total_fees_outstanding|full_number }}</p>
                 <p class="text-xs text-slate-500 mt-2">Amount still to be collected</p>
             </div>
         </div>
@@ -144,12 +144,12 @@
                         <tr class="hover:bg-slate-50/50 transition-colors cursor-pointer" onclick="window.location='{% url 'finance:student_payments' fee.student.id %}'">
                             <td class="px-6 py-4">
                                 <div class="text-sm font-semibold text-slate-900">{{ fee.student.full_name }}</div>
-                                <div class="text-[10px] text-slate-500 sm:hidden font-medium">Req: FRW {{ fee.total_fees|compact_number }}</div>
+                                <div class="text-[10px] text-slate-500 sm:hidden font-medium">Req: FRW {{ fee.total_fees|full_number }}</div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">FRW {{ fee.total_fees|compact_number }}</td>
-                            <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ fee.amount_paid|compact_number }}</td>
+                            <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">FRW {{ fee.total_fees|full_number }}</td>
+                            <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ fee.amount_paid|full_number }}</td>
                             <td class="px-6 py-4">
-                                <span class="text-sm font-bold text-rose-600">FRW {{ fee.balance|compact_number }}</span>
+                                <span class="text-sm font-bold text-rose-600">FRW {{ fee.balance|full_number }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
@@ -226,21 +226,21 @@
             <!-- Required Amount -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-teal-500">
                 <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Required Amount</h3>
-                <p class="text-3xl font-bold text-slate-900">FRW {{ total_insurance_required|compact_number }}</p>
+                <p class="text-3xl font-bold text-slate-900">FRW {{ total_insurance_required|full_number }}</p>
                 <p class="text-xs text-slate-500 mt-2">Total insurance contribution required</p>
             </div>
 
             <!-- Collected Amount -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-emerald-500">
                 <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Collected Amount</h3>
-                <p class="text-3xl font-bold text-emerald-600">FRW {{ total_insurance_collected|compact_number }}</p>
+                <p class="text-3xl font-bold text-emerald-600">FRW {{ total_insurance_collected|full_number }}</p>
                 <p class="text-xs text-slate-500 mt-2">{{ insurance_collection_percentage }}% collection rate</p>
             </div>
 
             <!-- Outstanding Amount -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-rose-500">
                 <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Outstanding Balance</h3>
-                <p class="text-3xl font-bold text-rose-600">FRW {{ total_insurance_outstanding|compact_number }}</p>
+                <p class="text-3xl font-bold text-rose-600">FRW {{ total_insurance_outstanding|full_number }}</p>
                 <p class="text-xs text-slate-500 mt-2">Amount still to be collected</p>
             </div>
         </div>
@@ -270,9 +270,9 @@
                                 <div class="text-[10px] text-slate-500 sm:hidden font-medium">{{ insurance.insurance_year.name|default:"N/A" }}</div>
                             </td>
                             <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">{{ insurance.insurance_year.name|default:"N/A" }}</td>
-                            <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ insurance.required_amount|compact_number }}</td>
+                            <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ insurance.required_amount|full_number }}</td>
                             <td class="px-6 py-4">
-                                <span class="text-sm font-bold text-rose-600">FRW {{ insurance.balance|compact_number }}</span>
+                                <span class="text-sm font-bold text-rose-600">FRW {{ insurance.balance|full_number }}</span>
                             </td>
                             <td class="px-6 py-4">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider

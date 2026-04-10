@@ -331,7 +331,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const amountPerPersonInput = document.getElementById('{{ settings_form_amount_field_id }}');
         const perPersonAmountDisplay = document.getElementById('perPersonAmount');
-        const defaultAmountPerPerson = Number('{{ mutuelle_amount_per_person|default_if_none:"3000"|floatformat:2 }}');
+        const defaultAmountPerPerson = Number('{{ mutuelle_amount_per_person|default_if_none:"3000"|floatformat:0 }}');
 
         function getAmountPerPerson() {
             if (amountPerPersonInput) {

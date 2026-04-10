@@ -45,16 +45,16 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-teal-500">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Required Amount</h3>
-            <p class="text-3xl font-bold text-slate-900">FRW {{ total_insurance_required|compact_number }}</p>
+            <p class="text-3xl font-bold text-slate-900">FRW {{ total_insurance_required|full_number }}</p>
         </div>
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-emerald-500">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Collected Amount</h3>
-            <p class="text-3xl font-bold text-emerald-600">FRW {{ total_insurance_collected|compact_number }}</p>
+            <p class="text-3xl font-bold text-emerald-600">FRW {{ total_insurance_collected|full_number }}</p>
             <p class="text-xs text-slate-500 mt-2">{{ insurance_collection_percentage }}% collection rate</p>
         </div>
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-rose-500">
             <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Outstanding Balance</h3>
-            <p class="text-3xl font-bold text-rose-600">FRW {{ total_insurance_outstanding|compact_number }}</p>
+            <p class="text-3xl font-bold text-rose-600">FRW {{ total_insurance_outstanding|full_number }}</p>
         </div>
     </div>
 
@@ -75,8 +75,8 @@
                     <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="px-6 py-4"><div class="text-sm font-semibold text-slate-900">{{ insurance.family.family_code }}</div></td>
                         <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">{{ insurance.insurance_year.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ insurance.required_amount|compact_number }}</td>
-                        <td class="px-6 py-4"><span class="text-sm font-bold text-rose-600">FRW {{ insurance.balance|compact_number }}</span></td>
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ insurance.required_amount|full_number }}</td>
+                        <td class="px-6 py-4"><span class="text-sm font-bold text-rose-600">FRW {{ insurance.balance|full_number }}</span></td>
                         <td class="px-6 py-4">
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider
                                 {% if insurance.coverage_status == 'covered' %}bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100

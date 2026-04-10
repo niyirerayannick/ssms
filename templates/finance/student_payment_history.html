@@ -41,13 +41,13 @@
         <!-- Total Outstanding -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-rose-500 transition-all hover:shadow-md">
             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Outstanding</p>
-            <p class="text-base sm:text-lg font-bold text-rose-600 mt-2">FRW {{ total_outstanding|compact_number }}</p>
+            <p class="text-base sm:text-lg font-bold text-rose-600 mt-2">FRW {{ total_outstanding|full_number }}</p>
         </div>
 
         <!-- Total Paid -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/60 border-l-4 border-l-emerald-500 transition-all hover:shadow-md">
             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Paid</p>
-            <p class="text-base sm:text-lg font-bold text-emerald-600 mt-2">FRW {{ total_paid|compact_number }}</p>
+            <p class="text-base sm:text-lg font-bold text-emerald-600 mt-2">FRW {{ total_paid|full_number }}</p>
         </div>
 
         <!-- Payment Rate -->
@@ -63,15 +63,15 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Total Required</p>
-                <p class="text-2xl font-bold text-slate-900">FRW {{ total_required|compact_number }}</p>
+                <p class="text-2xl font-bold text-slate-900">FRW {{ total_required|full_number }}</p>
             </div>
             <div>
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Amount Paid</p>
-                <p class="text-2xl font-bold text-emerald-600">FRW {{ total_paid|compact_number }}</p>
+                <p class="text-2xl font-bold text-emerald-600">FRW {{ total_paid|full_number }}</p>
             </div>
             <div>
                 <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Outstanding Balance</p>
-                <p class="text-2xl font-bold text-rose-600">FRW {{ total_outstanding|compact_number }}</p>
+                <p class="text-2xl font-bold text-rose-600">FRW {{ total_outstanding|full_number }}</p>
             </div>
         </div>
         
@@ -111,10 +111,10 @@
                         <td class="px-6 py-4 text-sm font-medium text-slate-700">{{ fee.get_term_display }}</td>
                         <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell font-medium">{{ fee.school_name }}</td>
                         <td class="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell font-medium">{{ fee.class_level }}</td>
-                        <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">FRW {{ fee.total_fees|compact_number }}</td>
-                        <td class="px-6 py-4 text-sm font-bold text-emerald-600">FRW {{ fee.amount_paid|compact_number }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell font-medium">FRW {{ fee.total_fees|full_number }}</td>
+                        <td class="px-6 py-4 text-sm font-bold text-emerald-600">FRW {{ fee.amount_paid|full_number }}</td>
                         <td class="px-6 py-4 text-sm font-bold {% if fee.balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
-                            FRW {{ fee.balance|compact_number }}
+                            FRW {{ fee.balance|full_number }}
                         </td>
                         <td class="px-6 py-4">
                             <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ring-1
@@ -185,7 +185,7 @@
                         <td class="px-6 py-4 text-sm font-medium text-slate-700">{{ payment.payment_date|date:"Y-m-d" }}</td>
                         <td class="px-6 py-4 text-sm font-medium text-slate-700">{{ payment.school_fee.academic_year.name|default:"N/A" }}</td>
                         <td class="px-6 py-4 text-sm font-medium text-slate-700">{{ payment.school_fee.get_term_display }}</td>
-                        <td class="px-6 py-4 text-sm font-bold text-emerald-600">FRW {{ payment.amount_paid|compact_number }}</td>
+                        <td class="px-6 py-4 text-sm font-bold text-emerald-600">FRW {{ payment.amount_paid|full_number }}</td>
                         <td class="px-6 py-4 text-sm text-slate-600 hidden md:table-cell">{{ payment.get_payment_method_display }}</td>
                         <td class="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell">{{ payment.reference_number|default:"-" }}</td>
                         <td class="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell">{{ payment.notes|default:"-" }}</td>

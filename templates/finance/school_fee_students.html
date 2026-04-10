@@ -21,15 +21,15 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="bg-white border border-slate-200/70 rounded-2xl p-5 shadow-sm">
             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Total Required</p>
-            <p class="text-2xl font-bold text-slate-900 mt-2">FRW {{ school_totals.required|compact_number }}</p>
+            <p class="text-2xl font-bold text-slate-900 mt-2">FRW {{ school_totals.required|full_number }}</p>
         </div>
         <div class="bg-white border border-slate-200/70 rounded-2xl p-5 shadow-sm">
             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Amount Paid</p>
-            <p class="text-2xl font-bold text-emerald-600 mt-2">FRW {{ school_totals.paid|compact_number }}</p>
+            <p class="text-2xl font-bold text-emerald-600 mt-2">FRW {{ school_totals.paid|full_number }}</p>
         </div>
         <div class="bg-white border border-slate-200/70 rounded-2xl p-5 shadow-sm">
             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Outstanding Balance</p>
-            <p class="text-2xl font-bold text-rose-600 mt-2">FRW {{ school_totals.balance|compact_number }}</p>
+            <p class="text-2xl font-bold text-rose-600 mt-2">FRW {{ school_totals.balance|full_number }}</p>
         </div>
     </div>
 
@@ -58,9 +58,9 @@
                             <div class="text-sm font-semibold text-slate-900">{{ summary.student.full_name }}</div>
                             <p class="text-xs text-slate-500">Class: {{ summary.student.class_level }}</p>
                         </td>
-                        <td class="px-6 py-4 text-sm text-slate-600">FRW {{ summary.total_required|compact_number }}</td>
-                        <td class="px-6 py-4 text-sm text-emerald-600 font-semibold">FRW {{ summary.total_paid|compact_number }}</td>
-                        <td class="px-6 py-4 text-sm font-semibold {% if summary.total_balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">FRW {{ summary.total_balance|compact_number }}</td>
+                        <td class="px-6 py-4 text-sm text-slate-600">FRW {{ summary.total_required|full_number }}</td>
+                        <td class="px-6 py-4 text-sm text-emerald-600 font-semibold">FRW {{ summary.total_paid|full_number }}</td>
+                        <td class="px-6 py-4 text-sm font-semibold {% if summary.total_balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">FRW {{ summary.total_balance|full_number }}</td>
                         <td class="px-6 py-4">
                             <span class="inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ring-1
                                 {% if summary.latest_status == 'paid' %}bg-emerald-50 text-emerald-700 ring-emerald-100

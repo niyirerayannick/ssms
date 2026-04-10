@@ -47,7 +47,7 @@
         </div>
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
             <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Amount To Pay</p>
-            <p class="text-2xl font-bold text-rose-600 mt-1">FRW {{ total_amount_to_pay|compact_number }}</p>
+            <p class="text-2xl font-bold text-rose-600 mt-1">FRW {{ total_amount_to_pay|full_number }}</p>
         </div>
     </div>
 
@@ -148,7 +148,7 @@
                             <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm font-medium text-slate-900">{{ fee.academic_year.name|default:"N/A" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap hidden lg:table-cell text-sm text-slate-600">{{ fee.get_term_display }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-bold {% if fee.balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">FRW {{ fee.balance|compact_number }}</span>
+                                <span class="text-sm font-bold {% if fee.balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">FRW {{ fee.balance|full_number }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700">
@@ -165,7 +165,7 @@
                     <tfoot class="bg-slate-50/70 border-t border-slate-100">
                         <tr>
                             <td colspan="5" class="px-6 py-4 text-sm font-bold text-slate-900">Totals</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-rose-600">FRW {{ total_amount_to_pay|compact_number }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-rose-600">FRW {{ total_amount_to_pay|full_number }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-slate-600">
                                 {{ listed_count|compact_number }} records
                             </td>

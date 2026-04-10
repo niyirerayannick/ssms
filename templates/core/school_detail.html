@@ -100,7 +100,7 @@
                 </h2>
                 <div class="text-center py-4">
                     <p class="text-sm text-gray-600 font-medium mb-2">Standard Fee per Student</p>
-                    <p class="text-5xl font-bold text-green-600">{{ school.fee_amount|compact_number }}</p>
+                    <p class="text-5xl font-bold text-green-600">{{ school.fee_amount|full_number }}</p>
                     <p class="text-lg text-gray-600 mt-2">RWF</p>
                 </div>
             </div>
@@ -149,7 +149,7 @@
                     </div>
                     <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                         <span class="text-gray-700 font-medium">Standard Fee</span>
-                        <span class="text-xl font-bold text-green-600">{{ school.fee_amount|compact_number }} RWF</span>
+                        <span class="text-xl font-bold text-green-600">{{ school.fee_amount|full_number }} RWF</span>
                     </div>
                     <div class="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
                         <span class="text-gray-700 font-medium">Added</span>

@@ -113,11 +113,11 @@
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden sm:table-cell font-medium">{{ insurance.insurance_year.name|default:"N/A" }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ insurance.required_amount|compact_number }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-emerald-600 hidden md:table-cell">FRW {{ insurance.amount_paid|compact_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden md:table-cell font-medium">FRW {{ insurance.required_amount|full_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-emerald-600 hidden md:table-cell">FRW {{ insurance.amount_paid|full_number }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="text-sm font-bold {% if insurance.balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
-                                FRW {{ insurance.balance|compact_number }}
+                                FRW {{ insurance.balance|full_number }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">

@@ -34,6 +34,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill
 from datetime import datetime, date
 import io
+from core.utils import format_money
 
 from .forms import SendReportForm
 from .services import (
@@ -1001,7 +1002,7 @@ def schools_pdf(request):
             school.headteacher_mobile or 'N/A',
             school.district.name if school.district else 'N/A',
             school.sector.name if school.sector else 'N/A',
-            f"{school.fee_amount:,.2f}",
+            format_money(school.fee_amount),
             school.bank_name or 'N/A',
         ])
 

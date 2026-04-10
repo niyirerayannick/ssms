@@ -75,14 +75,14 @@
             </div>
             <div class="bg-white rounded-2xl border border-emerald-100 p-5">
                 <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Required Amount</p>
-                <p class="text-3xl font-bold text-emerald-600 mt-1">FRW {{ summary.total_required|compact_number }}</p>
+                <p class="text-3xl font-bold text-emerald-600 mt-1">FRW {{ summary.total_required|full_number }}</p>
                 {% if category_label %}
                     <p class="text-xs text-slate-500 mt-1">{{ category_label }}</p>
                 {% endif %}
             </div>
             <div class="bg-white rounded-2xl border border-emerald-100 p-5">
                 <p class="text-xs uppercase tracking-wider text-slate-500 font-semibold">Amount Recorded</p>
-                <p class="text-3xl font-bold text-emerald-600 mt-1">FRW {{ summary.total_paid|compact_number }}</p>
+                <p class="text-3xl font-bold text-emerald-600 mt-1">FRW {{ summary.total_paid|full_number }}</p>
                 {% if selected_year %}
                     <p class="text-xs text-slate-500 mt-1">{{ selected_year.name }}</p>
                 {% endif %}

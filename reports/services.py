@@ -27,7 +27,7 @@ from core.export_utils import (
     write_excel_report_header,
 )
 from core.models import School
-from core.utils import normalize_identifier_value
+from core.utils import normalize_identifier_value, format_money
 from families.models import Family
 from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
@@ -406,7 +406,7 @@ def _build_schools_pdf(queryset, subtitle):
     doc = build_export_pdf_document(buffer, "Schools Directory Report", pagesize=landscape(A4))
     elements = []
     create_letterhead(elements, "Schools Directory Report", f"{subtitle} (Total: {queryset.count()})")
-    rows = [[school.name, school.headteacher_name or "N/A", normalize_identifier_value(school.headteacher_mobile, "N/A"), school.district.name if school.district else "N/A", school.sector.name if school.sector else "N/A", f"{school.fee_amount:,.2f}", school.bank_name or "N/A"] for school in queryset]
+    rows = [[school.name, school.headteacher_name or "N/A", normalize_identifier_value(school.headteacher_mobile, "N/A"), school.district.name if school.district else "N/A", school.sector.name if school.sector else "N/A", format_money(school.fee_amount), school.bank_name or "N/A"] for school in queryset]
     data = prepend_row_numbers(["School Name", "Headteacher", "Phone", "District", "Sector", "Fee Amount", "Bank"], rows)
     elements.append(build_export_table(data, col_widths=[26, 132, 100, 92, 60, 56, 66, 100], body_font_size=7, centered_columns=[0, 4, 5, 6], right_aligned_columns=[6]))
     doc.build(elements, canvasmaker=ExportNumberedCanvas)

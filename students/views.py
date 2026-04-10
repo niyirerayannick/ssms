@@ -59,6 +59,7 @@ from .models import (
 )
 from core.models import Notification, AcademicYear
 from core.academic_years import get_default_academic_year
+from core.utils import format_money
 from .forms import (
     StudentForm,
     StudentPhotoForm,
@@ -1108,16 +1109,16 @@ def student_full_report_pdf(request, pk):
                 fee.get_term_display(),
                 fee.school_name or (student.school.name if student.school else 'N/A'),
                 fee.class_level or 'N/A',
-                f'{fee.total_fees:,.2f}',
-                f'{fee.amount_paid:,.2f}',
-                f'{fee.balance:,.2f}',
+                format_money(fee.total_fees),
+                format_money(fee.amount_paid),
+                format_money(fee.balance),
                 fee.get_payment_status_display(),
             ])
         fees_data.append([
             'TOTAL', '', '', '',
-            f'{total_fees_required:,.2f}',
-            f'{total_fees_paid:,.2f}',
-            f'{total_fees_balance:,.2f}',
+            format_money(total_fees_required),
+            format_money(total_fees_paid),
+            format_money(total_fees_balance),
             '',
         ])
     else:
@@ -1191,9 +1192,9 @@ def student_full_report_pdf(request, pk):
         for record in insurance_records:
             insurance_data.append([
                 record.insurance_year.name if record.insurance_year else 'N/A',
-                f'{record.required_amount:,.2f}',
-                f'{record.amount_paid:,.2f}',
-                f'{record.balance:,.2f}',
+                format_money(record.required_amount),
+                format_money(record.amount_paid),
+                format_money(record.balance),
                 record.get_coverage_status_display(),
                 record.remarks or 'N/A',
             ])

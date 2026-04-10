@@ -60,3 +60,18 @@ def normalize_identifier_value(value, empty_value=''):
             pass
 
     return text
+
+
+def format_money(value, empty_value='0'):
+    """Format money without unnecessary trailing decimal zeros."""
+    if value is None or value == '':
+        return empty_value
+
+    try:
+        amount = Decimal(str(value))
+    except (InvalidOperation, ValueError, TypeError):
+        return str(value)
+
+    if amount == amount.to_integral_value():
+        return f"{int(amount):,}"
+    return f"{amount:,.2f}".rstrip('0').rstrip('.')

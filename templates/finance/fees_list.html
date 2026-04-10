@@ -153,11 +153,11 @@
                                 <span class="text-[10px] text-slate-500">{{ fee.get_term_display }}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden md:table-cell">{{ fee.total_fees|compact_number }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden md:table-cell">{{ fee.amount_paid|compact_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden md:table-cell">{{ fee.total_fees|full_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600 hidden md:table-cell">{{ fee.amount_paid|full_number }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="text-sm font-bold {% if fee.balance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
-                                {{ fee.balance|compact_number }}
+                                {{ fee.balance|full_number }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
