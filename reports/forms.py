@@ -6,7 +6,7 @@ from finance.models import SchoolFee
 from insurance.models import FamilyInsurance
 from students.models import Student
 
-from .services import get_available_reports_for_user, get_report_definition
+from .services import get_arrangement_choices, get_available_reports_for_user, get_report_definition
 
 
 class SendReportForm(forms.Form):
@@ -23,6 +23,13 @@ class SendReportForm(forms.Form):
     )
     export_format = forms.ChoiceField(
         choices=REPORT_FORMAT_CHOICES,
+        widget=forms.Select(attrs={
+            "class": "w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-sm",
+        }),
+    )
+    arrangement = forms.ChoiceField(
+        required=False,
+        choices=[("", "Default arrangement")],
         widget=forms.Select(attrs={
             "class": "w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none text-sm",
         }),
@@ -131,6 +138,12 @@ class SendReportForm(forms.Form):
         self.fields["report_key"].choices = [
             (report.key, report.label) for report in get_available_reports_for_user(self.user)
         ]
+        selected_report_key = None
+        if self.is_bound:
+            selected_report_key = self.data.get("report_key")
+        else:
+            selected_report_key = self.initial.get("report_key")
+        self.fields["arrangement"].choices = get_arrangement_choices(selected_report_key)
 
     def clean_recipients(self):
         raw_value = self.cleaned_data["recipients"]
@@ -157,4 +170,8 @@ class SendReportForm(forms.Form):
         export_format = cleaned_data.get("export_format")
         if export_format and export_format not in report.formats:
             self.add_error("export_format", "This format is not available for the selected report.")
+        arrangement = cleaned_data.get("arrangement")
+        valid_arrangements = {value for value, _label in get_arrangement_choices(report_key)}
+        if arrangement and arrangement not in valid_arrangements:
+            self.add_error("arrangement", "This arrangement is not available for the selected report.")
         return cleaned_data

@@ -40,6 +40,11 @@
                             {{ form.export_format }}
                             {% if form.export_format.errors %}<p class="text-red-600 text-xs mt-1 ml-1">{{ form.export_format.errors.0 }}</p>{% endif %}
                         </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Arrangement</label>
+                            {{ form.arrangement }}
+                            {% if form.arrangement.errors %}<p class="text-red-600 text-xs mt-1 ml-1">{{ form.arrangement.errors.0 }}</p>{% endif %}
+                        </div>
                     </div>
                 </div>
 
@@ -190,6 +195,7 @@
                 <div class="mt-3 space-y-2 text-sm text-emerald-800">
                     <p><span class="font-semibold">Report:</span> {{ sent_summary.report_label }}</p>
                     <p><span class="font-semibold">Format:</span> {{ sent_summary.format }}</p>
+                    <p><span class="font-semibold">Arrangement:</span> {{ sent_summary.arrangement }}</p>
                     <p><span class="font-semibold">Recipients:</span> {{ sent_summary.recipients|join:", " }}</p>
                     <p><span class="font-semibold">Records Included:</span> {{ sent_summary.record_count }}</p>
                 </div>
@@ -206,6 +212,7 @@
         const reportDefinitions = {{ report_definitions_json|safe }};
         const reportSelect = document.getElementById('id_report_key');
         const formatSelect = document.getElementById('id_export_format');
+        const arrangementSelect = document.getElementById('id_arrangement');
         const preview = document.getElementById('filter-preview');
         const filterWrappers = Array.from(document.querySelectorAll('[data-filter-wrapper]'));
 
@@ -228,12 +235,24 @@
                 const firstEnabled = Array.from(formatSelect.options).find((option) => !option.disabled);
                 if (firstEnabled) formatSelect.value = firstEnabled.value;
             }
+
+            const selectedArrangement = arrangementSelect?.value || '';
+            if (arrangementSelect) {
+                const arrangements = definition ? definition.arrangements : [{ value: '', label: 'Default arrangement' }];
+                arrangementSelect.innerHTML = arrangements.map((item) => `<option value="${item.value}">${item.label}</option>`).join('');
+                const matchingArrangement = arrangements.find((item) => item.value === selectedArrangement);
+                arrangementSelect.value = matchingArrangement ? selectedArrangement : '';
+            }
         }
 
         function buildPreview() {
             const definition = getCurrentDefinition();
             const activeFilters = new Set(definition ? definition.filters : []);
             const chips = [];
+            if (arrangementSelect && arrangementSelect.value) {
+                const arrangementLabel = arrangementSelect.options[arrangementSelect.selectedIndex]?.text || arrangementSelect.value;
+                chips.push(`<span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700">Arrangement: ${arrangementLabel}</span>`);
+            }
             filterWrappers.forEach((wrapper) => {
                 if (!activeFilters.has(wrapper.dataset.filterWrapper)) return;
                 const field = wrapper.querySelector('select, input');
@@ -253,6 +272,7 @@
             buildPreview();
         });
         formatSelect?.addEventListener('change', buildPreview);
+        arrangementSelect?.addEventListener('change', buildPreview);
         filterWrappers.forEach((wrapper) => {
             const field = wrapper.querySelector('select, input');
             field?.addEventListener('change', buildPreview);

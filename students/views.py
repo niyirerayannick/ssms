@@ -123,6 +123,21 @@ def student_list(request):
         students = students.filter(school_level=school_level_filter)
 
     summary_queryset = students.distinct()
+    summary_totals = summary_queryset.aggregate(
+        total_students=Count('id', distinct=True),
+        active_sponsorship_count=Count('id', filter=Q(sponsorship_status='active'), distinct=True),
+        pending_sponsorship_count=Count('id', filter=Q(sponsorship_status='pending'), distinct=True),
+        enrolled_count=Count('id', filter=Q(enrollment_status='enrolled'), distinct=True),
+        total_disability_count=Count('id', filter=Q(has_disability=True), distinct=True),
+        district_count=Count(
+            Case(
+                When(partner__district__isnull=False, then='partner__district'),
+                When(family__district__isnull=False, then='family__district'),
+                default=Value(None),
+            ),
+            distinct=True,
+        ),
+    )
     boarding_counts = {
         item['boarding_status']: item['total']
         for item in summary_queryset.values('boarding_status').annotate(total=Count('id'))
@@ -149,6 +164,14 @@ def student_list(request):
         'school_level_choices': Student.SCHOOL_LEVEL_CHOICES,
         'districts': District.objects.order_by('name'),
         'partners': Partner.objects.order_by('name'),
+        'summary': {
+            'total_students': summary_totals['total_students'] or 0,
+            'active_sponsorship_count': summary_totals['active_sponsorship_count'] or 0,
+            'pending_sponsorship_count': summary_totals['pending_sponsorship_count'] or 0,
+            'enrolled_count': summary_totals['enrolled_count'] or 0,
+            'total_disability_count': summary_totals['total_disability_count'] or 0,
+            'district_count': summary_totals['district_count'] or 0,
+        },
         'boarding_count': boarding_counts.get('boarding', 0),
         'non_boarding_count': boarding_counts.get('non_boarding', 0),
         'nursery_count': level_counts.get('nursery', 0),

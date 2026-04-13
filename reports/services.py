@@ -7,7 +7,8 @@ from datetime import date, datetime
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.mail import EmailMessage
-from django.db.models import Prefetch, Q
+from django.db.models import Prefetch, Q, Value, CharField
+from django.db.models.functions import Coalesce
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment
@@ -82,6 +83,32 @@ REPORT_DEFINITIONS = {
     ),
 }
 
+ARRANGEMENT_LABELS = {
+    "default": "Default arrangement",
+    "academic_year": "Academic Year",
+    "age": "Age",
+    "district": "District",
+    "sector": "Sector",
+    "school": "School",
+    "gender": "Gender",
+    "school_level": "Education Level",
+    "sponsorship_status": "Sponsorship Status",
+    "enrollment_status": "Academic Status",
+    "payment_ability": "Payment Ability",
+    "mutuelle_support_status": "Mutuelle Support",
+    "payment_status": "School Fees Status",
+    "coverage_status": "Coverage Status",
+}
+
+REPORT_ARRANGEMENT_FIELDS = {
+    "students": ("age", "district", "sector", "school", "gender", "school_level", "sponsorship_status", "enrollment_status", "payment_ability", "mutuelle_support_status"),
+    "families": ("district", "sector", "payment_ability", "mutuelle_support_status"),
+    "schools": ("district", "sector"),
+    "fees": ("academic_year", "district", "school", "payment_status"),
+    "insurance": ("academic_year", "district", "sector", "coverage_status"),
+    "supported_mutuelle_families": ("district", "sector"),
+}
+
 
 def get_available_reports_for_user(user):
     return [report for report in REPORT_DEFINITIONS.values() if user.has_perm(report.permission)]
@@ -89,6 +116,110 @@ def get_available_reports_for_user(user):
 
 def get_report_definition(report_key):
     return REPORT_DEFINITIONS.get(report_key)
+
+
+def get_arrangement_choices(report_key):
+    options = [("", ARRANGEMENT_LABELS["default"])]
+    for field_name in REPORT_ARRANGEMENT_FIELDS.get(report_key, ()):
+        options.append((field_name, ARRANGEMENT_LABELS.get(field_name, field_name.replace("_", " ").title())))
+    return options
+
+
+def _arrangement_label(arrangement):
+    return ARRANGEMENT_LABELS.get(arrangement, arrangement.replace("_", " ").title())
+
+
+def _apply_report_arrangement(queryset, report_key, arrangement):
+    if not arrangement:
+        return queryset
+
+    if report_key == "students":
+        if arrangement == "age":
+            return queryset.order_by("-date_of_birth", "last_name", "first_name")
+        if arrangement == "district":
+            queryset = queryset.annotate(
+                arrangement_district=Coalesce(
+                    "partner__district__name",
+                    "family__district__name",
+                    "school__district__name",
+                    Value("", output_field=CharField()),
+                )
+            )
+            return queryset.order_by("arrangement_district", "last_name", "first_name")
+        if arrangement == "sector":
+            queryset = queryset.annotate(
+                arrangement_sector=Coalesce(
+                    "partner__sector__name",
+                    "family__sector__name",
+                    "school__sector__name",
+                    Value("", output_field=CharField()),
+                )
+            )
+            return queryset.order_by("arrangement_sector", "last_name", "first_name")
+        if arrangement == "school":
+            queryset = queryset.annotate(
+                arrangement_school=Coalesce(
+                    "school__name",
+                    "school_name",
+                    Value("", output_field=CharField()),
+                )
+            )
+            return queryset.order_by("arrangement_school", "last_name", "first_name")
+        if arrangement == "gender":
+            return queryset.order_by("gender", "last_name", "first_name")
+        if arrangement == "school_level":
+            return queryset.order_by("school_level", "class_level", "last_name", "first_name")
+        if arrangement == "sponsorship_status":
+            return queryset.order_by("sponsorship_status", "last_name", "first_name")
+        if arrangement == "enrollment_status":
+            return queryset.order_by("enrollment_status", "last_name", "first_name")
+        if arrangement == "payment_ability":
+            return queryset.order_by("family__payment_ability", "last_name", "first_name")
+        if arrangement == "mutuelle_support_status":
+            return queryset.order_by("family__mutuelle_support_status", "last_name", "first_name")
+        return queryset.order_by("last_name", "first_name")
+
+    if report_key in {"families", "supported_mutuelle_families"}:
+        if arrangement == "district":
+            return queryset.order_by("district__name", "head_of_family")
+        if arrangement == "sector":
+            return queryset.order_by("sector__name", "head_of_family")
+        if arrangement == "payment_ability":
+            return queryset.order_by("payment_ability", "head_of_family")
+        if arrangement == "mutuelle_support_status":
+            return queryset.order_by("mutuelle_support_status", "head_of_family")
+        return queryset.order_by("head_of_family")
+
+    if report_key == "schools":
+        if arrangement == "district":
+            return queryset.order_by("district__name", "name")
+        if arrangement == "sector":
+            return queryset.order_by("sector__name", "name")
+        return queryset.order_by("name")
+
+    if report_key == "fees":
+        if arrangement == "academic_year":
+            return queryset.order_by("academic_year__name", "student__last_name", "student__first_name", "term")
+        if arrangement == "district":
+            return queryset.order_by("student__family__district__name", "student__last_name", "student__first_name", "term")
+        if arrangement == "school":
+            return queryset.order_by("student__school__name", "student__last_name", "student__first_name", "term")
+        if arrangement == "payment_status":
+            return queryset.order_by("payment_status", "student__last_name", "student__first_name", "term")
+        return queryset.order_by("student__last_name", "student__first_name", "term")
+
+    if report_key == "insurance":
+        if arrangement == "academic_year":
+            return queryset.order_by("insurance_year__name", "family__head_of_family")
+        if arrangement == "district":
+            return queryset.order_by("family__district__name", "family__head_of_family", "insurance_year__name")
+        if arrangement == "sector":
+            return queryset.order_by("family__sector__name", "family__head_of_family", "insurance_year__name")
+        if arrangement == "coverage_status":
+            return queryset.order_by("coverage_status", "family__head_of_family", "insurance_year__name")
+        return queryset.order_by("family__head_of_family", "insurance_year__name")
+
+    return queryset
 
 
 def ensure_report_permission(user, report_key):
@@ -239,7 +370,10 @@ def _student_queryset(cleaned_data):
             f"Age {age_from if age_from is not None else 0} to {age_to if age_to is not None else 'above'}"
         )
 
-    return students.distinct().order_by("last_name", "first_name"), " - ".join(subtitle_parts)
+    students = students.distinct()
+    arrangement = cleaned_data.get("arrangement")
+    students = _apply_report_arrangement(students, "students", arrangement)
+    return students, " - ".join(subtitle_parts)
 
 
 def _families_queryset(cleaned_data, supported_only=False):
@@ -265,7 +399,9 @@ def _families_queryset(cleaned_data, supported_only=False):
         if cleaned_data.get("mutuelle_support_status"):
             families = families.filter(mutuelle_support_status=cleaned_data["mutuelle_support_status"])
 
-    return families.order_by("head_of_family"), " - ".join(subtitle_parts)
+    arrangement = cleaned_data.get("arrangement")
+    families = _apply_report_arrangement(families, "supported_mutuelle_families" if supported_only else "families", arrangement)
+    return families, " - ".join(subtitle_parts)
 
 
 def _schools_queryset(cleaned_data):
@@ -277,7 +413,9 @@ def _schools_queryset(cleaned_data):
     if cleaned_data.get("sector"):
         schools = schools.filter(sector=cleaned_data["sector"])
         subtitle_parts.append(cleaned_data["sector"].name)
-    return schools.order_by("name"), " - ".join(subtitle_parts)
+    arrangement = cleaned_data.get("arrangement")
+    schools = _apply_report_arrangement(schools, "schools", arrangement)
+    return schools, " - ".join(subtitle_parts)
 
 
 def _fees_queryset(cleaned_data):
@@ -294,7 +432,9 @@ def _fees_queryset(cleaned_data):
         subtitle_parts.append(cleaned_data["school"].name)
     if cleaned_data.get("payment_status"):
         fees = fees.filter(payment_status=cleaned_data["payment_status"])
-    return fees.order_by("student__last_name", "student__first_name", "term"), " - ".join(subtitle_parts)
+    arrangement = cleaned_data.get("arrangement")
+    fees = _apply_report_arrangement(fees, "fees", arrangement)
+    return fees, " - ".join(subtitle_parts)
 
 
 def _insurance_queryset(cleaned_data):
@@ -311,7 +451,9 @@ def _insurance_queryset(cleaned_data):
         subtitle_parts.append(cleaned_data["sector"].name)
     if cleaned_data.get("coverage_status"):
         records = records.filter(coverage_status=cleaned_data["coverage_status"])
-    return records.order_by("family__head_of_family", "insurance_year__name"), " - ".join(subtitle_parts)
+    arrangement = cleaned_data.get("arrangement")
+    records = _apply_report_arrangement(records, "insurance", arrangement)
+    return records, " - ".join(subtitle_parts)
 
 
 def _build_students_pdf(queryset, subtitle):
@@ -502,6 +644,7 @@ def _build_insurance_excel(queryset, subtitle):
 def generate_report_attachment(report_key, export_format, cleaned_data):
     report = get_report_definition(report_key)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    arrangement = cleaned_data.get("arrangement")
 
     if report_key == "students":
         queryset, subtitle = _student_queryset(cleaned_data)
@@ -529,6 +672,9 @@ def generate_report_attachment(report_key, export_format, cleaned_data):
         filename = f"supported_mutuelle_families_{timestamp}.{'pdf' if export_format == 'pdf' else 'xlsx'}"
     else:
         raise ValueError("Unsupported report type selected.")
+
+    if arrangement:
+        subtitle = f"{subtitle} - Arranged by {_arrangement_label(arrangement)}"
 
     return {
         "filename": filename,
@@ -559,6 +705,7 @@ def build_filter_preview(report_key, cleaned_data):
         "payment_status": "School Fees Status",
         "age_from": "Age From",
         "age_to": "Age To",
+        "arrangement": "Arrangement",
     }
     choices_lookup = {
         "gender": dict(Student.GENDER_CHOICES),
@@ -571,6 +718,12 @@ def build_filter_preview(report_key, cleaned_data):
         "coverage_status": dict(FamilyInsurance.COVERAGE_STATUS_CHOICES),
     }
     preview = []
+    arrangement = cleaned_data.get("arrangement")
+    if arrangement:
+        preview.append({
+            "label": labels["arrangement"],
+            "value": _arrangement_label(arrangement),
+        })
     for field_name in report.filters:
         value = cleaned_data.get(field_name)
         if value in (None, "", []):

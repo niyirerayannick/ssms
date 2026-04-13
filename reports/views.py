@@ -41,6 +41,7 @@ from .services import (
     build_filter_preview,
     ensure_report_permission,
     generate_report_attachment,
+    get_arrangement_choices,
     get_available_reports_for_user,
     send_report_email,
 )
@@ -55,6 +56,10 @@ def _build_send_report_context(*, request, form, available_reports, sent_summary
             "label": report.label,
             "filters": list(report.filters),
             "formats": list(report.formats),
+            "arrangements": [
+                {"value": value, "label": label}
+                for value, label in get_arrangement_choices(report.key)
+            ],
         }
         for report in available_reports
     }
@@ -1111,6 +1116,10 @@ def send_report(request):
                 sent_summary = {
                     "report_label": report_label,
                     "format": form.cleaned_data["export_format"].upper(),
+                    "arrangement": dict(form.fields["arrangement"].choices).get(
+                        form.cleaned_data.get("arrangement", ""),
+                        "Default arrangement",
+                    ),
                     "recipients": form.cleaned_data["recipients"],
                     "record_count": attachment["record_count"],
                 }
@@ -1121,6 +1130,7 @@ def send_report(request):
                 form = SendReportForm(user=request.user, initial={
                     "report_key": report_key,
                     "export_format": form.cleaned_data["export_format"],
+                    "arrangement": form.cleaned_data.get("arrangement", ""),
                     "subject": subject,
                     "message": form.cleaned_data["message"],
                 })
