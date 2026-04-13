@@ -81,9 +81,10 @@ from students.services.promotion import promote_students_to_academic_year
 @permission_required('students.view_student', raise_exception=True)
 def student_list(request):
     """List all students with search and filters."""
-    students = Student.objects.select_related(
+    base_students = Student.objects.select_related(
         'school', 'family__district', 'partner__district'
     ).all()
+    students = base_students
     
     # Search functionality
     search_query = request.GET.get('search', '')
@@ -123,6 +124,7 @@ def student_list(request):
         students = students.filter(school_level=school_level_filter)
 
     summary_queryset = students.distinct()
+    kpi_queryset = base_students.order_by()
     summary_totals = summary_queryset.aggregate(
         total_students=Count('id', distinct=True),
         active_sponsorship_count=Count('id', filter=Q(sponsorship_status='active'), distinct=True),
@@ -140,11 +142,11 @@ def student_list(request):
     )
     boarding_counts = {
         item['boarding_status']: item['total']
-        for item in summary_queryset.values('boarding_status').annotate(total=Count('id'))
+        for item in kpi_queryset.values('boarding_status').annotate(total=Count('id'))
     }
     level_counts = {
         item['school_level']: item['total']
-        for item in summary_queryset.values('school_level').annotate(total=Count('id'))
+        for item in kpi_queryset.values('school_level').annotate(total=Count('id'))
     }
     
     # Pagination
