@@ -37,31 +37,41 @@
         </div>
     </div>
     
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Students</p>
-            <p class="text-3xl font-black text-slate-900 mt-1">{{ summary.total_students }}</p>
-            <p class="text-xs text-slate-500 mt-1">Filtered view count</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Boarding</p>
+            <p class="text-3xl font-black text-slate-900 mt-1">{{ boarding_count }}</p>
+            <p class="text-xs text-slate-500 mt-1">Students in boarding</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-5">
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Active Sponsorship</p>
-            <p class="text-3xl font-black text-blue-700 mt-1">{{ summary.active_sponsorship_count }}</p>
-            <p class="text-xs text-slate-500 mt-1">Students currently supported</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Non-Boarding</p>
+            <p class="text-3xl font-black text-blue-700 mt-1">{{ non_boarding_count }}</p>
+            <p class="text-xs text-slate-500 mt-1">Students in day school</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm border border-amber-100 p-5">
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pending Sponsorship</p>
-            <p class="text-3xl font-black text-amber-700 mt-1">{{ summary.pending_sponsorship_count }}</p>
-            <p class="text-xs text-slate-500 mt-1">Awaiting sponsorship action</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nursery</p>
+            <p class="text-3xl font-black text-amber-700 mt-1">{{ nursery_count }}</p>
+            <p class="text-xs text-slate-500 mt-1">Learners in nursery</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 p-5">
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Enrolled Students</p>
-            <p class="text-3xl font-black text-emerald-700 mt-1">{{ summary.enrolled_count }}</p>
-            <p class="text-xs text-slate-500 mt-1">Active academic enrollments</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">University</p>
+            <p class="text-3xl font-black text-emerald-700 mt-1">{{ university_count }}</p>
+            <p class="text-xs text-slate-500 mt-1">Students at university</p>
         </div>
         <div class="bg-white rounded-2xl shadow-sm border border-indigo-100 p-5">
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Districts Covered</p>
-            <p class="text-3xl font-black text-indigo-700 mt-1">{{ summary.district_count }}</p>
-            <p class="text-xs text-slate-500 mt-1">Distinct districts in results</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Primary</p>
+            <p class="text-3xl font-black text-indigo-700 mt-1">{{ primary_count }}</p>
+            <p class="text-xs text-slate-500 mt-1">Learners in primary</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Secondary</p>
+            <p class="text-3xl font-black text-slate-900 mt-1">{{ secondary_count }}</p>
+            <p class="text-xs text-slate-500 mt-1">Learners in secondary</p>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-5">
+            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">TVET</p>
+            <p class="text-3xl font-black text-blue-700 mt-1">{{ tvet_count }}</p>
+            <p class="text-xs text-slate-500 mt-1">Students in TVET</p>
         </div>
     </div>
 
