@@ -167,6 +167,33 @@ class SchoolFeeDomainTests(TestCase):
                 idempotency_key='payment-2',
             )
 
+    def test_payment_service_handles_fee_without_nullable_relations_loaded(self):
+        fee = SchoolFee.objects.create(
+            student=self.student,
+            academic_year=self.year_2024,
+            term='3',
+            total_fees=Decimal('700.00'),
+            school=None,
+            enrollment_history=None,
+            recorded_by=self.user,
+        )
+
+        payment, created = record_school_fee_payment(
+            fee=fee,
+            amount_paid=Decimal('200.00'),
+            payment_date=self.year_2024.created_at.date(),
+            payment_method='bank',
+            reference_number='NULL-JOIN-1',
+            recorded_by=self.user,
+            idempotency_key='null-join-1',
+        )
+
+        fee.refresh_from_db()
+        self.assertTrue(created)
+        self.assertEqual(payment.school_fee_id, fee.id)
+        self.assertEqual(fee.amount_paid, Decimal('200.00'))
+        self.assertEqual(fee.balance, Decimal('500.00'))
+
     def test_queue_reconciles_after_payment(self):
         fee = self._create_fee(self.enrollment_2024, term='2', total='1000.00')
         record_school_fee_payment(

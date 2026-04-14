@@ -289,7 +289,6 @@ def record_school_fee_payment(
 
     locked_fee = (
         SchoolFee.objects.select_for_update()
-        .select_related('student', 'academic_year', 'school', 'enrollment_history')
         .get(pk=fee.pk)
     )
 
