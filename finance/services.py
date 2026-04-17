@@ -107,6 +107,10 @@ def filter_school_fee_queryset(queryset, *, params):
             Q(school__district_id=district_filter)
         )
 
+    partner_filter = (params.get('partner') or '').strip()
+    if partner_filter:
+        queryset = queryset.filter(student__partner_id=partner_filter)
+
     school_filter = (params.get('school') or '').strip()
     if school_filter:
         queryset = queryset.filter(school_id=school_filter)
@@ -117,6 +121,7 @@ def filter_school_fee_queryset(queryset, *, params):
         'academic_year_filter': academic_year_filter,
         'term_filter': term_filter,
         'district_filter': district_filter,
+        'partner_filter': partner_filter,
         'school_filter': school_filter,
     }
 

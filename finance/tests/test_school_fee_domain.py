@@ -1,3 +1,4 @@
+from io import BytesIO
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -5,8 +6,9 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import Client, TestCase
 from django.urls import reverse
+from openpyxl import load_workbook
 
-from core.models import AcademicYear, District, Province, School
+from core.models import AcademicYear, District, Partner, Province, School
 from families.models import Family
 from finance.models import SchoolFee, SchoolFeeDisbursement, SchoolFeePayment
 from finance.services import get_or_create_school_fee_for_enrollment, record_school_fee_payment
@@ -28,6 +30,8 @@ class SchoolFeeDomainTests(TestCase):
         self.district_b = District.objects.create(name='Kicukiro', province=self.province)
         self.year_2024 = AcademicYear.objects.create(name='2024-2025', is_active=False)
         self.year_2025 = AcademicYear.objects.create(name='2025-2026', is_active=True)
+        self.partner_a = Partner.objects.create(name='Partner A', district=self.district_a)
+        self.partner_b = Partner.objects.create(name='Partner B', district=self.district_b)
 
         self.school_a = School.objects.create(
             name='Alpha Primary',
@@ -57,6 +61,7 @@ class SchoolFeeDomainTests(TestCase):
 
         self.student = Student.objects.create(
             family=self.family,
+            partner=self.partner_a,
             first_name='Aline',
             last_name='Uwase',
             gender='F',
@@ -246,6 +251,7 @@ class SchoolFeeDomainTests(TestCase):
     def test_filters_are_consistent_across_fee_pages(self):
         other_student = Student.objects.create(
             family=self.family,
+            partner=self.partner_b,
             first_name='Brian',
             last_name='Mugisha',
             gender='M',
@@ -287,6 +293,66 @@ class SchoolFeeDomainTests(TestCase):
         self.assertEqual(fee_students, ['Aline Uwase'])
         self.assertEqual(queue_students, ['Aline Uwase'])
         self.assertEqual(dashboard_schools, ['Alpha Primary'])
+
+    def test_disbursement_export_groups_pending_payments_by_school_with_partner_filter(self):
+        fee_alpha = self._create_fee(self.enrollment_2024, term='1', total='1200.00')
+
+        other_student = Student.objects.create(
+            family=self.family,
+            partner=self.partner_b,
+            first_name='Brian',
+            last_name='Mugisha',
+            gender='M',
+            date_of_birth='2011-02-02',
+            school=self.school_b,
+            school_name=self.school_b.name,
+            class_level='Senior 2',
+            school_level='secondary',
+            enrollment_status='enrolled',
+            sponsorship_status='active',
+            is_active=True,
+        )
+        other_enrollment = StudentEnrollmentHistory.objects.create(
+            student=other_student,
+            academic_year=self.year_2024,
+            school=self.school_b,
+            school_name=self.school_b.name,
+            class_level='Senior 2',
+            school_level='secondary',
+        )
+        fee_beta, _created = get_or_create_school_fee_for_enrollment(
+            other_enrollment,
+            '1',
+            total_fees=Decimal('2400.00'),
+            actor=self.user,
+        )
+        fee_beta.save()
+
+        response = self.client.get(
+            reverse('finance:export_fee_disbursement_excel'),
+            {
+                'academic_year': self.year_2024.id,
+                'term': '1',
+                'partner': self.partner_a.id,
+                'school': self.school_a.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('pending_school_fee_payments_by_school.xlsx', response['Content-Disposition'])
+
+        workbook = load_workbook(BytesIO(response.content))
+        worksheet = workbook.active
+        rows = list(worksheet.iter_rows(values_only=True))
+        flattened = ' | '.join(str(value) for row in rows for value in row if value is not None)
+
+        self.assertIn(f'School: {self.school_a.name}', flattened)
+        self.assertIn(f'Bank: {self.school_a.bank_name}', flattened)
+        self.assertIn('Aline Uwase', flattened)
+        self.assertIn('Partner A', flattened)
+        self.assertNotIn('Brian Mugisha', flattened)
+        self.assertNotIn(fee_beta.school_name, flattened)
+        self.assertEqual(fee_alpha.school_name, self.school_a.name)
 
     def test_reconciliation_uses_explicit_scope_not_ui_filters(self):
         fee_alpha = self._create_fee(self.enrollment_2024, term='1')

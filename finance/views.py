@@ -14,7 +14,7 @@ from django.forms import formset_factory
 from django.urls import reverse
 from django.utils import timezone
 from core.activity import set_audit_context
-from core.models import District, AcademicYear, School
+from core.models import District, AcademicYear, Partner, School
 from core.export_utils import (
     ExportNumberedCanvas,
     add_export_header,
@@ -114,9 +114,17 @@ def _get_disbursement_labels(filters):
         AcademicYear.objects.filter(id=filters.get('academic_year_filter')).values_list('name', flat=True).first()
         if filters.get('academic_year_filter') else 'All Years'
     )
+    term_label = (
+        dict(SchoolFee.TERM_CHOICES).get(filters.get('term_filter'), filters.get('term_filter'))
+        if filters.get('term_filter') else 'All Terms'
+    )
     district_label = (
         District.objects.filter(id=filters.get('district_filter')).values_list('name', flat=True).first()
         if filters.get('district_filter') else 'All Districts'
+    )
+    partner_label = (
+        Partner.objects.filter(id=filters.get('partner_filter')).values_list('name', flat=True).first()
+        if filters.get('partner_filter') else 'All Partners'
     )
     school_label = (
         School.objects.filter(id=filters.get('school_filter')).values_list('name', flat=True).first()
@@ -124,9 +132,52 @@ def _get_disbursement_labels(filters):
     )
     return {
         'academic_year_label': academic_year_label or 'All Years',
+        'term_label': term_label or 'All Terms',
         'district_label': district_label or 'All Districts',
+        'partner_label': partner_label or 'All Partners',
         'school_label': school_label or 'All Schools',
     }
+
+
+def _get_fee_district_name(fee):
+    student = fee.student
+    if student and student.partner and student.partner.district:
+        return student.partner.district.name
+    if student and student.family and student.family.district:
+        return student.family.district.name
+    if fee.school and fee.school.district:
+        return fee.school.district.name
+    return 'N/A'
+
+
+def _group_disbursements_by_school(disbursements):
+    grouped = OrderedDict()
+    for fee in disbursements:
+        school = fee.school
+        school_name = school.name if school else (fee.school_name or 'Unassigned School')
+        key = ('school', school.id) if school else ('external', school_name.lower())
+        entry = grouped.setdefault(key, {
+            'school_name': school_name,
+            'district_name': _get_fee_district_name(fee),
+            'bank_name': fee.bank_name or 'N/A',
+            'bank_account_name': fee.bank_account_name or 'N/A',
+            'bank_account_number': normalize_identifier_value(fee.bank_account_number, 'N/A'),
+            'student_count': 0,
+            'total_amount': Decimal('0'),
+            'students': [],
+        })
+        entry['students'].append({
+            'student_name': fee.student.full_name if fee.student else 'N/A',
+            'class_level': fee.class_level or 'N/A',
+            'academic_year': fee.academic_year.name if fee.academic_year else 'N/A',
+            'term': fee.get_term_display(),
+            'partner_name': fee.student.partner.name if fee.student and fee.student.partner else 'N/A',
+            'amount_to_pay': fee.balance,
+        })
+        entry['student_count'] += 1
+        entry['total_amount'] += fee.balance
+
+    return list(grouped.values())
 
 
 @login_required
@@ -249,6 +300,7 @@ def fee_disbursement_queue(request):
         'reconciliation_form': reconciliation_form,
         'districts': District.objects.order_by('name'),
         'academic_years': AcademicYear.objects.order_by('-name'),
+        'partners': Partner.objects.order_by('name'),
         'schools': School.objects.order_by('name'),
         **totals,
         **labels,
@@ -327,73 +379,73 @@ def export_fee_disbursement_excel(request):
 
     subtitle = (
         f"Academic Year: {labels['academic_year_label']} | "
+        f"Term: {labels['term_label']} | "
         f"District: {labels['district_label']} | "
+        f"Partner: {labels['partner_label']} | "
         f"School: {labels['school_label']}"
     )
-    headers = [
-        'No.',
-        'Student Name',
-        'Academic Year',
-        'School Term',
-        'District',
-        'School',
-        'Class Level',
-        'Bank Name',
-        'Bank Account Name',
-        'Bank Account Number',
-        'Amount To Pay',
-        'Status',
-    ]
-    header_row = write_excel_report_header(worksheet, 'School Fee Disbursement Queue', subtitle, len(headers))
-    worksheet.append(headers)
-    style_excel_header(worksheet, header_row)
+    headers = ['No.', 'Student Name', 'Class Level', 'Academic Year', 'Term', 'Partner', 'Amount To Pay']
+    school_groups = _group_disbursements_by_school(disbursements)
+    header_row = write_excel_report_header(worksheet, 'Pending School Fee Payments By School', subtitle, len(headers))
 
-    data_start_row = header_row + 1
-    for index, fee in enumerate(disbursements, start=1):
-        student = fee.student
-        district_name = student.partner.district.name if student and student.partner and student.partner.district else (
-            student.family.district.name if student and student.family and student.family.district else (
-                fee.school.district.name if fee.school and fee.school.district else 'N/A'
-            )
-        )
+    current_row = header_row + 1
+    for group in school_groups:
+        worksheet.append([f"School: {group['school_name']}"])
+        worksheet.merge_cells(start_row=current_row, start_column=1, end_row=current_row, end_column=len(headers))
+        school_cell = worksheet.cell(row=current_row, column=1)
+        school_cell.font = Font(bold=True, size=12, color='1E293B')
+        school_cell.fill = PatternFill(fill_type='solid', fgColor='E2E8F0')
+        current_row += 1
+
         worksheet.append([
-            index,
-            student.full_name if student else 'N/A',
-            fee.academic_year.name if fee.academic_year else 'N/A',
-            fee.get_term_display(),
-            district_name,
-            fee.school_name or 'N/A',
-            fee.class_level or 'N/A',
-            fee.bank_name or 'N/A',
-            fee.bank_account_name or 'N/A',
-            normalize_identifier_value(fee.bank_account_number, 'N/A'),
-            float(fee.balance),
-            fee.get_payment_status_display(),
+            f"District: {group['district_name']}",
+            f"Bank: {group['bank_name']}",
+            f"Account Name: {group['bank_account_name']}",
+            f"Account Number: {group['bank_account_number']}",
+            '',
+            '',
+            f"School Total: {float(group['total_amount'])}",
         ])
+        current_row += 1
+
+        worksheet.append(headers)
+        style_excel_header(worksheet, current_row)
+        current_row += 1
+
+        for index, student in enumerate(group['students'], start=1):
+            worksheet.append([
+                index,
+                student['student_name'],
+                student['class_level'],
+                student['academic_year'],
+                student['term'],
+                student['partner_name'],
+                float(student['amount_to_pay']),
+            ])
+            current_row += 1
+
+        worksheet.append(['', 'School Total', '', '', '', '', float(group['total_amount'])])
+        total_row = current_row
+        for column in range(1, len(headers) + 1):
+            worksheet.cell(row=total_row, column=column).font = Font(bold=True)
+            worksheet.cell(row=total_row, column=column).fill = PatternFill(fill_type='solid', fgColor='FEF3C7')
+        current_row += 1
+        worksheet.append([])
+        current_row += 1
 
     try:
         autosize_worksheet_columns(worksheet, max_width=32)
     except AttributeError:
         pass
 
-    worksheet.append([])
     worksheet.append(['TOTAL RECORDS', totals['listed_count']])
     worksheet.append(['TOTAL AMOUNT TO PAY', float(totals['total_amount_to_pay'])])
     worksheet.append(['UNPAID RECORDS', totals['pending_count']])
-    style_excel_table_rows(
-        worksheet,
-        header_row_idx=header_row,
-        data_start_row=data_start_row,
-        data_end_row=data_start_row + max(disbursements.count(), 0) - 1 if hasattr(disbursements, 'count') else worksheet.max_row,
-        max_col=len(headers),
-        centered_columns=[1, 3, 4, 12],
-        right_aligned_columns=[11],
-    )
 
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = 'attachment; filename="school_fee_disbursement_queue.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="pending_school_fee_payments_by_school.xlsx"'
     workbook.save(response)
     return response
 
@@ -409,11 +461,11 @@ def export_fee_disbursement_pdf(request):
     labels = _get_disbursement_labels(filters)
 
     buffer = HttpResponse(content_type='application/pdf')
-    buffer['Content-Disposition'] = 'attachment; filename="school_fee_disbursement_queue.pdf"'
+    buffer['Content-Disposition'] = 'attachment; filename="pending_school_fee_payments_by_school.pdf"'
 
     doc = build_export_pdf_document(
         buffer,
-        'School Fee Disbursement Queue',
+        'Pending School Fee Payments By School',
         pagesize=landscape(A4),
         left_margin=20,
         right_margin=20,
@@ -437,10 +489,12 @@ def export_fee_disbursement_pdf(request):
     elements = []
     add_export_header(
         elements,
-        'School Fee Disbursement Queue',
+        'Pending School Fee Payments By School',
         (
             f"Academic Year: {labels['academic_year_label']} | "
+            f"Term: {labels['term_label']} | "
             f"District: {labels['district_label']} | "
+            f"Partner: {labels['partner_label']} | "
             f"School: {labels['school_label']}"
         ),
         generated_label=f"Generated on: {timezone.now().strftime('%B %d, %Y at %I:%M %p')}",
@@ -465,64 +519,90 @@ def export_fee_disbursement_pdf(request):
     elements.append(summary_table)
     elements.append(Spacer(1, 12))
 
-    table_data = [[
-        'No.',
-        'Student',
-        'District',
-        'Academic Year',
-        'School Term',
-        'School',
-        'Bank',
-        'Account Name',
-        'Account Number',
-        'Amount To Pay',
-    ]]
-    for index, fee in enumerate(disbursements, start=1):
-        student = fee.student
-        district_name = student.partner.district.name if student and student.partner and student.partner.district else (
-            student.family.district.name if student and student.family and student.family.district else (
-                fee.school.district.name if fee.school and fee.school.district else 'N/A'
-            )
-        )
-        table_data.append([
-            Paragraph(str(index), cell_style),
-            Paragraph(student.full_name if student else 'N/A', cell_style),
-            Paragraph(district_name, cell_style),
-            Paragraph(fee.academic_year.name if fee.academic_year else 'N/A', cell_style),
-            Paragraph(fee.get_term_display(), cell_style),
-            Paragraph(fee.school_name or 'N/A', cell_style),
-            Paragraph(fee.bank_name or 'N/A', cell_style),
-            Paragraph(fee.bank_account_name or 'N/A', cell_style),
-            Paragraph(normalize_identifier_value(fee.bank_account_number, 'N/A'), cell_style),
-            Paragraph(format_money(fee.balance), amount_style),
-        ])
-
-    table_data.append([
-        '',
-        Paragraph('TOTAL', amount_style),
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        Paragraph(format_money(totals['total_amount_to_pay']), amount_style),
-    ])
-    table = build_export_table(
-        table_data,
-        col_widths=[24, 96, 58, 64, 52, 102, 60, 88, 80, 64],
-        body_font_size=6.5,
-        centered_columns=[0],
-        right_aligned_columns=[9],
-        total_row_indexes=[len(table_data) - 1],
+    school_groups = _group_disbursements_by_school(disbursements)
+    school_header_style = ParagraphStyle(
+        'SchoolHeader',
+        parent=styles['Heading4'],
+        fontSize=11,
+        leading=13,
+        textColor=colors.HexColor('#0f172a'),
+        spaceAfter=6,
     )
-    table.setStyle(TableStyle([
-        ('TEXTCOLOR', (9, -1), (9, -1), colors.HexColor('#b45309')),
-        ('LEFTPADDING', (0, 0), (-1, -1), 4),
-        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+
+    for group in school_groups:
+        elements.append(Paragraph(group['school_name'], school_header_style))
+        elements.append(Paragraph(
+            (
+                f"District: {group['district_name']}<br/>"
+                f"Bank: {group['bank_name']}<br/>"
+                f"Account Name: {group['bank_account_name']}<br/>"
+                f"Account Number: {group['bank_account_number']}<br/>"
+                f"Students: {group['student_count']} | School Total: FRW {format_money(group['total_amount'])}"
+            ),
+            cell_style,
+        ))
+        elements.append(Spacer(1, 6))
+
+        table_data = [[
+            'No.',
+            'Student',
+            'Class',
+            'Academic Year',
+            'Term',
+            'Partner',
+            'Amount To Pay',
+        ]]
+        for index, student in enumerate(group['students'], start=1):
+            table_data.append([
+                Paragraph(str(index), cell_style),
+                Paragraph(student['student_name'], cell_style),
+                Paragraph(student['class_level'], cell_style),
+                Paragraph(student['academic_year'], cell_style),
+                Paragraph(student['term'], cell_style),
+                Paragraph(student['partner_name'], cell_style),
+                Paragraph(format_money(student['amount_to_pay']), amount_style),
+            ])
+
+        table_data.append([
+            '',
+            Paragraph('School Total', amount_style),
+            '',
+            '',
+            '',
+            '',
+            Paragraph(format_money(group['total_amount']), amount_style),
+        ])
+        table = build_export_table(
+            table_data,
+            col_widths=[24, 120, 60, 68, 46, 110, 72],
+            body_font_size=7,
+            centered_columns=[0],
+            right_aligned_columns=[6],
+            total_row_indexes=[len(table_data) - 1],
+        )
+        table.setStyle(TableStyle([
+            ('TEXTCOLOR', (6, -1), (6, -1), colors.HexColor('#b45309')),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        elements.append(table)
+        elements.append(Spacer(1, 14))
+
+    overall_total = Table([
+        ['Overall Pending Amount', f"FRW {format_money(totals['total_amount_to_pay'])}"]
+    ], colWidths=[170, 120])
+    overall_total.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#FEF3C7')),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('TEXTCOLOR', (1, 0), (1, 0), colors.HexColor('#b45309')),
+        ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#D97706')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#F59E0B')),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
     ]))
-    elements.append(table)
+    elements.append(overall_total)
     elements.append(Spacer(1, 24))
 
     signature_table = Table([

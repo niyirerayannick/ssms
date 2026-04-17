@@ -22,7 +22,7 @@
                 </a>
                 <a href="{% url 'finance:export_fee_disbursement_excel' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" class="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all shadow-md active:scale-95 text-sm">
                     <span class="material-symbols-rounded text-[18px]">download</span>
-                    Export For Finance
+                    Export By School
                 </a>
             </div>
         </div>
@@ -52,8 +52,8 @@
     </div>
 
     <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200/60">
-        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-            <div class="sm:col-span-2 lg:col-span-1">
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 gap-4">
+            <div class="sm:col-span-2 lg:col-span-2">
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Search</label>
                 <input type="text" name="search" value="{{ search_query }}" placeholder="Student, school, or account..." class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm">
             </div>
@@ -67,6 +67,15 @@
                 </select>
             </div>
             <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Partner</label>
+                <select name="partner" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm">
+                    <option value="">All Partners</option>
+                    {% for partner in partners %}
+                    <option value="{{ partner.id }}" {% if partner_filter|add:""|stringformat:"s" == partner.id|stringformat:"s" %}selected{% endif %}>{{ partner.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Academic Year</label>
                 <select name="academic_year" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm">
                     <option value="">All Years</option>
@@ -76,12 +85,21 @@
                 </select>
             </div>
             <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Queue Status</label>
-                <select name="status" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm">
-                    <option value="">All Statuses</option>
-                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
-                    <option value="exported" {% if status_filter == 'exported' %}selected{% endif %}>Exported</option>
-                    <option value="paid" {% if status_filter == 'paid' %}selected{% endif %}>Paid</option>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">Term</label>
+                <select name="term" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm">
+                    <option value="">All Terms</option>
+                    <option value="1" {% if term_filter == '1' %}selected{% endif %}>Term 1</option>
+                    <option value="2" {% if term_filter == '2' %}selected{% endif %}>Term 2</option>
+                    <option value="3" {% if term_filter == '3' %}selected{% endif %}>Term 3</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1 ml-1">School</label>
+                <select name="school" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50/50 focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm">
+                    <option value="">All Schools</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}" {% if school_filter|add:""|stringformat:"s" == school.id|stringformat:"s" %}selected{% endif %}>{{ school.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="flex items-end gap-3 lg:col-span-2">

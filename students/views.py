@@ -1691,7 +1691,7 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
             return self._performance_qs
 
         filters = self.get_filters()
-        queryset = Student.objects.select_related('school').filter(academic_records__isnull=False)
+        queryset = Student.objects.select_related('school')
         mark_filter = Q()
 
         if filters['class_level']:
@@ -1704,11 +1704,9 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
                 )
 
         if filters['academic_year']:
-            queryset = queryset.filter(academic_records__academic_year_id=filters['academic_year'])
             mark_filter &= Q(academic_records__academic_year_id=filters['academic_year'])
 
         if filters['term']:
-            queryset = queryset.filter(academic_records__term=filters['term'])
             mark_filter &= Q(academic_records__term=filters['term'])
 
         mark_filter = mark_filter if mark_filter.children else Q()
@@ -1807,11 +1805,11 @@ class StudentPerformanceListView(LoginRequiredMixin, PermissionRequiredMixin, Li
         trend_labels, trend_values = self.get_trend_data()
 
         available_classes = (
-            StudentMark.objects.values_list('student__class_level', flat=True)
-            .exclude(student__class_level__isnull=True)
-            .exclude(student__class_level__exact='')
+            Student.objects.values_list('class_level', flat=True)
+            .exclude(class_level__isnull=True)
+            .exclude(class_level__exact='')
             .distinct()
-            .order_by('student__class_level')
+            .order_by('class_level')
         )
 
         status_options = [
