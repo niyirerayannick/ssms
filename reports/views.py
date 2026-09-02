@@ -280,6 +280,16 @@ def _student_sector_label(student):
     return 'N/A'
 
 
+def _student_district_label(student):
+    if student.partner and student.partner.district:
+        return student.partner.district.name
+    if student.family and student.family.district:
+        return student.family.district.name
+    if student.school and student.school.district:
+        return student.school.district.name
+    return 'Unknown District'
+
+
 def _student_mutuelle_support_label(student):
     if student.family:
         return student.family.get_mutuelle_support_status_display()
@@ -1209,6 +1219,33 @@ def reports_index(request):
         'age_options': range(1, 31),
     }
     return render(request, 'reports/index.html', context)
+
+
+@login_required
+@permission_required('students.view_student', raise_exception=True)
+def boarding_students_by_district(request):
+    """Show all boarding students grouped by their district."""
+    students = Student.objects.filter(
+        boarding_status='boarding'
+    ).select_related(
+        'family__district',
+        'partner__district',
+        'school__district',
+    ).order_by('last_name', 'first_name')
+
+    districts = {}
+    for student in students:
+        districts.setdefault(_student_district_label(student), []).append(student)
+
+    district_groups = [
+        {'name': name, 'students': group, 'count': len(group)}
+        for name, group in sorted(districts.items(), key=lambda item: item[0].lower())
+    ]
+
+    return render(request, 'reports/boarding_students_by_district.html', {
+        'district_groups': district_groups,
+        'total_boarding_students': students.count(),
+    })
 
 
 @login_required

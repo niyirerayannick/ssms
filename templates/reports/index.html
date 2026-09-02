@@ -212,6 +212,34 @@
                     </a>
                 </div>
             </div>
+
+            <!-- Boarding Students by District -->
+            <div class="group relative bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                <div class="absolute inset-0 pointer-events-none bg-gradient-to-br from-emerald-600/5 to-cyan-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="p-6">
+                    <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center mb-4 group-hover:bg-emerald-100 transition-colors">
+                        <svg class="w-6 h-6 text-slate-400 group-hover:text-emerald-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3m-6 0h6m-3-4v4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-900">Boarding Students by District</h3>
+                    <p class="text-sm text-slate-500 mt-2 mb-6">View every boarding student organized by district.</p>
+                    <div class="space-y-2 mb-8">
+                        <div class="flex items-center text-xs text-slate-600">
+                            <svg class="w-4 h-4 mr-2 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            District totals and student details
+                        </div>
+                        <div class="flex items-center text-xs text-slate-600">
+                            <svg class="w-4 h-4 mr-2 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0h-1.414l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            Includes students without a district
+                        </div>
+                    </div>
+                    <a href="{% url 'reports:boarding_students_by_district' %}" class="report-link inline-flex items-center justify-center w-full px-6 py-3 bg-slate-900 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 group-hover:shadow-emerald-500/25">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        View Report
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}

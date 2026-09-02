@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Boarding Students by District - SIMS{% endblock %}
+
+{% block content %}
+<div class="space-y-6 sm:space-y-8">
+    <div class="bg-gradient-to-r from-emerald-50 via-teal-50 to-cyan-50 border border-emerald-200 rounded-2xl p-5 sm:p-8 shadow-sm">
+        <a href="{% url 'reports:index' %}" class="inline-flex items-center gap-2 text-sm font-bold text-emerald-700 hover:text-emerald-900 mb-4">
+            <span aria-hidden="true">&larr;</span> Reports
+        </a>
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+            <div>
+                <h1 class="text-2xl sm:text-4xl font-bold text-slate-900 tracking-tight">Boarding Students by District</h1>
+                <p class="text-sm text-slate-600 mt-2">All students currently marked as boarding, grouped by district.</p>
+            </div>
+            <div class="text-left sm:text-right">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Total Boarding Students</p>
+                <p class="text-3xl font-bold text-emerald-700">{{ total_boarding_students }}</p>
+            </div>
+        </div>
+    </div>
+
+    {% for district in district_groups %}
+    <section class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+        <div class="flex items-center justify-between gap-4 px-5 py-4 bg-slate-50 border-b border-slate-100">
+            <h2 class="text-lg font-bold text-slate-900">{{ district.name }}</h2>
+            <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-sm font-bold">{{ district.count }}</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="text-left text-[10px] uppercase tracking-wider text-slate-500 bg-white">
+                    <tr>
+                        <th class="px-5 py-3 font-bold">Student</th>
+                        <th class="px-5 py-3 font-bold">Gender</th>
+                        <th class="px-5 py-3 font-bold">School</th>
+                        <th class="px-5 py-3 font-bold">Class</th>
+                        <th class="px-5 py-3 font-bold">Sector</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for student in district.students %}
+                    <tr class="hover:bg-emerald-50/40">
+                        <td class="px-5 py-3 font-semibold text-slate-900">{{ student.full_name }}</td>
+                        <td class="px-5 py-3 text-slate-600">{{ student.get_gender_display }}</td>
+                        <td class="px-5 py-3 text-slate-600">{% if student.school %}{{ student.school.name }}{% else %}{{ student.school_name|default:'N/A' }}{% endif %}</td>
+                        <td class="px-5 py-3 text-slate-600">{{ student.class_level|default:'N/A' }}</td>
+                        <td class="px-5 py-3 text-slate-600">{% if student.partner and student.partner.sector %}{{ student.partner.sector.name }}{% elif student.family and student.family.sector %}{{ student.family.sector.name }}{% elif student.school and student.school.sector %}{{ student.school.sector.name }}{% else %}N/A{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {% empty %}
+    <div class="bg-white border border-slate-100 rounded-2xl p-8 text-center text-slate-500">No boarding students found.</div>
+    {% endfor %}
+</div>
+{% endblock %}
